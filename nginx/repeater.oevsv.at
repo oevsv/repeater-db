@@ -1,0 +1,57 @@
+# repeater.oevsv.at
+
+# generate DH group
+# $ mkdir -p /etc/nginx/ssl
+# $ openssl dhparam -out /etc/nginx/ssl/dhparams.pem 4096
+ssl_dhparam /etc/nginx/ssl/dhparams.pem;
+# ssl_session_cache shared:SSL:50m;
+ssl_stapling on;
+ssl_session_timeout 5m;
+
+# rate limit
+limit_req_zone $binary_remote_addr zone=iplimit:10m rate=100r/s;
+limit_req_zone $server_name zone=serverlimit:10m rate=1000r/s;
+
+
+server {
+        listen 443      ssl http2; #ipv4
+        listen [::]:443 ssl http2; #ipv6
+        add_header Strict-Transport-Security 'max-age=31536000; includeSubDomains; preload' always;
+        add_header X-Machine "$hostname serving $server_name remote $remote_addr port $remote_port duration $request_time ms";
+
+        # enable session resumption (caching)
+        ssl_session_timeout 1d;
+        ssl_session_cache   shared:SSL:100m;
+
+        root  /var/www/repeater.oevsv.at;
+        index index.html;
+        server_name repeater.oevsv.at;
+
+        access_log /var/log/nginx/repeater.oevsv.at.access.log;
+        error_log /var/log/nginx/repeater.oevsv.at.at.error.log;
+
+        ssl_certificate     /etc/letsencrypt/live/repeater.oevsv.at/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/repeater.oevsv.at/privkey.pem;
+
+        limit_req zone=iplimit burst=100 nodelay;
+        limit_req zone=serverlimit burst=1000 nodelay;
+
+	location / {
+		# root block
+	}
+}
+
+
+# redirect to https
+
+server {
+        listen 80; 
+        listen [::]:80;
+
+        server_name repeater.oevsv.at;
+
+        limit_req zone=iplimit burst=100 nodelay;
+        limit_req zone=serverlimit burst=1000 nodelay;
+
+        rewrite ^ https://$host$request_uri? permanent;
+}
