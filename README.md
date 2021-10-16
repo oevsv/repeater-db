@@ -13,3 +13,16 @@ certbot certonly
 # create web root
 mkdir /var/www/repeater.oevsv.at
 
+# Postgres
+su postgres
+psql
+CREATE DATABASE vhf;
+-- user and password to be replaced
+create user username with encrypted password '***';
+grant all privileges on database vhf to username;
+quit
+psql vhf
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+
+
