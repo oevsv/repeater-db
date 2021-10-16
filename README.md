@@ -24,5 +24,9 @@ quit
 psql vhf
 CREATE EXTENSION postgis;
 CREATE EXTENSION postgis_topology;
+quit
+# Import repeater table
+psql vhf -1 < vhf_repeater.sql
+
 
 
