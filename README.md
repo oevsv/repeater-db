@@ -27,6 +27,6 @@ CREATE EXTENSION postgis_topology;
 quit
 # Import repeater table
 psql vhf -1 < vhf_repeater.sql
-
-
+# Import licenses table
+psql vhf -1 < vhf_licenses.sql
 
