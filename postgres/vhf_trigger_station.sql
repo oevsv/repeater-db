@@ -1,9 +1,9 @@
 
 --
--- Name: trigger_repeater(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: trigger_station(); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.trigger_repeater() RETURNS trigger
+CREATE FUNCTION public.trigger_station() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
         begin
@@ -20,15 +20,18 @@ CREATE FUNCTION public.trigger_repeater() RETURNS trigger
            -- set see level
            SELECT INTO NEW.see_level ST_Value(rast, (ST_Transform(ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326), 31287)))
            FROM dhm WHERE st_intersects(rast, (ST_Transform(ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326), 31287)));   
-           NEW.see_level = round(NEW.see_level*10.0)/10.0;
+           NEW.see_level = round(NEW.see_level);
            
            -- set geo prefix according to region
-           SELECT map.prefix
-                INTO NEW.geo_prefix
+           SELECT map.prefix,bev.gid
+                INTO NEW.geo_prefix, new.bev_gid
                 FROM oesterreich_bev_vgd_lam as bev
                 LEFT JOIN bl_kz_prefix map on map.bl_kz=bev.bl_kz, repeater as r
                 WHERE ST_intersects(ST_Transform(NEW.geom, 31287), bev.geom)
                 LIMIT 1;
+           -- set locator
+           NEW.locator_short = maidenhead_loc(NEW.longitude,new.latitude);     
+           NEW.locator_long = maidenhead_loc(NEW.longitude,new.latitude,10);     
            
        end if;
         
@@ -38,7 +41,7 @@ CREATE FUNCTION public.trigger_repeater() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.trigger_repeater() OWNER TO postgres;
+ALTER FUNCTION public.trigger_station() OWNER TO dz;
 
 SET default_tablespace = '';
 
