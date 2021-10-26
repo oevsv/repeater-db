@@ -2,30 +2,31 @@
 -- OE3DZW, APL2.0
 -- Usage: maidenhead_loc(latitude,longitude[,pairs])
 -- pairs: The number of digit pairs, the default is 3, e.g. JN78ab
+-- Example:  maidenhead_loc(15,48)
 
 
 --
 -- Name: maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.maidenhead_loc(latitude double precision, longitude double precision) RETURNS character varying
+CREATE OR REPLACE FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
       
    BEGIN
      -- short default locator (3 pairs aka 6 digits
-     RETURN  maidenhead_loc (latitude,longitude,3);
+     RETURN  maidenhead_loc (longitude,latitude,3);
    END
 $$;
 
 
-ALTER FUNCTION public.maidenhead_loc(latitude double precision, longitude double precision) OWNER TO postgres;
+ALTER FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision) OWNER TO postgres;
 
 --
 -- Name: maidenhead_loc(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.maidenhead_loc(latitude double precision, longitude double precision, pairs integer) RETURNS character varying
+CREATE OR REPLACE FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision, pairs integer) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    DECLARE
@@ -115,5 +116,5 @@ CREATE FUNCTION public.maidenhead_loc(latitude double precision, longitude doubl
 $$;
 
 
-ALTER FUNCTION public.maidenhead_loc(latitude double precision, longitude double precision, pairs integer) OWNER TO postgres;
+ALTER FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision, pairs integer) OWNER TO postgres;
 
