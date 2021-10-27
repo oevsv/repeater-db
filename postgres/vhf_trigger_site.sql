@@ -1,9 +1,9 @@
 
 --
--- Name: trigger_station(); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: trigger_site(); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.trigger_station() RETURNS trigger
+CREATE FUNCTION public.trigger_site() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
         begin
@@ -26,7 +26,7 @@ CREATE FUNCTION public.trigger_station() RETURNS trigger
            SELECT map.prefix,bev.gid
                 INTO NEW.geo_prefix, new.bev_gid
                 FROM oesterreich_bev_vgd_lam as bev
-                LEFT JOIN bl_kz_prefix map on map.bl_kz=bev.bl_kz, repeater as r
+                LEFT JOIN bl_kz_prefix map on map.bl_kz=bev.bl_kz, station as r
                 WHERE ST_intersects(ST_Transform(NEW.geom, 31287), bev.geom)
                 LIMIT 1;
            -- set locator
@@ -41,8 +41,8 @@ CREATE FUNCTION public.trigger_station() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.trigger_station() OWNER TO dz;
+ALTER FUNCTION public.trigger_site() OWNER TO dz;
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
+--
+-- Name: trigger_station(); Type: FUNCTION; Schema: public; Owner: dz
+--

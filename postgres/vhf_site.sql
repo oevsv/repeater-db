@@ -21,10 +21,10 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: station; Type: TABLE; Schema: public; Owner: dz
+-- Name: site; Type: TABLE; Schema: public; Owner: dz
 --
 
-CREATE TABLE public.station (
+CREATE TABLE public.site (
     uid bigint NOT NULL,
     name character varying(100) NOT NULL,
     city character varying(100),
@@ -40,83 +40,83 @@ CREATE TABLE public.station (
 );
 
 
-ALTER TABLE public.station OWNER TO dz;
+ALTER TABLE public.site OWNER TO dz;
 
 --
--- Name: COLUMN station.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.uid; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.uid IS 'UID';
-
-
---
--- Name: COLUMN station.name; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.station.name IS 'Name of station, e.g. Grünberg';
+COMMENT ON COLUMN public.site.uid IS 'UID';
 
 
 --
--- Name: COLUMN station.city; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.name; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.city IS 'Bigger city around station (to identify station)';
-
-
---
--- Name: COLUMN station.longitude; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.station.longitude IS 'Longitude of station, e.g. 48. North is positive';
+COMMENT ON COLUMN public.site.name IS 'Name of station, e.g. Grünberg';
 
 
 --
--- Name: COLUMN station.latitude; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.city; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.latitude IS 'Latitude of station, e.g. 15. East is positive';
-
-
---
--- Name: COLUMN station.see_level; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.station.see_level IS 'See level using WGS84 geoid in meter.';
+COMMENT ON COLUMN public.site.city IS 'Bigger city around station (to identify station)';
 
 
 --
--- Name: COLUMN station.locator_short; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.longitude; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.locator_short IS 'Short locator, e.g. JN78ab';
-
-
---
--- Name: COLUMN station.locator_long; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.station.locator_long IS 'Long locator (exact location)';
+COMMENT ON COLUMN public.site.longitude IS 'Longitude of station, e.g. 48. North is positive';
 
 
 --
--- Name: COLUMN station.geo_prefix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.latitude; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.geo_prefix IS 'Amateur radio prefix of Austrian location, e.g. OE3';
-
-
---
--- Name: COLUMN station.bev_gid; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.station.bev_gid IS 'GID of BEV table (pointer to community, etc.)';
+COMMENT ON COLUMN public.site.latitude IS 'Latitude of station, e.g. 15. East is positive';
 
 
 --
--- Name: COLUMN station.geom; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.see_level; Type: COMMENT; Schema: public; Owner: dz
 --
 
-COMMENT ON COLUMN public.station.geom IS 'Geometry of location';
+COMMENT ON COLUMN public.site.see_level IS 'See level using WGS84 geoid in meter.';
+
+
+--
+-- Name: COLUMN site.locator_short; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.site.locator_short IS 'Short locator, e.g. JN78ab';
+
+
+--
+-- Name: COLUMN site.locator_long; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.site.locator_long IS 'Long locator (exact location)';
+
+
+--
+-- Name: COLUMN site.geo_prefix; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.site.geo_prefix IS 'Amateur radio prefix of Austrian location, e.g. OE3';
+
+
+--
+-- Name: COLUMN site.bev_gid; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.site.bev_gid IS 'GID of BEV table (pointer to community, etc.)';
+
+
+--
+-- Name: COLUMN site.geom; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.site.geom IS 'Geometry of location';
 
 
 --
@@ -138,21 +138,23 @@ ALTER TABLE public.station_uid_seq OWNER TO dz;
 -- Name: station_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
 --
 
-ALTER SEQUENCE public.station_uid_seq OWNED BY public.station.uid;
+ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 
 
 --
--- Name: station uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: site uid; Type: DEFAULT; Schema: public; Owner: dz
 --
 
-ALTER TABLE ONLY public.station ALTER COLUMN uid SET DEFAULT nextval('public.station_uid_seq'::regclass);
+ALTER TABLE ONLY public.site ALTER COLUMN uid SET DEFAULT nextval('public.station_uid_seq'::regclass);
 
 
 --
--- Data for Name: station; Type: TABLE DATA; Schema: public; Owner: dz
+-- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: dz
 --
 
-COPY public.station (uid, name, city, longitude, latitude, see_level, locator_short, locator_long, geo_prefix, bev_gid, geom, dummy) FROM stdin;
+COPY public.site (uid, name, city, longitude, latitude, see_level, locator_short, locator_long, geo_prefix, bev_gid, geom, dummy) FROM stdin;
+136	Ostarrichi Kaserne	Amstetten	14.89126126683842	48.0928409013797	321	JN78KC	JN78KC62WG87HP72VO08	OE3	4969	0101000020110F0000EE3B1A9F574B394133C5258BD25A5741	\N
+80	Braunau Stadt	Braunau am Inn	13.03791	48.25152	353	JN68MG	JN68MG40NI17TN32WL05	OE5	5302	0101000020110F0000FABC90806D25364105CD6E51B0745741	a
 74	Linz Froschberg	\N	\N	\N	\N	\N	\N	\N	\N	\N	a
 100	Schellenberg	\N	\N	\N	\N	\N	\N	\N	\N	\N	a
 1	Ahorn	Mayhofen	11.86928	47.13717	1952	JN57WD	JN57WD42HW50GX38IB69	OE7	6024	0101000020110F000087A0A73442293441CE603A21B3C05641	a
@@ -234,7 +236,6 @@ COPY public.station (uid, name, city, longitude, latitude, see_level, locator_sh
 77	Mönichkirchen Ort	Mönichkirchen	16.037665	47.510703	948	JN87AM	JN87AM42MN46SL08LG55	OE3	5507	0101000020110F0000764189B3D83D3B41843CCEF79AFC5641	a
 78	Nebelstein	Weitra	14.77828	48.672816	1005	JN78JQ	JN78JQ31JL44LE18IJ62	OE3	1241	0101000020110F000062FCB99A361A394181287D97C1B95741	a
 79	Oberaich	Bruck an der Mur	15.19713	47.43786	762	JN77OK	JN77OK35PC70IR26NP43	OE6	4358	0101000020110F00008023EBC558D03941801CA2C8E3F05641	a
-80	Ort-OE5SIX	Stadt-OE5SIX	\N	\N	\N	\N	\N	\N	\N	\N	a
 81	Ottakring	Wien	16.32542	48.21328	207	JN88DF	JN88DF91BE24CW32AR92	OE1	1367	0101000020110F0000B5B1FE70F9BA3B41C55515AA726E5741	a
 82	Patscherkofel	Innsbruck	11.460929	47.208287	2243	JN57RE	JN57RE59HX47SH19FL97	OE7	7526	0101000020110F0000C799C1C7B0773341F5C4009512CC5641	a
 83	Penkenjoch	Zillertal	11.8	47.168667	2086	JN57VE	JN57VE50XL95XF92XO95	OE7	6	0101000020110F000065CFC9FD210B34413607021ABCC55641	a
@@ -295,14 +296,28 @@ COPY public.station (uid, name, city, longitude, latitude, see_level, locator_sh
 -- Name: station_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
 --
 
-SELECT pg_catalog.setval('public.station_uid_seq', 135, true);
+SELECT pg_catalog.setval('public.station_uid_seq', 136, true);
 
 
 --
--- Name: station station_trigger; Type: TRIGGER; Schema: public; Owner: dz
+-- Name: site_name_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
-CREATE TRIGGER station_trigger BEFORE INSERT OR UPDATE ON public.station FOR EACH ROW EXECUTE FUNCTION public.trigger_station();
+CREATE UNIQUE INDEX site_name_idx ON public.site USING btree (name);
+
+
+--
+-- Name: site_uid_idx; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE UNIQUE INDEX site_uid_idx ON public.site USING btree (uid);
+
+
+--
+-- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: dz
+--
+
+CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.trigger_site();
 
 
 --
