@@ -368,7 +368,6 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2040	repeater_voice	438.95	431.35	OE1XUU	\N	Kahlenberg	OE1BAD	\N	\N	\N	\N	\N	active	t	\N	\N	162.2	t	6406	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2034	repeater_voice	2401.9	2449.9	OE1XKU	\N	Satzberg	OE1MCU	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2045	repeater_voice	438.825	431.225	OE2XHM	\N	Hochköngi Matrashaus	OE2WCL	https://www.foto-webcam.eu/webcam/hochkoenig/	\N	\N	t	\N	active	t	Tone 1750. DTMF 1	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2038	repeater_voice	430.4875	430.4875	OE1XTW	\N	Arsenal Funkturm	OE1ERR	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2086	repeater_voice	145.7	145.1	OE3XSA	\N	Sandl	OE3WLS	\N	\N	\N	\N	\N	active	t	\N	\N	162.2	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2138	repeater_voice	438.9	431.3	OE6XDE	\N	Plabutsch	OE6THH	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2052	repeater_voice	51.89	51.29	OE2XZR	\N	Gaisberg	OE2AIP	\N	\N	\N	\N	\N	planned	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
@@ -376,8 +375,6 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2285	beacon	10368.814	\N	OE8XXQ	\N	Dobratsch	OE8URQ	https://www.foto-webcam.eu/webcam/dobratsch/	\N	\N	\N	\N	planned	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	CW	\N	\N	2021-10-23 20:40:08.807978+02	\N
 2335	repeater_voice	438.625	431.025	OE9XKV	\N	Karren	OE9MNR	\N	Yaesu DR-2X	\N	\N	\N	active	t	\N	85.4	85.4	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 6.11.21	2021-11-06 17:52:53.798091+01	\N
 2136	repeater_voice	438.775	431.175	OE6XCG	\N	Grambach Ort	OE6TYG	\N	\N	\N	\N	t	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2020	repeater_voice	430.4125	430.4125	OE1XAR	\N	Bisamberg	OE1KBC	https://www.foto-webcam.eu/webcam/bisamberg/	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2177	repeater_voice	438.875	431.275	OE7XOI	\N	Schönjöchl	OE7SJJ	\N	svx	\N	t	\N	active	t	Tone 1750	\N	\N	t	96498	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2046	repeater_voice	145.7625	145.1625	OE2XGR	\N	Gernkogel	OE2HFO	https://www.foto-webcam.eu/webcam/gernkogel/	\N	\N	\N	\N	active	t	\N	\N	88.5	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 6.11.21	2021-10-16 14:40:51.350258+02	\N
 2169	repeater_voice	438.4	430.8	OE7XKT	\N	Kaltenbach	OE7SBH	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2183	repeater_voice	438.55	430.95	OE7XTT	\N	Penkenjoch	OE7FMI	\N	UP4DAR  	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
@@ -391,12 +388,15 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2292	beacon	24048.965	\N	OE8XGQ	\N	Gerlitzen	OE8PGQ	\N	\N	\N	\N	\N	historic	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	CW	\N	\N	2021-10-23 20:40:08.807978+02	\N
 2299	repeater_voice	51.9	51.3	OE3XWJ	38	Jauerling	OE1KBC	\N	Yaesu FT8900/BARIX	\N	\N	\N	active	t	\N	162.2	162.2	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2070	repeater_voice	29.66	29.56	OE3XLU	\N	Gießhübel	OE3KLU	\N	\N	\N	\N	\N	planned	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2030	repeater_voice	145.625	145.025	OE1XFW	\N	Laaerberg	OE3NSC	\N	\N	\N	\N	t	active	t	\N	\N	\N	t	3302	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Coupling 70cm	Update 8.11.21	2021-10-16 14:40:51.350258+02	\N
+2038	repeater_voice	430.4875	430.4875	OE1XTW	\N	Arsenal Funkturm	OE1ERR	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	TETRA-OE-MASTER	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2107	repeater_voice	438.425	430.825	OE5XDN	\N	Senftenbach/Wolfau	OE5RLN	\N	UP4DAR  	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2031	repeater_voice	438.65	431.05	OE1XFW	\N	Laaerberg	OE3NSC	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Coupling 2m	Update 8.11.21	2021-10-16 14:40:51.350258+02	\N
+2020	repeater_voice	430.4125	430.4125	OE1XAR	\N	Bisamberg	OE1KBC	https://www.foto-webcam.eu/webcam/bisamberg/	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	TETRA-OE-MASTER	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
+2177	repeater_voice	438.875	431.275	OE7XOI	\N	Schönjöchl	OE7SJJ	\N	svx	\N	t	t	active	t	Tone 1750	\N	\N	t	96498	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2047	repeater_voice	145.6125	145.0125	OE2XNL	\N	Speiereck	OE2TRM	\N	\N	\N	\N	t	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
+2030	repeater_voice	145.625	145.025	OE1XFW	\N	Laaerberg Turm	OE3NSC	\N	\N	\N	\N	t	active	t	\N	\N	\N	t	3302	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Coupling 70cm	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2099	repeater_voice	438.3625	430.7625	OE4XSB	\N	Sonnenberg im Leithagebirge	OE4JHW	\N	\N	\N	\N	\N	planned	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2035	repeater_voice	145.75	145.15	OE3XQA	\N	Exelberg	OE1BAD	\N	\N	\N	\N	\N	active	t	\N	\N	162.2	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Coupling OE3XFW/70cm	\N	2021-10-16 14:40:51.350258+02	\N
+2031	repeater_voice	438.65	431.05	OE1XFW	\N	Laaerberg Turm	OE3NSC	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Coupling 2m	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2095	repeater_voice	1298.6	1270.6	OE3XWW	\N	Mönichkirchen Ort	OE3RPU	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	A	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2300	digipeater	144.8	144.8	OE3XNR	\N	Nebelstein	OE3DZW	https://oe3xnr.xax.at/	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	AFSK 1k2bps	APRS	\N	2021-10-16 14:40:51.350258+02	\N
 2301	repeater_voice	438.6125	431.0125	OE3XNR	\N	Nebelstein	OE3GWU	https://www.oe3xnr.eu/	Hytera	\N	\N	\N	active	\N	\N	88.5	\N	\N	\N	232305	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
@@ -473,7 +473,6 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2049	repeater_voice	438.9	431.3	OE2XPR	\N	Haunsberg	OE2WAO	\N	\N	\N	\N	\N	historic	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2112	repeater_voice	438.2625	430.6625	OE5XGL	\N	Grünberg	OE5RDL	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2215	repeater_voice	439.0875	431.4875	OE8XPK	\N	Petzen	OE8HJK	\N	\N	\N	\N	\N	active	t	Tone 1750. DTMF 1	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	1,32,98,99	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
-2186	repeater_voice	145.6625	145.0625	OE7XWH	\N	Grünberg bei Silz	OE7MST	\N	\N	\N	t	\N	active	t	Tone 1750	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2104	repeater_voice	438.3	430.7	OE5XBN	\N	Braunau Ort	OE5MCM	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2222	repeater_voice	145.575	144.975	OE9XDV	\N	Bazora	OE9VVV	\N	\N	\N	\N	\N	historic	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	C	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2027	repeater_voice	145.575	144.975	OE1XDS	\N	Stadt/AKH	OE1AOA	\N	\N	\N	\N	t	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	C	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
@@ -498,6 +497,7 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2181	repeater_voice	145.75	145.15	OE7XTT	\N	Penkenjoch	OE7WWH	\N	\N	\N	\N	\N	active	t	\N	\N	\N	t	404786	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2179	repeater_voice	145.6125	145.0125	OE7XTI	\N	Patscherkofel	OE7DA	\N	\N	\N	\N	\N	active	t	Tone 1750	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2210	repeater_voice	145.7625	145.1625	OE8XNK	\N	Gerlitzen	OE8DSK	\N	\N	\N	\N	\N	active	t	Tone 1750	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
+2186	repeater_voice	145.6625	145.0625	OE7XWH	\N	Grünberg bei Silz	OE7MST	\N	\N	\N	t	t	active	t	Tone 1750	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2022	repeater_voice	438.475	430.875	OE1XAT	\N	Hermannskogel	OE1KBC	\N	\N	\N	\N	t	active	t	\N	\N	162.2	\N	\N	932181	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	FM-OE-Link	\N	2021-10-16 14:40:51.350258+02	\N
 2093	repeater_voice	438.6	431	OE3XWJ	\N	Jauerling	OE1KBC	\N	\N	\N	\N	\N	active	t	\N	162.2	162.2	\N	\N	932831	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	FM-OE-Link	\N	2021-10-16 14:40:51.350258+02	\N
 2023	repeater_voice	1298.25	1270.25	OE1XQU	\N	Wienerberg	OE1MCU	\N	\N	\N	\N	\N	active	t	\N	\N	\N	t	254700	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
@@ -520,6 +520,8 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2339	digipeater	432.5	432.5	OE3XTV	\N	Hinteralm	OE3REC	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	AFSK 1k2bps	APRS	Update 6.11.21	2021-10-16 14:40:51.350258+02	1
 2340	digipeater	432.5	432.5	OE3XXI	\N	Probstdorf Sonnenweg	OE3REC	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	AFSK 1k2bps	APRS	Update 6.11.21	2021-10-16 14:40:51.350258+02	1
 2308	repeater_voice	1298.375	1270.375	OE2XZR	\N	Gaisberg	OE2AIP	https://oe2.oevsv.at/funkbetrieb/oe2xzr/	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
+2352	repeater_voice	438.3125	430.7125	OE1XBA	\N	Laaerberg Hochhaus	OE1BAD	\N	\N	\N	\N	\N	active	t	\N	162.2	162.2	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 9.11.21	2021-11-09 17:37:13.960823+01	\N
+2353	digipeater	144.8	144.8	OE1XBA	\N	Laaerberg Hochhaus	OE1BAD	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	AFSK 1k2bps	APRS	Update 9.11.21	2021-11-09 17:37:13.960823+01	\N
 2154	repeater_voice	439.1	431.5	OE6XRE	\N	Eisenerzer Reichenstein	OE6SWG	\N	\N	\N	t	t	active	t	\N	\N	103.5	t	383901	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2105	repeater_voice	438.775	431.175	OE5XBR	\N	Stadt/Froschberg	OE5AJP	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2200	repeater_voice	145.5875	144.9875	OE8XKK	\N	Pyramidenkogel	OE8HJK	\N	\N	\N	\N	\N	historic	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
@@ -573,13 +575,16 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2232	repeater_voice	438.825	431.225	OE9XVV	\N	Dünserberg	OE9TEV	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	APCO P25	P25	Update 8.11.21	2021-10-16 14:40:51.350258+02	\N
 2293	beacon	47088.8	\N	OE1XGA	\N	Kahlenberg	OE4WOG	\N	\N	\N	\N	\N	planned	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	CW	\N	\N	2021-10-23 20:40:08.807978+02	\N
 2318	beacon	70.045	\N	OE5XQL	\N	Eidenberg	OE5MPL	\N	\N	\N	\N	\N	planned	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	CW	\N	\N	2021-10-23 20:40:08.807978+02	\N
-2342	repeater_voice	430.4875	430.4875	OE6XWG	\N	Kainbach	OE6DJG	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	Update 8.11.21	2021-11-07 12:17:24.137415+01	\N
-2341	repeater_voice	430.4125	430.4125	OE4XBJ	\N	Allhau	\N	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	Update 6.11.21	2021-11-07 12:17:24.137415+01	\N
+2354	repeater_voice	439.05	431.45	OE7XBI	\N	Rangger Köpfel	OE7NCI	\N	\N	\N	\N	\N	active	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 9.11.21	2021-10-16 14:40:51.350258+02	\N
 2155	repeater_voice	439.025	431.425	OE6XVE	\N	Stubalpe	OE6PZG	\N	\N	\N	\N	t	historic	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2148	repeater_voice	145.775	145.175	OE6XLG	\N	Stubalpe	OE6PZG	\N	\N	\N	\N	t	historic	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2143	repeater_voice	438.65	431.05	OE6XEE	\N	Stubalpe	OE6PZG	\N	\N	\N	\N	\N	historic	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2146	repeater_voice	51.93	51.33	OE6XIE	\N	Stubalpe	OE6PZG	\N	\N	\N	\N	\N	historc	t	Tone 1750	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
+2356	atv	\N	2435	OE8XER	\N	Koralpe Steinschneider	OE8XEG	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	DVBS/S2 SR 1000 1/2-3/4 V	DATV input	Update 9.11.21	2021-10-21 12:45:40.647422+02	\N
+2355	atv	10435	\N	OE8XER	\N	Koralpe Steinschneider	OE8XEG	http://44.143.212.35/ts/1 	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	DVB-S SR 1000 1/2 FEC H	DATV output	Update 9.11.21	2021-10-21 12:45:40.647422+02	\N
+2341	repeater_voice	430.4125	430.4125	OE4XBJ	\N	Allhau	\N	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	TETRA-OE-MASTER	Update 9.11.21	2021-11-07 12:17:24.137415+01	\N
 2053	repeater_voice	145.6875	145.0875	OE2XZR	\N	Gaisberg	OE2AIP	https://oe2.oevsv.at/funkbetrieb/oe2xzr/	\N	\N	\N	t	active	t	\N	\N	88.5	t	304806	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
+2342	repeater_voice	430.4875	430.4875	OE6XWG	\N	Kainbach	OE6DJG	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	TETRA-OE-MASTER	Update 9.11.21	2021-11-07 12:17:24.137415+01	\N
 2180	repeater_voice	145.7625	145.1625	OE7XTR	\N	Krahberg	OE7TTT	\N	\N	\N	\N	t	active	t	\N	\N	77	\N	\N	\N	\N	\N	\N	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2063	repeater_voice	1298.225	1270.225	OE3XFC	\N	Hochwechsel	OE4KMU	\N	\N	\N	\N	\N	active	t	\N	\N	\N	t	541749	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	\N
 2302	digipeater	438.225	430.625	OE3XNR	\N	Nebelstein	OE3GWU	https://www.oe3xnr.eu/	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	FM Vara	Winlink	\N	2021-10-16 14:40:51.350258+02	\N
@@ -645,7 +650,6 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2270	digipeater	433.625	433.625	OE1XDU	\N	Wieden/Gußhausstraße	OE1RSA	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	AFSK 1k2bps	\N	Update 6.11.21	2021-10-23 18:38:59.606853+02	\N
 2068	repeater_voice	438.5	430.9	OE3XKC	\N	Fronberg	OE3ICU	\N	Motorola DR3000	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232304	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2073	repeater_voice	438.225	430.625	OE3XNK	\N	Hohe Wand	OE3GBB	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232306	t	t	\N	\N	t	32,93,94	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
-2167	repeater_voice	438.5	430.9	OE7XKH	\N	Krahberg	OE7ERJ	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232714	t	t	t	t	\N	\N	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2131	repeater_voice	438.9125	431.3125	OE6XBF	\N	Stradner Kogel	OE6JWD	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232604	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2134	repeater_voice	438.925	431.325	OE6XBG	\N	Rennfeld	OE6MKD	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232602	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2128	repeater_voice	438.6	431	OE6XAG	\N	Schöckl	OE6DJG	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232601	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
@@ -661,7 +665,6 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2199	repeater_voice	438.45	430.85	OE8XGK	\N	Finkenstein/Neumüllern	OE8VIK	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232836	t	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2130	repeater_voice	438.425	430.825	OE6XAR	\N	Klosterneuburgerhütte	OE6POD	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232603	t	\N	\N	\N	t	32	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2096	repeater_voice	438.575	430.975	OE3XWW	\N	Mönichkirchen Ort	OE3RPU	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	t	t	\N	\N	t	32,93,94	t	B	G	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
-2160	repeater_voice	438.4	430.8	OE7XCJ	\N	Stadt/Brixner Straße	OE7AAI	\N	\N	t	\N	\N	active	t	\N	\N	\N	\N	\N	232706	t	t	t	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2162	repeater_voice	438.825	431.225	OE7XFJ	\N	Harschbichl	OE7GBJ	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232712	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2054	repeater_voice	438.55	430.95	OE2XZR	\N	Gaisberg	OE2RPL	https://oe2.oevsv.at/funkbetrieb/oe2xzr/	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232222	t	\N	\N	t	t	32	\N	\N	\N	\N	\N	\N	\N	wrong QRG in IPSC2	2021-10-16 14:40:51.350258+02	1
 2320	repeater_voice	438.4	430.8	OE3XKQ	\N	Kuhberg/Egelsee	OE3MUC	http://www.ardv.at/home/relaistechnikfotos/kremseglsee/	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232395	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
@@ -677,6 +680,8 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2343	atv	\N	144.5	OE6XFE	\N	St. Wolfgang Ort	OE6RKE	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	SSTV V	DATV input	Update 6.11.21	2021-10-21 12:45:40.647422+02	\N
 2233	repeater_voice	439.05	431.45	OE9XXI	\N	Dornbirn Stadt	OE9OBV	\N	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232999	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 6.11.21	2021-10-16 14:40:51.350258+02	1
 2326	repeater_voice	439.1	431.5	OE7XOT	\N	Obtarrenz	OE7RMT	\N	\N	t	\N	\N	planned	\N	\N	\N	\N	\N	\N	232076	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	Updat 8.11.21	2021-11-05 00:50:41.692591+01	1
+2167	repeater_voice	438.5	430.9	OE7XKH	\N	Krahberg	OE7ERJ	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232714	t	t	t	t	t	32	t	B	G	\N	\N	\N	\N	Update 9.11.21	2021-10-16 14:40:51.350258+02	1
+2160	repeater_voice	438.4	430.8	OE7XCJ	\N	Stadt/Brixner Straße	OE7AAI	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232706	t	t	t	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 \.
 
 
@@ -684,7 +689,7 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 -- Name: repeater_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
 --
 
-SELECT pg_catalog.setval('public.repeater_uid_seq', 2351, true);
+SELECT pg_catalog.setval('public.repeater_uid_seq', 2356, true);
 
 
 --
