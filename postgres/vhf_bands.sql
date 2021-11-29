@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.4 (Debian 13.4-0+deb11u1)
--- Dumped by pg_dump version 13.4 (Debian 13.4-0+deb11u1)
+-- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
+-- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -82,20 +82,20 @@ COPY public.bands (uid, band_name, frequency_from, frequency_to) FROM stdin;
 13	10m	28	29.7
 14	6m	50	54
 15	70MHz	70	70.5
-16	2m	144	146
-17	70cm	430	440
-18	23cm	1240	1300
 19	13cm	2300	2450
 20	3.4GHz	3400	3475
 21	5GHz	5650	5850
 22	10GHz	10000	10500
 23	24GHz	24000	24250
 24	47GHz	47000	47200
-25	75GHz	75000	81500
 26	122GHz	122250	123000
-27	131GHz	134000	141000
 28	241GHz	241000	250000
 29	275GHz	275000	3000000
+16	2m	144	146
+17	70cm	430	440
+18	23cm	1240	1300
+25	76GHz	75000	81500
+27	134GHz	134000	141000
 \.
 
 
@@ -111,6 +111,13 @@ SELECT pg_catalog.setval('public.band_uid_seq', 28, true);
 --
 
 CREATE UNIQUE INDEX band_uid_idx ON public.bands USING btree (uid);
+
+
+--
+-- Name: TABLE bands; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT SELECT ON TABLE public.bands TO web_anon;
 
 
 --
