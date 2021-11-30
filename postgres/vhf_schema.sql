@@ -1826,10 +1826,10 @@ ALTER SEQUENCE public.repeater_uid_seq OWNED BY public.trx.uid;
 
 
 --
--- Name: rt_ic9700_dstar_raw; Type: VIEW; Schema: public; Owner: dz
+-- Name: rt_ic9700_dr_dstar_raw; Type: VIEW; Schema: public; Owner: dz
 --
 
-CREATE VIEW public.rt_ic9700_dstar_raw AS
+CREATE VIEW public.rt_ic9700_dr_dstar_raw AS
  SELECT t.frequency_tx AS "Receive Frequency",
     t.frequency_rx AS "Transmit Frequency",
     ' '::text AS "Offset Frequency",
@@ -1856,38 +1856,120 @@ CREATE VIEW public.rt_ic9700_dstar_raw AS
   ORDER BY t.callsign, (public.band_name(t.frequency_tx));
 
 
-ALTER TABLE public.rt_ic9700_dstar_raw OWNER TO dz;
+ALTER TABLE public.rt_ic9700_dr_dstar_raw OWNER TO dz;
 
 --
--- Name: rt_ic9700_dstar; Type: VIEW; Schema: public; Owner: dz
+-- Name: rt_ic9700_dr_fm_raw; Type: VIEW; Schema: public; Owner: dz
 --
 
-CREATE VIEW public.rt_ic9700_dstar AS
+CREATE VIEW public.rt_ic9700_dr_fm_raw AS
+ SELECT t.frequency_tx AS "Receive Frequency",
+    t.frequency_rx AS "Transmit Frequency",
+    ' '::text AS "Offset Frequency",
+    'DUP-'::text AS "Offset Direction",
+    'On'::text AS "Repeater Use",
+    'FM'::text AS "Operating Mode",
+    public.nice_display(t.site_name) AS "Name",
+    ''::text AS "Sub Name",
+        CASE
+            WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
+            WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
+            ELSE 'None'::text
+        END AS "Tone Mode",
+        CASE
+            WHEN (t.ctcss_rx IS NULL) THEN ''::text
+            ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
+        END AS "CTCSS",
+    ''::text AS "IP Address",
+    ''::text AS "Rpt-1 CallSign",
+    ''::text AS "Rpt-2 CallSign",
+    'Exact'::text AS "LatLng",
+    concat(public.nice_geo_dms(s.latitude), 'N') AS "Latitude",
+    concat(public.nice_geo_dms(s.longitude), 'E') AS "Longitude",
+    '+01:00'::text AS "UTC Offset",
+    '1: Austria'::text AS "Bank",
+    ''::text AS "Comment",
+    ''::text AS "Dummy"
+   FROM (public.trx t
+     LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
+
+
+ALTER TABLE public.rt_ic9700_dr_fm_raw OWNER TO dz;
+
+--
+-- Name: rt_ic9700_dr; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.rt_ic9700_dr AS
  SELECT row_number() OVER (PARTITION BY true::boolean) AS "Channel Number",
-    rt."Receive Frequency",
-    rt."Transmit Frequency",
-    rt."Offset Frequency",
-    rt."Offset Direction",
-    rt."Repeater Use",
-    rt."Operating Mode",
-    rt."Name",
-    rt."Sub Name",
-    rt."Tone Mode",
-    rt."CTCSS",
-    rt."IP Address",
-    rt."Rpt-1 CallSign",
-    rt."Rpt-2 CallSign",
-    rt."LatLng",
-    rt."Latitude",
-    rt."Longitude",
-    rt."UTC Offset",
-    rt."Bank",
-    rt."Comment",
-    rt."Dummy"
-   FROM public.rt_ic9700_dstar_raw rt;
+    foobar."Receive Frequency",
+    foobar."Transmit Frequency",
+    foobar."Offset Frequency",
+    foobar."Offset Direction",
+    foobar."Repeater Use",
+    foobar."Operating Mode",
+    foobar."Name",
+    foobar."Sub Name",
+    foobar."Tone Mode",
+    foobar."CTCSS",
+    foobar."IP Address",
+    foobar."Rpt-1 CallSign",
+    foobar."Rpt-2 CallSign",
+    foobar."LatLng",
+    foobar."Latitude",
+    foobar."Longitude",
+    foobar."UTC Offset",
+    foobar."Bank",
+    foobar."Comment",
+    foobar."Dummy"
+   FROM ( SELECT r."Receive Frequency",
+            r."Transmit Frequency",
+            r."Offset Frequency",
+            r."Offset Direction",
+            r."Repeater Use",
+            r."Operating Mode",
+            r."Name",
+            r."Sub Name",
+            r."Tone Mode",
+            r."CTCSS",
+            r."IP Address",
+            r."Rpt-1 CallSign",
+            r."Rpt-2 CallSign",
+            r."LatLng",
+            r."Latitude",
+            r."Longitude",
+            r."UTC Offset",
+            r."Bank",
+            r."Comment",
+            r."Dummy"
+           FROM public.rt_ic9700_dr_dstar_raw r
+        UNION
+         SELECT r."Receive Frequency",
+            r."Transmit Frequency",
+            r."Offset Frequency",
+            r."Offset Direction",
+            r."Repeater Use",
+            r."Operating Mode",
+            r."Name",
+            r."Sub Name",
+            r."Tone Mode",
+            r."CTCSS",
+            r."IP Address",
+            r."Rpt-1 CallSign",
+            r."Rpt-2 CallSign",
+            r."LatLng",
+            r."Latitude",
+            r."Longitude",
+            r."UTC Offset",
+            r."Bank",
+            r."Comment",
+            r."Dummy"
+           FROM public.rt_ic9700_dr_fm_raw r) foobar;
 
 
-ALTER TABLE public.rt_ic9700_dstar OWNER TO dz;
+ALTER TABLE public.rt_ic9700_dr OWNER TO dz;
 
 --
 -- Name: rt_ic9700_fm_raw; Type: VIEW; Schema: public; Owner: dz
@@ -1901,15 +1983,7 @@ CREATE VIEW public.rt_ic9700_fm_raw AS
     'FM'::text AS "Operating Mode",
     ''::text AS "Data Mode",
     '1'::text AS "Filter",
-    concat("substring"((t.callsign)::text, 3, 4), '-',
-        CASE
-            WHEN ((public.band_name(t.frequency_tx))::text = '6m'::text) THEN '6'::text
-            WHEN ((public.band_name(t.frequency_tx))::text = '2m'::text) THEN '2'::text
-            WHEN ((public.band_name(t.frequency_tx))::text = '70cm'::text) THEN '7'::text
-            WHEN ((public.band_name(t.frequency_tx))::text = '23cm'::text) THEN '3'::text
-            WHEN ((public.band_name(t.frequency_tx))::text = '13cm'::text) THEN '1'::text
-            ELSE '0'::text
-        END, ' ', public.nice_display(t.site_name)) AS "Name",
+    (public.nice_display(t.site_name))::text AS "Name",
         CASE
             WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
             WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
@@ -1936,7 +2010,7 @@ CREATE VIEW public.rt_ic9700_fm_raw AS
    FROM (public.trx t
      LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
   WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
-  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
+  ORDER BY ROW(public.band_name(t.frequency_tx), t.callsign);
 
 
 ALTER TABLE public.rt_ic9700_fm_raw OWNER TO dz;
