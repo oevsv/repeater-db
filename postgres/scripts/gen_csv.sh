@@ -15,16 +15,16 @@ mv /var/www/repeater.oevsv.at/static/csv/chirp_fm.csv.tmp /var/www/repeater.oevs
 # RT-Systems 
 
 # IC-9700 format 
-# Dstar
-echo "COPY (select * from rt_ic9700_dstar) TO '/var/www/repeater.oevsv.at/static/csv/rt_ic9700_dstar.csv.tmp' CSV HEADER DELIMITER ',';" | psql -q vhf
+# DR Memory
+echo "COPY (select * from rt_ic9700_dr) TO '/var/www/repeater.oevsv.at/static/csv/rt_ic9700_dr.csv.tmp' CSV HEADER DELIMITER ',';" | psql -q vhf
 # remove dummy
-sed -i "s/Dummy//g" /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dstar.csv.tmp
+sed -i "s/Dummy//g" /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dr.csv.tmp
 # remove quotes
-sed -i "s/\"//g" /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dstar.csv.tmp
+sed -i "s/\"//g" /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dr.csv.tmp
 # atomic replacement of previous file
-mv /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dstar.csv.tmp /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dstar.csv
+mv /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dr.csv.tmp /var/www/repeater.oevsv.at/static/csv/rt_ic9700_dr.csv
 
-# FM
+# FM (VHF/UHF Memory)
 echo "COPY (select * from rt_ic9700_fm) TO '/var/www/repeater.oevsv.at/static/csv/rt_ic9700_fm.csv.tmp' CSV HEADER DELIMITER ',';" | psql -q vhf
 # remove dummy
 sed -i "s/Dummy//g" /var/www/repeater.oevsv.at/static/csv/rt_ic9700_fm.csv.tmp
