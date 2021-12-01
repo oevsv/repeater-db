@@ -48,6 +48,14 @@ CREATE EXTENSION postgis_topology;
 CREATE EXTENSION postgis_raster;
 quit
 ```
+
+### Import schema
+Note: vhf_schema.sql was generated using "pg_dump -s".
+```
+# Import schema
+psql vhf < vhf_schema.sql
+```
+
 ### Import Austrian terrain open data
 This step might take a while to process.
 ```
@@ -82,50 +90,29 @@ psql vhf -1 < vgd.sql
 grant select on oesterreich_bev_vgd_lam to user;
 exit
 ```
-### Import functions
-```
-# Import trigger (sets geom, see level and geo_prefix)
-psql vhf -1 < vhf_trigger_repeater.sql
-```
+
 ### Import sites
 A site is defined as location with one or more callsigns and or transceivers.
 ```
 # Import site table
 psql vhf -1 < vhf_site.sql
 ```
-### Import trx table
+### Import trx
 Each active site contains one or more transmitters and receivers.
 
 ```
-### Import transceivers
+# Import site table
 psql vhf -1 < vhf_trx.sql
 ```
 
-### Import licenses
-Import club stations (e.g. OE1XLR) using public license data.
+## Setup postgrest
+Postgrest is used to provide a REST interface to the database.
 ```
-# Import licenses table
-psql vhf -1 < vhf_licenses.sql
-```
-### Import sites
-```
-### Setup views
-psql vhf -1 < vhf_views.sql
-```
-### Import views
-Views are used to provide an interface to Excel (via ODBC) and
-as well as to provide an interface for the REST API. 
-
-TODO
-```
-# Views
-# TODO
-```
-
-## Test API
-TODO
-```
-# Query using curl
-# TODO
+# setup /etc/postgrest/postgrest.conf
+# test API
+wget https://repeater.oevsv.at/api/site
+wget https://repeater.oevsv.at/api/trx
+# a more complex query
+wget https://repeater.oevsv.at/api/trx?dmr=eq.true&band=eq.2m
 ```
 
