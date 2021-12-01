@@ -23,10 +23,6 @@ certbot certonly
 ## create web root
 mkdir /var/www/repeater.oevsv.at
 ```
-## API using Postgrest
-```
-# configure Postgrest
-```
 ##Database
 Setup users, tables and add OpenData sources
 ### Setup database vhf
