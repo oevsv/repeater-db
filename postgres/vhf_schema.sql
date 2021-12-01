@@ -1877,7 +1877,7 @@ CREATE VIEW public.rt_ic9700_dr_fm_raw AS
             ELSE 'None'::text
         END AS "Tone Mode",
         CASE
-            WHEN (t.ctcss_rx IS NULL) THEN ''::text
+            WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
             ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
         END AS "CTCSS",
     ''::text AS "IP Address",
