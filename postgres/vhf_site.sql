@@ -354,7 +354,7 @@ CREATE UNIQUE INDEX site_name_idx ON public.site USING btree (site_name);
 -- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: dz
 --
 
-CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.trigger_site();
+CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_site();
 
 
 --

@@ -84,29 +84,6 @@ COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and fun
 
 
 --
--- Name: band_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
---
-
-CREATE FUNCTION public.band_name(frequency double precision) RETURNS character varying
-    LANGUAGE plpgsql
-    AS $$
-   declare
-      name varchar;
-
-	BEGIN
-select band_name into name from bands where 
-    frequency >= frequency_from and
-    frequency <= frequency_to
-    limit 1;
-		
-    return name;
-	END;
-$$;
-
-
-ALTER FUNCTION public.band_name(frequency double precision) OWNER TO dz;
-
---
 -- Name: channel_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
@@ -244,27 +221,50 @@ $$;
 ALTER FUNCTION public.channel_name(frequency_tx double precision, frequency_rx double precision, format integer) OWNER TO dz;
 
 --
--- Name: maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: vhf_band_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision) RETURNS character varying
+CREATE FUNCTION public.vhf_band_name(frequency double precision) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+   declare
+      name varchar;
+
+	BEGIN
+select band_name into name from bands where 
+    frequency >= frequency_from and
+    frequency <= frequency_to
+    limit 1;
+		
+    return name;
+	END;
+$$;
+
+
+ALTER FUNCTION public.vhf_band_name(frequency double precision) OWNER TO dz;
+
+--
+-- Name: vhf_maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+--
+
+CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
       
    BEGIN
      -- short default locator (3 pairs aka 6 digits
-     RETURN  maidenhead_loc (longitude,latitude,3);
+     RETURN  vhf_maidenhead_loc (longitude,latitude,3);
    END
 $$;
 
 
-ALTER FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision) OWNER TO postgres;
+ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision) OWNER TO dz;
 
 --
--- Name: maidenhead_loc(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: vhf_maidenhead_loc(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision, pairs integer) RETURNS character varying
+CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision, pairs integer) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    DECLARE
@@ -354,13 +354,13 @@ CREATE FUNCTION public.maidenhead_loc(longitude double precision, latitude doubl
 $$;
 
 
-ALTER FUNCTION public.maidenhead_loc(longitude double precision, latitude double precision, pairs integer) OWNER TO postgres;
+ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision, pairs integer) OWNER TO dz;
 
 --
--- Name: nice_display(character varying); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_display(character varying); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.nice_display(org character varying) RETURNS character varying
+CREATE FUNCTION public.vhf_nice_display(org character varying) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
         
@@ -377,13 +377,13 @@ CREATE FUNCTION public.nice_display(org character varying) RETURNS character var
 $$;
 
 
-ALTER FUNCTION public.nice_display(org character varying) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_display(org character varying) OWNER TO dz;
 
 --
--- Name: nice_frq(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_frq(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.nice_frq(frequency double precision) RETURNS character varying
+CREATE FUNCTION public.vhf_nice_frq(frequency double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    declare
@@ -406,13 +406,13 @@ CREATE FUNCTION public.nice_frq(frequency double precision) RETURNS character va
 $$;
 
 
-ALTER FUNCTION public.nice_frq(frequency double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_frq(frequency double precision) OWNER TO dz;
 
 --
--- Name: nice_geo(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_geo(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.nice_geo(geo double precision) RETURNS character varying
+CREATE FUNCTION public.vhf_nice_geo(geo double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    declare
@@ -433,13 +433,13 @@ CREATE FUNCTION public.nice_geo(geo double precision) RETURNS character varying
 $$;
 
 
-ALTER FUNCTION public.nice_geo(geo double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_geo(geo double precision) OWNER TO dz;
 
 --
--- Name: nice_geo_dms(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_geo_dms(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.nice_geo_dms(geo double precision) RETURNS character varying
+CREATE FUNCTION public.vhf_nice_geo_dms(geo double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    declare
@@ -465,13 +465,13 @@ CREATE FUNCTION public.nice_geo_dms(geo double precision) RETURNS character vary
 $$;
 
 
-ALTER FUNCTION public.nice_geo_dms(geo double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_geo_dms(geo double precision) OWNER TO dz;
 
 --
--- Name: trigger_import_hamnet_site(); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_trigger_import_hamnet_site(); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.trigger_import_hamnet_site() RETURNS trigger
+CREATE FUNCTION public.vhf_trigger_import_hamnet_site() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
         begin
@@ -509,13 +509,13 @@ CREATE FUNCTION public.trigger_import_hamnet_site() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.trigger_import_hamnet_site() OWNER TO dz;
+ALTER FUNCTION public.vhf_trigger_import_hamnet_site() OWNER TO dz;
 
 --
--- Name: trigger_site(); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_trigger_site(); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.trigger_site() RETURNS trigger
+CREATE FUNCTION public.vhf_trigger_site() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
         begin
@@ -553,7 +553,7 @@ CREATE FUNCTION public.trigger_site() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.trigger_site() OWNER TO dz;
+ALTER FUNCTION public.vhf_trigger_site() OWNER TO dz;
 
 SET default_tablespace = '';
 
@@ -701,8 +701,8 @@ CREATE VIEW api.site AS
     site.city,
     site.longitude,
     site.latitude,
-    public.nice_geo(site.longitude) AS longitude_formated,
-    public.nice_geo(site.latitude) AS latitude_formated,
+    public.vhf_nice_geo(site.longitude) AS longitude_formated,
+    public.vhf_nice_geo(site.latitude) AS latitude_formated,
     site.sea_level,
     site.locator_short,
     site.locator_long,
@@ -1021,7 +1021,7 @@ COMMENT ON COLUMN public.trx.cc IS 'Color Code (default DMR code is 1)';
 CREATE VIEW api.trx AS
  SELECT trx.uid,
     trx.type_of_station,
-    COALESCE(public.band_name(trx.frequency_tx), public.band_name(trx.frequency_rx)) AS band,
+    COALESCE(public.vhf_band_name(trx.frequency_tx), public.vhf_band_name(trx.frequency_rx)) AS band,
     trx.frequency_tx,
     trx.frequency_rx,
     public.channel_name(trx.frequency_tx, trx.frequency_rx, 0) AS ch,
@@ -1218,61 +1218,51 @@ ALTER SEQUENCE public.bl_kz_prefix_uid_seq OWNED BY public.bl_kz_prefix.uid;
 
 
 --
--- Name: chirp_fm_raw; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.chirp_fm_raw AS
- SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
-    t.frequency_tx AS "Frequency",
-    '-'::character varying AS "Duplex",
-    (round(((t.frequency_tx - t.frequency_rx) * (10)::double precision)) / (10)::double precision) AS "Offset",
-        CASE
-            WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
-            ELSE NULL::text
-        END AS "Tone",
-    COALESCE(t.ctcss_rx, t.ctcss_tx, (88.5)::double precision) AS "rToneFreq",
-    COALESCE(t.ctcss_tx, t.ctcss_rx, (88.5)::double precision) AS "cToneFreq",
-    '023'::character varying AS "DtcsCode",
-    'NN'::character varying AS "DtcsPolarity",
-    'FM'::character varying AS "Mode",
-    '12.50'::character varying AS "TStep",
-    ''::text AS "Skip",
-    ''::text AS "Comment",
-    ''::text AS "URCALL",
-    ''::text AS "RPT1CALL",
-    ''::text AS "RPT2CALL",
-    ''::text AS "DVCODE"
-   FROM public.trx t
-  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (abs((t.frequency_tx - t.frequency_rx)) <= (7.7)::double precision))
-  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
-
-
-ALTER TABLE public.chirp_fm_raw OWNER TO dz;
-
---
 -- Name: chirp_fm; Type: VIEW; Schema: public; Owner: dz
 --
 
 CREATE VIEW public.chirp_fm AS
  SELECT row_number() OVER (PARTITION BY true::boolean) AS "Location",
-    cfr."Name",
-    cfr."Frequency",
-    cfr."Duplex",
-    cfr."Offset",
-    cfr."Tone",
-    cfr."rToneFreq",
-    cfr."cToneFreq",
-    cfr."DtcsCode",
-    cfr."DtcsPolarity",
-    cfr."Mode",
-    cfr."TStep",
-    cfr."Skip",
-    cfr."Comment",
-    cfr."URCALL",
-    cfr."RPT1CALL",
-    cfr."RPT2CALL",
-    cfr."DVCODE"
-   FROM public.chirp_fm_raw cfr;
+    foobar."Name",
+    foobar."Frequency",
+    foobar."Duplex",
+    foobar."Offset",
+    foobar."Tone",
+    foobar."rToneFreq",
+    foobar."cToneFreq",
+    foobar."DtcsCode",
+    foobar."DtcsPolarity",
+    foobar."Mode",
+    foobar."TStep",
+    foobar."Skip",
+    foobar."Comment",
+    foobar."URCALL",
+    foobar."RPT1CALL",
+    foobar."RPT2CALL",
+    foobar."DVCODE"
+   FROM ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+            t.frequency_tx AS "Frequency",
+            '-'::character varying AS "Duplex",
+            (round(((t.frequency_tx - t.frequency_rx) * (1000)::double precision)) / (1000)::double precision) AS "Offset",
+                CASE
+                    WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
+                    ELSE NULL::text
+                END AS "Tone",
+            COALESCE(t.ctcss_rx, t.ctcss_tx, (88.5)::double precision) AS "rToneFreq",
+            COALESCE(t.ctcss_tx, t.ctcss_rx, (88.5)::double precision) AS "cToneFreq",
+            '023'::character varying AS "DtcsCode",
+            'NN'::character varying AS "DtcsPolarity",
+            'FM'::character varying AS "Mode",
+            '12.50'::character varying AS "TStep",
+            ''::text AS "Skip",
+            ''::text AS "Comment",
+            ''::text AS "URCALL",
+            ''::text AS "RPT1CALL",
+            ''::text AS "RPT2CALL",
+            ''::text AS "DVCODE"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (abs((t.frequency_tx - t.frequency_rx)) <= (7.7)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
 
 
 ALTER TABLE public.chirp_fm OWNER TO dz;
@@ -1495,49 +1485,92 @@ ALTER SEQUENCE public.echolink_uid_seq OWNED BY public."echolink-import".uid;
 
 
 --
--- Name: gd77_raw; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.gd77_raw AS
- SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
-    t.frequency_tx AS "Rx Freq",
-    t.frequency_rx AS "Tx Freq",
-    'Analog'::text AS "Ch Mode",
-    'High'::text AS "Power",
-    t.ctcss_rx AS "Rx Tone",
-    t.ctcss_tx AS "Tx Tone",
-    0 AS "Color Code",
-    1 AS "Rx Group List",
-    1 AS "Contact",
-    1 AS "Repeater Slot"
-   FROM public.trx t
-  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
-  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
-
-
-ALTER TABLE public.gd77_raw OWNER TO dz;
-
---
 -- Name: gd77; Type: VIEW; Schema: public; Owner: dz
 --
 
 CREATE VIEW public.gd77 AS
  SELECT row_number() OVER (PARTITION BY true::boolean) AS "Number",
-    g."Name",
-    g."Rx Freq",
-    g."Tx Freq",
-    g."Ch Mode",
-    g."Power",
-    g."Rx Tone",
-    g."Tx Tone",
-    g."Color Code",
-    g."Rx Group List",
-    g."Contact",
-    g."Repeater Slot"
-   FROM public.gd77_raw g;
+    foobar."Name",
+    foobar."Rx Freq",
+    foobar."Tx Freq",
+    foobar."Ch Mode",
+    foobar."Power",
+    foobar."Rx Tone",
+    foobar."Tx Tone",
+    foobar."Color Code",
+    foobar."Rx Group List",
+    foobar."Contact",
+    foobar."Repeater Slot"
+   FROM ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+            t.frequency_tx AS "Rx Freq",
+            t.frequency_rx AS "Tx Freq",
+            'Analog'::text AS "Ch Mode",
+            'High'::text AS "Power",
+            t.ctcss_rx AS "Rx Tone",
+            t.ctcss_tx AS "Tx Tone",
+            0 AS "Color Code",
+            1 AS "Rx Group List",
+            1 AS "Contact",
+            1 AS "Repeater Slot"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
 
 
 ALTER TABLE public.gd77 OWNER TO dz;
+
+--
+-- Name: ic9700_dr; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.ic9700_dr AS
+ SELECT '1'::text AS "Group N",
+    'Austria'::text AS "Group Name",
+    public.vhf_nice_display(t.site_name) AS "Name",
+        CASE
+            WHEN (t.dstar = true) THEN concat(t.callsign, ' ', t.dstar_rpt1)
+            ELSE ''::text
+        END AS "Sub Name",
+        CASE
+            WHEN (t.dstar = true) THEN concat(t.callsign, ' ', t.dstar_rpt1)
+            ELSE ''::text
+        END AS "Repeater Call Sign",
+        CASE
+            WHEN (t.dstar = true) THEN concat(t.callsign, ' ', t.dstar_rpt2)
+            ELSE ''::text
+        END AS "Gateway Call Sign",
+    ''::text AS "Gateway IP Address",
+    t.frequency_rx AS "Frequency",
+    'DUP-'::text AS "Dup",
+    (round(((t.frequency_tx - t.frequency_rx) * (1000)::double precision)) / (1000)::double precision) AS "Offset",
+        CASE
+            WHEN (t.fm = true) THEN 'FM'::text
+            ELSE 'DV'::text
+        END AS "Mode",
+        CASE
+            WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
+            WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
+            ELSE 'None'::text
+        END AS "TONE",
+        CASE
+            WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
+            ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
+        END AS "Repeater Tone",
+        CASE
+            WHEN (t.dstar = true) THEN 'YES'::text
+            ELSE ''::text
+        END AS "RPT1USE",
+    'Exact'::text AS "Position",
+    s.latitude AS "Latitude",
+    s.longitude AS "Longitude",
+    '+1:00'::text AS "UTC offset"
+   FROM (public.trx t
+     LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND ((t.fm = true) OR (t.dstar = true)) AND ((t.status)::text = 'active'::text))
+  ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx));
+
+
+ALTER TABLE public.ic9700_dr OWNER TO dz;
 
 --
 -- Name: import_hamnet_site; Type: TABLE; Schema: public; Owner: dz
@@ -1826,79 +1859,6 @@ ALTER SEQUENCE public.repeater_uid_seq OWNED BY public.trx.uid;
 
 
 --
--- Name: rt_ic9700_dr_dstar_raw; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.rt_ic9700_dr_dstar_raw AS
- SELECT t.frequency_tx AS "Receive Frequency",
-    t.frequency_rx AS "Transmit Frequency",
-    ' '::text AS "Offset Frequency",
-    'DUP-'::text AS "Offset Direction",
-    'On'::text AS "Repeater Use",
-    'DV'::text AS "Operating Mode",
-    public.nice_display(t.site_name) AS "Name",
-    concat(t.callsign, ' ', t.dstar_rpt1) AS "Sub Name",
-    'None'::text AS "Tone Mode",
-    '67.0 Hz'::text AS "CTCSS",
-    ''::text AS "IP Address",
-    concat(t.callsign, ' ', t.dstar_rpt1) AS "Rpt-1 CallSign",
-    concat(t.callsign, ' ', t.dstar_rpt2) AS "Rpt-2 CallSign",
-    'Exact'::text AS "LatLng",
-    concat(public.nice_geo_dms(s.latitude), 'N') AS "Latitude",
-    concat(public.nice_geo_dms(s.longitude), 'E') AS "Longitude",
-    '+01:00'::text AS "UTC Offset",
-    '1: Austria'::text AS "Bank",
-    ''::text AS "Comment",
-    ''::text AS "Dummy"
-   FROM (public.trx t
-     LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
-  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
-  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
-
-
-ALTER TABLE public.rt_ic9700_dr_dstar_raw OWNER TO dz;
-
---
--- Name: rt_ic9700_dr_fm_raw; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.rt_ic9700_dr_fm_raw AS
- SELECT t.frequency_tx AS "Receive Frequency",
-    t.frequency_rx AS "Transmit Frequency",
-    ' '::text AS "Offset Frequency",
-    'DUP-'::text AS "Offset Direction",
-    'On'::text AS "Repeater Use",
-    'FM'::text AS "Operating Mode",
-    public.nice_display(t.site_name) AS "Name",
-    ''::text AS "Sub Name",
-        CASE
-            WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
-            WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
-            ELSE 'None'::text
-        END AS "Tone Mode",
-        CASE
-            WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
-            ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
-        END AS "CTCSS",
-    ''::text AS "IP Address",
-    ''::text AS "Rpt-1 CallSign",
-    ''::text AS "Rpt-2 CallSign",
-    'Exact'::text AS "LatLng",
-    concat(public.nice_geo_dms(s.latitude), 'N') AS "Latitude",
-    concat(public.nice_geo_dms(s.longitude), 'E') AS "Longitude",
-    '+01:00'::text AS "UTC Offset",
-    '1: Austria'::text AS "Bank",
-    ''::text AS "Comment",
-    ''::text AS "Dummy"
-   FROM (public.trx t
-     LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
-  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
-  ORDER BY t.callsign, (public.band_name(t.frequency_tx));
-
-
-ALTER TABLE public.rt_ic9700_dr_fm_raw OWNER TO dz;
-
---
 -- Name: rt_ic9700_dr; Type: VIEW; Schema: public; Owner: dz
 --
 
@@ -1924,96 +1884,65 @@ CREATE VIEW public.rt_ic9700_dr AS
     foobar."Bank",
     foobar."Comment",
     foobar."Dummy"
-   FROM ( SELECT r."Receive Frequency",
-            r."Transmit Frequency",
-            r."Offset Frequency",
-            r."Offset Direction",
-            r."Repeater Use",
-            r."Operating Mode",
-            r."Name",
-            r."Sub Name",
-            r."Tone Mode",
-            r."CTCSS",
-            r."IP Address",
-            r."Rpt-1 CallSign",
-            r."Rpt-2 CallSign",
-            r."LatLng",
-            r."Latitude",
-            r."Longitude",
-            r."UTC Offset",
-            r."Bank",
-            r."Comment",
-            r."Dummy"
-           FROM public.rt_ic9700_dr_dstar_raw r
-        UNION
-         SELECT r."Receive Frequency",
-            r."Transmit Frequency",
-            r."Offset Frequency",
-            r."Offset Direction",
-            r."Repeater Use",
-            r."Operating Mode",
-            r."Name",
-            r."Sub Name",
-            r."Tone Mode",
-            r."CTCSS",
-            r."IP Address",
-            r."Rpt-1 CallSign",
-            r."Rpt-2 CallSign",
-            r."LatLng",
-            r."Latitude",
-            r."Longitude",
-            r."UTC Offset",
-            r."Bank",
-            r."Comment",
-            r."Dummy"
-           FROM public.rt_ic9700_dr_fm_raw r) foobar;
+   FROM (( SELECT t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            ' '::text AS "Offset Frequency",
+            'DUP-'::text AS "Offset Direction",
+            'On'::text AS "Repeater Use",
+            'DV'::text AS "Operating Mode",
+            public.vhf_nice_display(t.site_name) AS "Name",
+            concat(t.callsign, ' ', t.dstar_rpt1) AS "Sub Name",
+            'None'::text AS "Tone Mode",
+            '67.0 Hz'::text AS "CTCSS",
+            ''::text AS "IP Address",
+            concat(t.callsign, ' ', t.dstar_rpt1) AS "Rpt-1 CallSign",
+            concat(t.callsign, ' ', t.dstar_rpt2) AS "Rpt-2 CallSign",
+            'Exact'::text AS "LatLng",
+            concat(public.vhf_nice_geo_dms(s.latitude), 'N') AS "Latitude",
+            concat(public.vhf_nice_geo_dms(s.longitude), 'E') AS "Longitude",
+            '+01:00'::text AS "UTC Offset",
+            '1: Austria'::text AS "Bank",
+            ''::text AS "Comment",
+            ''::text AS "Dummy"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            ' '::text AS "Offset Frequency",
+            'DUP-'::text AS "Offset Direction",
+            'On'::text AS "Repeater Use",
+            'FM'::text AS "Operating Mode",
+            public.vhf_nice_display(t.site_name) AS "Name",
+            ''::text AS "Sub Name",
+                CASE
+                    WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
+                    WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
+                    ELSE 'None'::text
+                END AS "Tone Mode",
+                CASE
+                    WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
+                    ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
+                END AS "CTCSS",
+            ''::text AS "IP Address",
+            ''::text AS "Rpt-1 CallSign",
+            ''::text AS "Rpt-2 CallSign",
+            'Exact'::text AS "LatLng",
+            concat(public.vhf_nice_geo_dms(s.latitude), 'N') AS "Latitude",
+            concat(public.vhf_nice_geo_dms(s.longitude), 'E') AS "Longitude",
+            '+01:00'::text AS "UTC Offset",
+            '1: Austria'::text AS "Bank",
+            ''::text AS "Comment",
+            ''::text AS "Dummy"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
 ALTER TABLE public.rt_ic9700_dr OWNER TO dz;
-
---
--- Name: rt_ic9700_fm_raw; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.rt_ic9700_fm_raw AS
- SELECT t.frequency_tx AS "Receive Frequency",
-    t.frequency_rx AS "Transmit Frequency",
-    ' '::text AS "Offset Frequency",
-    'DUP-'::text AS "Offset Direction",
-    'FM'::text AS "Operating Mode",
-    ''::text AS "Data Mode",
-    '1'::text AS "Filter",
-    (public.nice_display(t.site_name))::text AS "Name",
-        CASE
-            WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
-            WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
-            ELSE 'None'::text
-        END AS "Tone Mode",
-        CASE
-            WHEN (t.ctcss_rx IS NULL) THEN ''::text
-            ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
-        END AS "CTCSS",
-        CASE
-            WHEN (t.ctcss_tx IS NULL) THEN ''::text
-            ELSE concat(to_char(t.ctcss_tx, '999.9'::text), ' Hz')
-        END AS "Rx CTCSS",
-    '023'::text AS "DCS",
-    'Both N'::text AS "DCS Polarity",
-    ''::text AS "Scan Select",
-    'Off'::text AS "Digital Squelch",
-    '0'::text AS "Digital Code",
-    'CQCQCQ'::text AS "Your Callsign",
-    ''::text AS "Rpt-1 CallSign",
-    ''::text AS "Rpt-2 CallSign",
-    concat(t.callsign, ' ', public.nice_display(s.city), ' ', public.nice_display(t.site_name)) AS "Comment",
-    ''::text AS "Dummy"
-   FROM (public.trx t
-     LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
-  WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
-  ORDER BY ROW(public.band_name(t.frequency_tx), t.callsign);
-
-
-ALTER TABLE public.rt_ic9700_fm_raw OWNER TO dz;
 
 --
 -- Name: rt_ic9700_fm; Type: VIEW; Schema: public; Owner: dz
@@ -2021,28 +1950,62 @@ ALTER TABLE public.rt_ic9700_fm_raw OWNER TO dz;
 
 CREATE VIEW public.rt_ic9700_fm AS
  SELECT row_number() OVER (PARTITION BY true::boolean) AS "Channel Number",
-    rt."Receive Frequency",
-    rt."Transmit Frequency",
-    rt."Offset Frequency",
-    rt."Offset Direction",
-    rt."Operating Mode",
-    rt."Data Mode",
-    rt."Filter",
-    rt."Name",
-    rt."Tone Mode",
-    rt."CTCSS",
-    rt."Rx CTCSS",
-    rt."DCS",
-    rt."DCS Polarity",
-    rt."Scan Select",
-    rt."Digital Squelch",
-    rt."Digital Code",
-    rt."Your Callsign",
-    rt."Rpt-1 CallSign",
-    rt."Rpt-2 CallSign",
-    rt."Comment",
-    rt."Dummy"
-   FROM public.rt_ic9700_fm_raw rt;
+    foobar."Receive Frequency",
+    foobar."Transmit Frequency",
+    foobar."Offset Frequency",
+    foobar."Offset Direction",
+    foobar."Operating Mode",
+    foobar."Data Mode",
+    foobar."Filter",
+    foobar."Name",
+    foobar."Tone Mode",
+    foobar."CTCSS",
+    foobar."Rx CTCSS",
+    foobar."DCS",
+    foobar."DCS Polarity",
+    foobar."Scan Select",
+    foobar."Digital Squelch",
+    foobar."Digital Code",
+    foobar."Your Callsign",
+    foobar."Rpt-1 CallSign",
+    foobar."Rpt-2 CallSign",
+    foobar."Comment",
+    foobar."Dummy"
+   FROM ( SELECT t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            ' '::text AS "Offset Frequency",
+            'DUP-'::text AS "Offset Direction",
+            'FM'::text AS "Operating Mode",
+            ''::text AS "Data Mode",
+            '1'::text AS "Filter",
+            (public.vhf_nice_display(t.site_name))::text AS "Name",
+                CASE
+                    WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
+                    WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
+                    ELSE 'None'::text
+                END AS "Tone Mode",
+                CASE
+                    WHEN (t.ctcss_rx IS NULL) THEN ''::text
+                    ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
+                END AS "CTCSS",
+                CASE
+                    WHEN (t.ctcss_tx IS NULL) THEN ''::text
+                    ELSE concat(to_char(t.ctcss_tx, '999.9'::text), ' Hz')
+                END AS "Rx CTCSS",
+            '023'::text AS "DCS",
+            'Both N'::text AS "DCS Polarity",
+            ''::text AS "Scan Select",
+            'Off'::text AS "Digital Squelch",
+            '0'::text AS "Digital Code",
+            'CQCQCQ'::text AS "Your Callsign",
+            ''::text AS "Rpt-1 CallSign",
+            ''::text AS "Rpt-2 CallSign",
+            concat(t.callsign, ' ', public.vhf_nice_display(s.city), ' ', public.vhf_nice_display(t.site_name)) AS "Comment",
+            ''::text AS "Dummy"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+          ORDER BY ROW(public.vhf_band_name(t.frequency_tx), t.callsign)) foobar;
 
 
 ALTER TABLE public.rt_ic9700_fm OWNER TO dz;
@@ -2098,7 +2061,7 @@ CREATE VIEW public.site_callsigns_atv AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE (((trx.type_of_station)::text = 'atv'::text) AND ((trx.status)::text = 'active'::text))
@@ -2117,7 +2080,7 @@ CREATE VIEW public.site_callsigns_beacon AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE (((trx.type_of_station)::text = 'beacon'::text) AND ((trx.status)::text = 'active'::text))
@@ -2136,7 +2099,7 @@ CREATE VIEW public.site_callsigns_c4fm AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.c4fm = true) AND ((trx.status)::text = 'active'::text))
@@ -2155,7 +2118,7 @@ CREATE VIEW public.site_callsigns_digipeater AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE (((trx.type_of_station)::text = 'digipeater'::text) AND ((trx.status)::text = 'active'::text))
@@ -2174,7 +2137,7 @@ CREATE VIEW public.site_callsigns_dmr AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.dmr = true) AND ((trx.status)::text = 'active'::text))
@@ -2193,7 +2156,7 @@ CREATE VIEW public.site_callsigns_dstar AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.dstar = true) AND ((trx.status)::text = 'active'::text))
@@ -2212,7 +2175,7 @@ CREATE VIEW public.site_callsigns_fm AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.fm = true) AND ((trx.status)::text = 'active'::text))
@@ -2231,7 +2194,7 @@ CREATE VIEW public.site_callsigns_tetra AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.tetra = true) AND ((trx.status)::text = 'active'::text))
@@ -2247,10 +2210,10 @@ ALTER TABLE public.site_callsigns_tetra OWNER TO dz;
 CREATE VIEW public.site_list AS
  SELECT s.site_name AS "Site name",
     s.city AS "City",
-    public.maidenhead_loc(s.longitude, s.latitude) AS "Loc short",
-    public.maidenhead_loc(s.longitude, s.latitude, 6) AS "Loc long",
-    public.nice_geo(s.longitude) AS "Longitude",
-    public.nice_geo(s.latitude) AS "Latitude",
+    public.vhf_maidenhead_loc(s.longitude, s.latitude) AS "Loc short",
+    public.vhf_maidenhead_loc(s.longitude, s.latitude, 6) AS "Loc long",
+    public.vhf_nice_geo(s.longitude) AS "Longitude",
+    public.vhf_nice_geo(s.latitude) AS "Latitude",
     to_char(s.longitude, '990.999999'::text) AS "Long dez",
     to_char(s.latitude, '990.999999'::text) AS "Lat dez",
     string_agg(DISTINCT (t.callsign)::text, ' '::text ORDER BY (t.callsign)::text) AS "Callsigns"
@@ -2403,7 +2366,7 @@ ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 --
 
 CREATE VIEW public.trx_list AS
- SELECT public.band_name(t.frequency_tx) AS band,
+ SELECT public.vhf_band_name(t.frequency_tx) AS band,
     public.channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
     public.channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
     t.uid,
@@ -2458,11 +2421,11 @@ CREATE VIEW public.trx_list AS
         CASE
             WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true)) THEN
             CASE
-                WHEN ((public.band_name(t.frequency_tx))::text = '6m'::text) THEN '6'::text
-                WHEN ((public.band_name(t.frequency_tx))::text = '2m'::text) THEN '2'::text
-                WHEN ((public.band_name(t.frequency_tx))::text = '70cm'::text) THEN '7'::text
-                WHEN ((public.band_name(t.frequency_tx))::text = '23cm'::text) THEN '3'::text
-                WHEN ((public.band_name(t.frequency_tx))::text = '13cm'::text) THEN '1'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '6m'::text) THEN '6'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '2m'::text) THEN '2'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '70cm'::text) THEN '7'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '23cm'::text) THEN '3'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '13cm'::text) THEN '1'::text
                 ELSE '0'::text
             END
             WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true)) THEN 'D'::text
@@ -2489,16 +2452,16 @@ ALTER TABLE public.trx_list OWNER TO dz;
 --
 
 CREATE VIEW public.trx_list_atv AS
- SELECT COALESCE(t.band, public.band_name(t.frequency_rx)) AS "Band",
+ SELECT COALESCE(t.band, public.vhf_band_name(t.frequency_rx)) AS "Band",
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     t.other_mode_name AS "Mode",
     t.comment AS "Comment"
@@ -2517,10 +2480,10 @@ CREATE VIEW public.trx_list_beacon AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     t.locator_long AS "Locator",
     t.comment AS "Comment"
@@ -2539,13 +2502,13 @@ CREATE VIEW public.trx_list_c4fm AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     btrim(concat(t.comment,
         CASE
@@ -2575,12 +2538,12 @@ CREATE VIEW public.trx_list_digipeater AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.other_mode_name AS "Mode",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     t.comment AS "Comment"
    FROM public.trx_list t
@@ -2598,14 +2561,14 @@ CREATE VIEW public.trx_list_dmr AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.digital_id AS "Digital ID",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     btrim(concat(t.comment,
         CASE
@@ -2643,12 +2606,12 @@ CREATE VIEW public.trx_list_dstar AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     btrim(concat(t.comment,
         CASE
@@ -2684,8 +2647,8 @@ CREATE VIEW public.trx_list_fm AS
     t.sysop AS "Sysop",
     t.echolink_id AS "Echolink",
     t.comment AS "Comment",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel"
    FROM public.trx_list t
   WHERE (t.fm = true);
@@ -2702,12 +2665,12 @@ CREATE VIEW public.trx_list_tetra AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    public.nice_frq(t.frequency_tx) AS "Frequency TX",
-    public.nice_frq(t.frequency_rx) AS "Frquency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
-    public.nice_geo(t.longitude) AS "Longitude",
-    public.nice_geo(t.latitude) AS "Latitude",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
     t.comment AS "Comment"
    FROM public.trx_list t
@@ -2721,7 +2684,7 @@ ALTER TABLE public.trx_list_tetra OWNER TO dz;
 --
 
 CREATE VIEW public.trx_verylong AS
- SELECT public.band_name(t.frequency_tx) AS band,
+ SELECT public.vhf_band_name(t.frequency_tx) AS band,
     public.channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
     public.channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
     t.uid,
@@ -3114,14 +3077,14 @@ CREATE INDEX trx_tetra_idx ON public.trx USING btree (tetra);
 -- Name: import_hamnet_site import_hamnet_site_trigger; Type: TRIGGER; Schema: public; Owner: dz
 --
 
-CREATE TRIGGER import_hamnet_site_trigger BEFORE INSERT OR UPDATE ON public.import_hamnet_site FOR EACH ROW EXECUTE FUNCTION public.trigger_import_hamnet_site();
+CREATE TRIGGER import_hamnet_site_trigger BEFORE INSERT OR UPDATE ON public.import_hamnet_site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_import_hamnet_site();
 
 
 --
 -- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: dz
 --
 
-CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.trigger_site();
+CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_site();
 
 
 --
