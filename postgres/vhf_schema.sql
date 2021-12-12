@@ -84,10 +84,56 @@ COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and fun
 
 
 --
--- Name: channel_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.channel_name(frequency_tx double precision) RETURNS character varying
+CREATE FUNCTION public.vhf_band_common(frequency double precision) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+   declare
+      common boolean;
+
+	BEGIN
+select common_band into common from bands where 
+    frequency >= frequency_from and
+    frequency <= frequency_to
+    limit 1;
+		
+    return common;
+	END;
+$$;
+
+
+ALTER FUNCTION public.vhf_band_common(frequency double precision) OWNER TO dz;
+
+--
+-- Name: vhf_band_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+--
+
+CREATE FUNCTION public.vhf_band_name(frequency double precision) RETURNS character varying
+    LANGUAGE plpgsql
+    AS $$
+   declare
+      name varchar;
+
+	BEGIN
+select band_name into name from bands where 
+    frequency >= frequency_from and
+    frequency <= frequency_to
+    limit 1;
+		
+    return name;
+	END;
+$$;
+
+
+ALTER FUNCTION public.vhf_band_name(frequency double precision) OWNER TO dz;
+
+--
+-- Name: vhf_channel_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+--
+
+CREATE FUNCTION public.vhf_channel_name(frequency_tx double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
       
@@ -98,13 +144,13 @@ CREATE FUNCTION public.channel_name(frequency_tx double precision) RETURNS chara
 $$;
 
 
-ALTER FUNCTION public.channel_name(frequency_tx double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision) OWNER TO dz;
 
 --
--- Name: channel_name(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_channel_name(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.channel_name(frequency_tx double precision, frequency_rx double precision, format integer) RETURNS character varying
+CREATE FUNCTION public.vhf_channel_name(frequency_tx double precision, frequency_rx double precision, format integer) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    declare
@@ -218,30 +264,85 @@ chan2m_old varchar[] := '{"R00", "R00x", "R0", "R0x","R1","R1x","R2","R2x","R3",
 $$;
 
 
-ALTER FUNCTION public.channel_name(frequency_tx double precision, frequency_rx double precision, format integer) OWNER TO dz;
+ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision, frequency_rx double precision, format integer) OWNER TO dz;
 
 --
--- Name: vhf_band_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_chirp_Tone(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
-CREATE FUNCTION public.vhf_band_name(frequency double precision) RETURNS character varying
+CREATE FUNCTION public."vhf_chirp_Tone"(ctcss_tx double precision, ctcss_rx double precision) RETURNS character varying
     LANGUAGE plpgsql
     AS $$
    declare
       name varchar;
 
-	BEGIN
-select band_name into name from bands where 
-    frequency >= frequency_from and
-    frequency <= frequency_to
-    limit 1;
-		
-    return name;
+     BEGIN
+if (ctcss_tx is null and ctcss_rx is null) then
+-- 'None' is encoded as empty string
+   return '';
+elseif  (ctcss_tx is null and ctcss_rx is not null) then
+   return 'Tone';
+elseif  (ctcss_tx is not null and ctcss_rx is null) then
+   return 'TSQL';
+elseif (ctcss_tx = ctcss_rx) then
+   return 'TSQL';
+else
+   return 'Cross';
+end if;  
 	END;
 $$;
 
 
-ALTER FUNCTION public.vhf_band_name(frequency double precision) OWNER TO dz;
+ALTER FUNCTION public."vhf_chirp_Tone"(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
+
+--
+-- Name: vhf_chirp_ctonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+--
+
+CREATE FUNCTION public.vhf_chirp_ctonefreq(ctcss_tx double precision, ctcss_rx double precision) RETURNS double precision
+    LANGUAGE plpgsql
+    AS $$
+   declare
+      default_ctcss constant float8 := 162.2; 
+
+     BEGIN
+if (ctcss_tx is null and ctcss_rx is null) then
+   return default_ctcss;
+elseif (ctcss_tx is null and ctcss_rx is not null) then
+   return ctcss_rx;
+else 
+   return ctcss_tx;
+end if;  
+	END;
+$$;
+
+
+ALTER FUNCTION public.vhf_chirp_ctonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
+
+--
+-- Name: vhf_chirp_rtonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+--
+
+CREATE FUNCTION public.vhf_chirp_rtonefreq(ctcss_tx double precision, ctcss_rx double precision) RETURNS double precision
+    LANGUAGE plpgsql
+    AS $$
+   declare
+      default_ctcss constant float8 := 162.2;
+
+     BEGIN
+if (ctcss_rx is not null) then 
+  return ctcss_rx;
+elsif (ctcss_tx is not null) then 
+  return  ctcss_tx;
+else 
+  return default_ctcss;
+end if;
+
+	END;
+$$;
+
+
+ALTER FUNCTION public.vhf_chirp_rtonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
 
 --
 -- Name: vhf_maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
@@ -542,8 +643,8 @@ CREATE FUNCTION public.vhf_trigger_site() RETURNS trigger
                 WHERE ST_intersects(ST_Transform(NEW.geom, 31287), bev.geom)
                 LIMIT 1;
            -- set locator
-           NEW.locator_short = maidenhead_loc(NEW.longitude,new.latitude);     
-           NEW.locator_long = maidenhead_loc(NEW.longitude,new.latitude,10);     
+           NEW.locator_short = vhf_maidenhead_loc(NEW.longitude,new.latitude);     
+           NEW.locator_long = vhf_maidenhead_loc(NEW.longitude,new.latitude,10);     
            
        end if;
         
@@ -1024,8 +1125,8 @@ CREATE VIEW api.trx AS
     COALESCE(public.vhf_band_name(trx.frequency_tx), public.vhf_band_name(trx.frequency_rx)) AS band,
     trx.frequency_tx,
     trx.frequency_rx,
-    public.channel_name(trx.frequency_tx, trx.frequency_rx, 0) AS ch,
-    public.channel_name(trx.frequency_tx, trx.frequency_rx, 1) AS ch_new,
+    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 0) AS ch,
+    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 1) AS ch_new,
     trx.callsign,
     trx.antenna_heigth,
     trx.site_name,
@@ -1069,11 +1170,19 @@ CREATE TABLE public.bands (
     uid integer NOT NULL,
     band_name character varying(30),
     frequency_from double precision,
-    frequency_to double precision
+    frequency_to double precision,
+    common_band boolean
 );
 
 
 ALTER TABLE public.bands OWNER TO dz;
+
+--
+-- Name: COLUMN bands.common_band; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.bands.common_band IS 'Band available on all common transceivers';
+
 
 --
 -- Name: band_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
@@ -1218,6 +1327,319 @@ ALTER SEQUENCE public.bl_kz_prefix_uid_seq OWNED BY public.bl_kz_prefix.uid;
 
 
 --
+-- Name: repeater_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.repeater_uid_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.repeater_uid_seq OWNER TO dz;
+
+--
+-- Name: repeater_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.repeater_uid_seq OWNED BY public.trx.uid;
+
+
+--
+-- Name: direct_channels; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.direct_channels (
+    uid bigint DEFAULT nextval('public.repeater_uid_seq'::regclass) NOT NULL,
+    type_of_station character varying(50) DEFAULT 'repeater_voice'::character varying NOT NULL,
+    frequency_tx double precision,
+    frequency_rx double precision,
+    callsign character varying(10),
+    antenna_heigth double precision,
+    site_name character varying(100),
+    sysop character varying(10),
+    url character varying(500),
+    hardware character varying(100),
+    mmdvm boolean,
+    solar_power boolean,
+    battery_power boolean,
+    status character varying,
+    fm boolean,
+    fm_wakeup character varying(50),
+    ctcss_tx double precision,
+    ctcss_rx double precision,
+    echolink boolean,
+    echolink_id bigint,
+    digital_id bigint,
+    dmr boolean,
+    ipsc2 boolean,
+    brandmeister boolean,
+    network_registered boolean,
+    c4fm boolean,
+    c4fm_groups character varying(30),
+    dstar boolean,
+    dstar_rpt1 character varying(1),
+    dstar_rpt2 character varying(1),
+    tetra boolean,
+    other_mode boolean,
+    other_mode_name character varying(50),
+    comment character varying(1000),
+    internal character varying(3000),
+    created_at timestamp with time zone DEFAULT now(),
+    cc integer
+);
+
+
+ALTER TABLE public.direct_channels OWNER TO dz;
+
+--
+-- Name: COLUMN direct_channels.frequency_tx; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.frequency_tx IS 'in MHz';
+
+
+--
+-- Name: COLUMN direct_channels.frequency_rx; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.frequency_rx IS 'in MHz';
+
+
+--
+-- Name: COLUMN direct_channels.callsign; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.callsign IS 'Callsign with all characters in upper case without SSID';
+
+
+--
+-- Name: COLUMN direct_channels.antenna_heigth; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.antenna_heigth IS 'heigth about ground in m';
+
+
+--
+-- Name: COLUMN direct_channels.site_name; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.site_name IS 'Name of location, should fully identify station without city';
+
+
+--
+-- Name: COLUMN direct_channels.sysop; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.sysop IS 'Callsign of sysop/keeper of station; might not be legally responsible for station';
+
+
+--
+-- Name: COLUMN direct_channels.url; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.url IS 'URL including https://-Prefix of station, should be deep link';
+
+
+--
+-- Name: COLUMN direct_channels.hardware; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.hardware IS 'Hardware of station';
+
+
+--
+-- Name: COLUMN direct_channels.mmdvm; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.mmdvm IS 'True if station is based on MMDVM-concept';
+
+
+--
+-- Name: COLUMN direct_channels.solar_power; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.solar_power IS 'True if solar powered station';
+
+
+--
+-- Name: COLUMN direct_channels.battery_power; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.battery_power IS 'True if battery powered station';
+
+
+--
+-- Name: COLUMN direct_channels.status; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.status IS 'Status of operation: planed, active, inactive';
+
+
+--
+-- Name: COLUMN direct_channels.fm; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.fm IS 'Analogue FM station';
+
+
+--
+-- Name: COLUMN direct_channels.fm_wakeup; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.fm_wakeup IS 'Tone or DTMF needed for activation of repeater, eg. "1750 Hz" or "DTMF 1"; Subtone is not relevant here';
+
+
+--
+-- Name: COLUMN direct_channels.ctcss_tx; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.ctcss_tx IS 'CTCSS tone send by transmitter in Hz; NULL if no tone ';
+
+
+--
+-- Name: COLUMN direct_channels.ctcss_rx; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.ctcss_rx IS 'CTCSS tone required by receiver in Hz; NULL if no tone needed';
+
+
+--
+-- Name: COLUMN direct_channels.echolink; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.echolink IS 'True if connected to Echolink';
+
+
+--
+-- Name: COLUMN direct_channels.echolink_id; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.echolink_id IS 'Numeric ID in Echolink system';
+
+
+--
+-- Name: COLUMN direct_channels.digital_id; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.digital_id IS 'Digital (DMR) ID of station, eg. 23205 or private ID eg. 932832';
+
+
+--
+-- Name: COLUMN direct_channels.dmr; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.dmr IS 'True if station supports DMR mode';
+
+
+--
+-- Name: COLUMN direct_channels.ipsc2; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.ipsc2 IS 'True if station is connected to IPSC2';
+
+
+--
+-- Name: COLUMN direct_channels.brandmeister; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.brandmeister IS 'True if stations is connected to Brandmeister';
+
+
+--
+-- Name: COLUMN direct_channels.network_registered; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.network_registered IS 'True if station is registered on digital network (including FM stations)';
+
+
+--
+-- Name: COLUMN direct_channels.c4fm; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.c4fm IS 'True if C4FM is supported';
+
+
+--
+-- Name: COLUMN direct_channels.c4fm_groups; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.c4fm_groups IS 'Comma separated list of C4FM groups';
+
+
+--
+-- Name: COLUMN direct_channels.dstar; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.dstar IS 'True if Dstar is supported';
+
+
+--
+-- Name: COLUMN direct_channels.dstar_rpt1; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.dstar_rpt1 IS 'Dstar Repeater 1 - Upper case character, eg. A';
+
+
+--
+-- Name: COLUMN direct_channels.dstar_rpt2; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.dstar_rpt2 IS 'Dstar Repeater 2 - Upper case character, eg. A';
+
+
+--
+-- Name: COLUMN direct_channels.tetra; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.tetra IS 'True if Tetra station';
+
+
+--
+-- Name: COLUMN direct_channels.other_mode; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.other_mode IS 'True if other mode (digital or analogue)';
+
+
+--
+-- Name: COLUMN direct_channels.other_mode_name; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.other_mode_name IS 'Short description of the other mode (eg SSB USB)';
+
+
+--
+-- Name: COLUMN direct_channels.comment; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.comment IS 'Public visible comment';
+
+
+--
+-- Name: COLUMN direct_channels.internal; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.internal IS 'Internal comment (for administrative perposes)';
+
+
+--
+-- Name: COLUMN direct_channels.created_at; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.created_at IS 'Timestamp of insert';
+
+
+--
+-- Name: COLUMN direct_channels.cc; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.direct_channels.cc IS 'Color Code (default DMR code is 1)';
+
+
+--
 -- Name: chirp_fm; Type: VIEW; Schema: public; Owner: dz
 --
 
@@ -1240,32 +1662,118 @@ CREATE VIEW public.chirp_fm AS
     foobar."RPT1CALL",
     foobar."RPT2CALL",
     foobar."DVCODE"
-   FROM ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+   FROM (( SELECT "substring"((t.site_name)::text, 1, 6) AS "Name",
             t.frequency_tx AS "Frequency",
-            '-'::character varying AS "Duplex",
-            (round(((t.frequency_tx - t.frequency_rx) * (1000)::double precision)) / (1000)::double precision) AS "Offset",
-                CASE
-                    WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
-                    ELSE NULL::text
-                END AS "Tone",
-            COALESCE(t.ctcss_rx, t.ctcss_tx, (88.5)::double precision) AS "rToneFreq",
-            COALESCE(t.ctcss_tx, t.ctcss_rx, (88.5)::double precision) AS "cToneFreq",
+            'split'::character varying AS "Duplex",
+            t.frequency_rx AS "Offset",
+            public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx) AS "Tone",
+            public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx) AS "rToneFreq",
+            public.vhf_chirp_ctonefreq(t.ctcss_tx, t.ctcss_rx) AS "cToneFreq",
             '023'::character varying AS "DtcsCode",
             'NN'::character varying AS "DtcsPolarity",
             'FM'::character varying AS "Mode",
-            '12.50'::character varying AS "TStep",
+            '25.0'::character varying AS "TStep",
             ''::text AS "Skip",
-            ''::text AS "Comment",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx)) AS "Comment",
+            ''::text AS "URCALL",
+            ''::text AS "RPT1CALL",
+            ''::text AS "RPT2CALL",
+            ''::text AS "DVCODE"
+           FROM public.direct_channels t
+          WHERE (((t.type_of_station)::text = 'direct'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+            t.frequency_tx AS "Frequency",
+            'split'::character varying AS "Duplex",
+            t.frequency_rx AS "Offset",
+            public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx) AS "Tone",
+            public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx) AS "rToneFreq",
+            public.vhf_chirp_ctonefreq(t.ctcss_tx, t.ctcss_rx) AS "cToneFreq",
+            '023'::character varying AS "DtcsCode",
+            'NN'::character varying AS "DtcsPolarity",
+            'FM'::character varying AS "Mode",
+            '25.0'::character varying AS "TStep",
+            ''::text AS "Skip",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx)) AS "Comment",
             ''::text AS "URCALL",
             ''::text AS "RPT1CALL",
             ''::text AS "RPT2CALL",
             ''::text AS "DVCODE"
            FROM public.trx t
-          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (abs((t.frequency_tx - t.frequency_rx)) <= (7.7)::double precision))
-          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
 ALTER TABLE public.chirp_fm OWNER TO dz;
+
+--
+-- Name: chirp_fm_short; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.chirp_fm_short AS
+ SELECT row_number() OVER (PARTITION BY true::boolean) AS "Location",
+    foobar."Name",
+    foobar."Frequency",
+    foobar."Duplex",
+    foobar."Offset",
+    foobar."Tone",
+    foobar."rToneFreq",
+    foobar."cToneFreq",
+    foobar."DtcsCode",
+    foobar."DtcsPolarity",
+    foobar."Mode",
+    foobar."TStep",
+    foobar."Skip",
+    foobar."Comment",
+    foobar."URCALL",
+    foobar."RPT1CALL",
+    foobar."RPT2CALL",
+    foobar."DVCODE"
+   FROM (( SELECT concat("substring"((t.callsign)::text, 3, 4), "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+            t.frequency_tx AS "Frequency",
+            'split'::character varying AS "Duplex",
+            t.frequency_rx AS "Offset",
+            public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx) AS "Tone",
+            public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx) AS "rToneFreq",
+            public.vhf_chirp_ctonefreq(t.ctcss_tx, t.ctcss_rx) AS "cToneFreq",
+            '023'::character varying AS "DtcsCode",
+            'NN'::character varying AS "DtcsPolarity",
+            'FM'::character varying AS "Mode",
+            '25.0'::character varying AS "TStep",
+            ''::text AS "Skip",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx)) AS "Comment",
+            ''::text AS "URCALL",
+            ''::text AS "RPT1CALL",
+            ''::text AS "RPT2CALL",
+            ''::text AS "DVCODE"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT "substring"((t.site_name)::text, 1, 6) AS "Name",
+            t.frequency_tx AS "Frequency",
+            'split'::character varying AS "Duplex",
+            t.frequency_rx AS "Offset",
+            public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx) AS "Tone",
+            public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx) AS "rToneFreq",
+            public.vhf_chirp_ctonefreq(t.ctcss_tx, t.ctcss_rx) AS "cToneFreq",
+            '023'::character varying AS "DtcsCode",
+            'NN'::character varying AS "DtcsPolarity",
+            'FM'::character varying AS "Mode",
+            '25.0'::character varying AS "TStep",
+            ''::text AS "Skip",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx)) AS "Comment",
+            ''::text AS "URCALL",
+            ''::text AS "RPT1CALL",
+            ''::text AS "RPT2CALL",
+            ''::text AS "DVCODE"
+           FROM public.direct_channels t
+          WHERE (((t.type_of_station)::text = 'direct'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
+
+
+ALTER TABLE public.chirp_fm_short OWNER TO dz;
 
 --
 -- Name: dhm; Type: TABLE; Schema: public; Owner: postgres
@@ -1341,6 +1849,78 @@ ALTER TABLE public.digital_repeater_id_import_uid_seq OWNER TO dz;
 --
 
 ALTER SEQUENCE public.digital_repeater_id_import_uid_seq OWNED BY public.digital_repeater_id_import.uid;
+
+
+--
+-- Name: dmr_groups; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.dmr_groups (
+    uid smallint NOT NULL,
+    number integer NOT NULL,
+    id integer NOT NULL,
+    "Type" character varying(10) DEFAULT 'Group'::character varying NOT NULL,
+    "Name" character varying(10) NOT NULL
+);
+
+
+ALTER TABLE public.dmr_groups OWNER TO dz;
+
+--
+-- Name: COLUMN dmr_groups.uid; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.dmr_groups.uid IS 'UID';
+
+
+--
+-- Name: COLUMN dmr_groups.number; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.dmr_groups.number IS 'index';
+
+
+--
+-- Name: COLUMN dmr_groups.id; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.dmr_groups.id IS 'DMR ID';
+
+
+--
+-- Name: COLUMN dmr_groups."Type"; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.dmr_groups."Type" IS 'Private/Group';
+
+
+--
+-- Name: COLUMN dmr_groups."Name"; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.dmr_groups."Name" IS 'Usage';
+
+
+--
+-- Name: dmr-groups_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public."dmr-groups_uid_seq"
+    AS smallint
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."dmr-groups_uid_seq" OWNER TO dz;
+
+--
+-- Name: dmr-groups_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public."dmr-groups_uid_seq" OWNED BY public.dmr_groups.uid;
 
 
 --
@@ -1501,30 +2081,78 @@ CREATE VIEW public.gd77 AS
     foobar."Rx Group List",
     foobar."Contact",
     foobar."Repeater Slot"
-   FROM ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
+   FROM (( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)) AS "Name",
             t.frequency_tx AS "Rx Freq",
             t.frequency_rx AS "Tx Freq",
             'Analog'::text AS "Ch Mode",
             'High'::text AS "Power",
-            t.ctcss_rx AS "Rx Tone",
-            t.ctcss_tx AS "Tx Tone",
+            t.ctcss_tx AS "Rx Tone",
+            t.ctcss_rx AS "Tx Tone",
             0 AS "Color Code",
             1 AS "Rx Group List",
             1 AS "Contact",
             1 AS "Repeater Slot"
            FROM public.trx t
           WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
-          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1), '-D1') AS "Name",
+            t.frequency_tx AS "Rx Freq",
+            t.frequency_rx AS "Tx Freq",
+            'Digital'::text AS "Ch Mode",
+            'High'::text AS "Power",
+            NULL::double precision AS "Rx Tone",
+            NULL::double precision AS "Tx Tone",
+            1 AS "Color Code",
+            1 AS "Rx Group List",
+            8 AS "Contact",
+            1 AS "Repeater Slot"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT concat("substring"((t.callsign)::text, 3, 4), '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1), '-D2') AS "Name",
+            t.frequency_tx AS "Rx Freq",
+            t.frequency_rx AS "Tx Freq",
+            'Digital'::text AS "Ch Mode",
+            'High'::text AS "Power",
+            NULL::double precision AS "Rx Tone",
+            NULL::double precision AS "Tx Tone",
+            1 AS "Color Code",
+            1 AS "Rx Group List",
+            10 AS "Contact",
+            2 AS "Repeater Slot"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true) AND ((t.status)::text = 'active'::text) AND (t.frequency_tx > (144)::double precision) AND (t.frequency_tx < (440)::double precision))
+          ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar
+  ORDER BY foobar."Name";
 
 
 ALTER TABLE public.gd77 OWNER TO dz;
+
+--
+-- Name: gd77_groups; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.gd77_groups AS
+ SELECT d.number AS "Number",
+    d."Name",
+    d.id AS "Call ID",
+    concat(d."Type", ' Call') AS "Type",
+    'None'::text AS "Ring Style",
+    'On'::text AS "Call Receive Tone"
+   FROM public.dmr_groups d
+  ORDER BY d.number;
+
+
+ALTER TABLE public.gd77_groups OWNER TO dz;
 
 --
 -- Name: ic9700_dr; Type: VIEW; Schema: public; Owner: dz
 --
 
 CREATE VIEW public.ic9700_dr AS
- SELECT '1'::text AS "Group N",
+ SELECT '1'::text AS "Group No",
     'Austria'::text AS "Group Name",
     public.vhf_nice_display(t.site_name) AS "Name",
         CASE
@@ -1540,7 +2168,7 @@ CREATE VIEW public.ic9700_dr AS
             ELSE ''::text
         END AS "Gateway Call Sign",
     ''::text AS "Gateway IP Address",
-    t.frequency_rx AS "Frequency",
+    t.frequency_tx AS "Frequency",
     'DUP-'::text AS "Dup",
     (round(((t.frequency_tx - t.frequency_rx) * (1000)::double precision)) / (1000)::double precision) AS "Offset",
         CASE
@@ -1553,7 +2181,7 @@ CREATE VIEW public.ic9700_dr AS
             ELSE 'None'::text
         END AS "TONE",
         CASE
-            WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
+            WHEN (t.ctcss_rx IS NULL) THEN '162.2 Hz'::text
             ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
         END AS "Repeater Tone",
         CASE
@@ -1563,7 +2191,7 @@ CREATE VIEW public.ic9700_dr AS
     'Exact'::text AS "Position",
     s.latitude AS "Latitude",
     s.longitude AS "Longitude",
-    '+1:00'::text AS "UTC offset"
+    '+1:00'::text AS "UTC Offset"
    FROM (public.trx t
      LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
   WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND ((t.fm = true) OR (t.dstar = true)) AND ((t.status)::text = 'active'::text))
@@ -1838,25 +2466,143 @@ ALTER SEQUENCE public.packet_import_uid_seq OWNED BY public.packet_import.uid;
 
 
 --
--- Name: repeater_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: rfinder_fr; Type: VIEW; Schema: public; Owner: dz
 --
 
-CREATE SEQUENCE public.repeater_uid_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+CREATE VIEW public.rfinder_fr AS
+ SELECT foobar."Indicatif",
+    foobar."QTH",
+    foobar."Dépt",
+    foobar."Locator",
+    foobar."Distance",
+    foobar."Azimut",
+    foobar."Alt. (m)",
+    foobar."Ps(W)",
+    foobar."Antenne",
+    foobar."Mode",
+    foobar."Etat",
+    foobar."Resp",
+    foobar."Frq Tx",
+    foobar."Bde Tx",
+    foobar."Frq Rx",
+    foobar."Bde Rx",
+    foobar."Fonct./Dplx",
+    foobar."Loc.étendu",
+    foobar."CTCSS",
+    foobar."Loc.publié",
+    foobar."Type",
+    foobar."Add/Bal.",
+    foobar."Plauralité"
+   FROM ( SELECT t.callsign AS "Indicatif",
+            t.site_name AS "QTH",
+            s.geo_prefix AS "Dépt",
+            s.locator_short AS "Locator",
+            NULL::double precision AS "Distance",
+            NULL::double precision AS "Azimut",
+            s.sea_level AS "Alt. (m)",
+            NULL::double precision AS "Ps(W)",
+            ''::text AS "Antenne",
+            'FM'::text AS "Mode",
+            'Actif'::text AS "Etat",
+            t.sysop AS "Resp",
+            t.frequency_tx AS "Frq Tx",
+            public.vhf_band_name(t.frequency_tx) AS "Bde Tx",
+            t.frequency_rx AS "Frq Rx",
+            public.vhf_band_name(t.frequency_rx) AS "Bde Rx",
+            (round(((t.frequency_rx - t.frequency_rx) * (10)::double precision)) / (10)::double precision) AS "Fonct./Dplx",
+            s.locator_long AS "Loc.étendu",
+            t.ctcss_rx AS "CTCSS",
+            s.locator_long AS "Loc.publié",
+            'Analogique'::text AS "Type",
+            ''::text AS "Add/Bal.",
+            ''::text AS "Plauralité"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text))
+        UNION ALL
+         SELECT t.callsign AS "Indicatif",
+            t.site_name AS "QTH",
+            s.geo_prefix AS "Dépt",
+            s.locator_short AS "Locator",
+            NULL::double precision AS "Distance",
+            NULL::double precision AS "Azimut",
+            s.sea_level AS "Alt. (m)",
+            NULL::double precision AS "Ps(W)",
+            ''::text AS "Antenne",
+            'DMR'::text AS "Mode",
+            'Actif'::text AS "Etat",
+            t.sysop AS "Resp",
+            t.frequency_tx AS "Frq Tx",
+            public.vhf_band_name(t.frequency_tx) AS "Bde Tx",
+            t.frequency_rx AS "Frq Rx",
+            public.vhf_band_name(t.frequency_rx) AS "Bde Rx",
+            (round(((t.frequency_rx - t.frequency_rx) * (10)::double precision)) / (10)::double precision) AS "Fonct./Dplx",
+            s.locator_long AS "Loc.étendu",
+            NULL::double precision AS "CTCSS",
+            s.locator_long AS "Loc.publié",
+            'Numérique'::text AS "Type",
+            ''::text AS "Add/Bal.",
+            ''::text AS "Plauralité"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true) AND ((t.status)::text = 'active'::text))
+        UNION ALL
+         SELECT t.callsign AS "Indicatif",
+            t.site_name AS "QTH",
+            s.geo_prefix AS "Dépt",
+            s.locator_short AS "Locator",
+            NULL::double precision AS "Distance",
+            NULL::double precision AS "Azimut",
+            s.sea_level AS "Alt. (m)",
+            NULL::double precision AS "Ps(W)",
+            ''::text AS "Antenne",
+            'C4FM'::text AS "Mode",
+            'Actif'::text AS "Etat",
+            t.sysop AS "Resp",
+            t.frequency_tx AS "Frq Tx",
+            public.vhf_band_name(t.frequency_tx) AS "Bde Tx",
+            t.frequency_rx AS "Frq Rx",
+            public.vhf_band_name(t.frequency_rx) AS "Bde Rx",
+            (round(((t.frequency_rx - t.frequency_rx) * (10)::double precision)) / (10)::double precision) AS "Fonct./Dplx",
+            s.locator_long AS "Loc.étendu",
+            NULL::double precision AS "CTCSS",
+            s.locator_long AS "Loc.publié",
+            'Numérique'::text AS "Type",
+            ''::text AS "Add/Bal.",
+            ''::text AS "Plauralité"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.c4fm = true) AND ((t.status)::text = 'active'::text))
+        UNION ALL
+         SELECT t.callsign AS "Indicatif",
+            t.site_name AS "QTH",
+            s.geo_prefix AS "Dépt",
+            s.locator_short AS "Locator",
+            NULL::double precision AS "Distance",
+            NULL::double precision AS "Azimut",
+            s.sea_level AS "Alt. (m)",
+            NULL::double precision AS "Ps(W)",
+            ''::text AS "Antenne",
+            'DSTAR'::text AS "Mode",
+            'Actif'::text AS "Etat",
+            t.sysop AS "Resp",
+            t.frequency_tx AS "Frq Tx",
+            public.vhf_band_name(t.frequency_tx) AS "Bde Tx",
+            t.frequency_rx AS "Frq Rx",
+            public.vhf_band_name(t.frequency_rx) AS "Bde Rx",
+            (round(((t.frequency_rx - t.frequency_rx) * (10)::double precision)) / (10)::double precision) AS "Fonct./Dplx",
+            s.locator_long AS "Loc.étendu",
+            NULL::double precision AS "CTCSS",
+            s.locator_long AS "Loc.publié",
+            'Numérique'::text AS "Type",
+            ''::text AS "Add/Bal.",
+            ''::text AS "Plauralité"
+           FROM (public.trx t
+             LEFT JOIN public.site s ON (((t.site_name)::text = (s.site_name)::text)))
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true) AND ((t.status)::text = 'active'::text))) foobar;
 
 
-ALTER TABLE public.repeater_uid_seq OWNER TO dz;
-
---
--- Name: repeater_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
---
-
-ALTER SEQUENCE public.repeater_uid_seq OWNED BY public.trx.uid;
-
+ALTER TABLE public.rfinder_fr OWNER TO dz;
 
 --
 -- Name: rt_ic9700_dr; Type: VIEW; Schema: public; Owner: dz
@@ -1923,7 +2669,7 @@ CREATE VIEW public.rt_ic9700_dr AS
                     ELSE 'None'::text
                 END AS "Tone Mode",
                 CASE
-                    WHEN (t.ctcss_rx IS NULL) THEN '67.0 Hz'::text
+                    WHEN (t.ctcss_rx IS NULL) THEN '162.2 Hz'::text
                     ELSE concat(to_char(t.ctcss_rx, '999.9'::text), ' Hz')
                 END AS "CTCSS",
             ''::text AS "IP Address",
@@ -2367,8 +3113,8 @@ ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 
 CREATE VIEW public.trx_list AS
  SELECT public.vhf_band_name(t.frequency_tx) AS band,
-    public.channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
-    public.channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
     t.uid,
     t.type_of_station,
     t.frequency_tx,
@@ -2638,8 +3384,8 @@ CREATE VIEW public.trx_list_fm AS
     t.callsign AS "Callsign",
     t.city AS "City",
     t.site_name AS "Site",
-    t.frequency_tx AS "Frequency TX",
-    t.frequency_rx AS "Frequency RX",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frequency RX",
     t.ch AS "Ch",
     t.ctcss_tx AS "CTCSS TX",
     t.ctcss_rx AS "CTCSS RX",
@@ -2685,8 +3431,8 @@ ALTER TABLE public.trx_list_tetra OWNER TO dz;
 
 CREATE VIEW public.trx_verylong AS
  SELECT public.vhf_band_name(t.frequency_tx) AS band,
-    public.channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
-    public.channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
     t.uid,
     t.type_of_station,
     t.frequency_tx,
@@ -2747,6 +3493,157 @@ CREATE VIEW public.trx_verylong AS
 ALTER TABLE public.trx_verylong OWNER TO dz;
 
 --
+-- Name: yaesu_ft3; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.yaesu_ft3 AS
+ SELECT row_number() OVER (PARTITION BY true::boolean) AS "Channel No",
+    foobar."Priority CH",
+    foobar."Receive Frequency",
+    foobar."Transmit Frequency",
+    foobar."Offset Frequency",
+    foobar."Offset Direction",
+    foobar."AUTO MODE",
+    foobar."Operating Mode",
+    foobar."DIG/ANALOG",
+    foobar."TAG",
+    foobar."Name",
+    foobar."Tone Mode",
+    foobar."CSCSS Frequency",
+    foobar."DCS Code",
+    foobar."DCS Polarity",
+    foobar."User CTCSS",
+    foobar."RX DG-ID",
+    foobar."TX DG-ID",
+    foobar."Tx Power",
+    foobar."Skip",
+    foobar."AUTO STEP",
+    foobar."Step",
+    foobar."Memory Mask",
+    foobar."ATT",
+    foobar."S-Meter SQL",
+    foobar."Bell",
+    foobar."Narrow",
+    foobar."Clock Shift",
+    foobar."BANK1",
+    foobar."BANK2",
+    foobar."BANK3",
+    foobar."BANK4",
+    foobar."BANK5",
+    foobar."BANK6",
+    foobar."BANK7",
+    foobar."BANK8",
+    foobar."BANK9",
+    foobar."BANK10",
+    foobar."BANK11",
+    foobar."BANK12",
+    foobar."BANK13",
+    foobar."BANK14",
+    foobar."BANK15",
+    foobar."BANK16",
+    foobar."BANK17",
+    foobar."BANK18",
+    foobar."BANK19",
+    foobar."BANK20",
+    foobar."BANK21",
+    foobar."BANK22",
+    foobar."BANK23",
+    foobar."BANK24",
+    foobar."Comment",
+    foobar."Dummy"
+   FROM ( SELECT 'OFF'::text AS "Priority CH",
+            t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            (0)::double precision AS "Offset Frequency",
+            '-/+'::text AS "Offset Direction",
+            'ON'::text AS "AUTO MODE",
+            'FM'::text AS "Operating Mode",
+            'FM'::text AS "DIG/ANALOG",
+            'ON'::text AS "TAG",
+            "substring"(concat(t.callsign, '-', "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1), ' ', public.vhf_nice_display(t.site_name)), 1, 16) AS "Name",
+                CASE
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Tone'::text) THEN 'TONE'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'TSQL'::text) THEN 'TONE SQL'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Cross'::text) THEN 'TONE'::text
+                    ELSE 'OFF'::text
+                END AS "Tone Mode",
+            btrim(concat(to_char(public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx), '999.9'::text), ' Hz')) AS "CSCSS Frequency",
+            '023'::text AS "DCS Code",
+            'RX Normal TX Normal'::text AS "DCS Polarity",
+            '1600 Hz'::text AS "User CTCSS",
+            'RX 00'::text AS "RX DG-ID",
+            'TX 00'::text AS "TX DG-ID",
+            'High (5W)'::text AS "Tx Power",
+            'OFF'::text AS "Skip",
+            'ON'::text AS "AUTO STEP",
+            '12.5KHz'::text AS "Step",
+            'OFF'::text AS "Memory Mask",
+            'OFF'::text AS "ATT",
+            'OFF'::text AS "S-Meter SQL",
+            'OFF'::text AS "Bell",
+            'OFF'::text AS "Narrow",
+            'OFF'::text AS "Clock Shift",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '1'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK1",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '2'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK2",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '3'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK3",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '4'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK4",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '5'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK5",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '6'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK6",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '7'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK7",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '8'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK8",
+                CASE
+                    WHEN ("substring"((t.callsign)::text, 3, 1) = '9'::text) THEN 'ON'::text
+                    ELSE 'OFF'::text
+                END AS "BANK9",
+            'OFF'::text AS "BANK10",
+            'OFF'::text AS "BANK11",
+            'OFF'::text AS "BANK12",
+            'OFF'::text AS "BANK13",
+            'OFF'::text AS "BANK14",
+            'OFF'::text AS "BANK15",
+            'OFF'::text AS "BANK16",
+            'OFF'::text AS "BANK17",
+            'OFF'::text AS "BANK18",
+            'OFF'::text AS "BANK19",
+            'OFF'::text AS "BANK20",
+            'OFF'::text AS "BANK21",
+            'OFF'::text AS "BANK22",
+            'OFF'::text AS "BANK23",
+            'OFF'::text AS "BANK24",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx)) AS "Comment",
+            '0'::text AS "Dummy"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND public.vhf_band_common(t.frequency_tx))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
+
+
+ALTER TABLE public.yaesu_ft3 OWNER TO dz;
+
+--
 -- Name: bands uid; Type: DEFAULT; Schema: public; Owner: dz
 --
 
@@ -2779,6 +3676,13 @@ ALTER TABLE ONLY public.dhm ALTER COLUMN rid SET DEFAULT nextval('public.dhm_rid
 --
 
 ALTER TABLE ONLY public.digital_repeater_id_import ALTER COLUMN uid SET DEFAULT nextval('public.digital_repeater_id_import_uid_seq'::regclass);
+
+
+--
+-- Name: dmr_groups uid; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.dmr_groups ALTER COLUMN uid SET DEFAULT nextval('public."dmr-groups_uid_seq"'::regclass);
 
 
 --
@@ -2906,6 +3810,14 @@ ALTER TABLE ONLY public.trx
 
 
 --
+-- Name: direct_channels trx_pk_1; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.direct_channels
+    ADD CONSTRAINT trx_pk_1 PRIMARY KEY (uid);
+
+
+--
 -- Name: band_uid_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
@@ -2931,6 +3843,13 @@ CREATE INDEX dhm_st_convexhull_idx ON public.dhm USING gist (public.st_convexhul
 --
 
 CREATE UNIQUE INDEX digital_repeater_id_import_uid_idx ON public.digital_repeater_id_import USING btree (uid);
+
+
+--
+-- Name: dmr_groups_uid_idx; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE UNIQUE INDEX dmr_groups_uid_idx ON public.dmr_groups USING btree (uid);
 
 
 --
@@ -3018,10 +3937,24 @@ CREATE INDEX trx_c4fm_idx ON public.trx USING btree (c4fm);
 
 
 --
+-- Name: trx_c4fm_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_c4fm_idx_1 ON public.direct_channels USING btree (c4fm);
+
+
+--
 -- Name: trx_callsign_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
 CREATE INDEX trx_callsign_idx ON public.trx USING btree (callsign);
+
+
+--
+-- Name: trx_callsign_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_callsign_idx_1 ON public.direct_channels USING btree (callsign);
 
 
 --
@@ -3032,10 +3965,24 @@ CREATE INDEX trx_dmr_idx ON public.trx USING btree (dmr);
 
 
 --
+-- Name: trx_dmr_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_dmr_idx_1 ON public.direct_channels USING btree (dmr);
+
+
+--
 -- Name: trx_dstar_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
 CREATE INDEX trx_dstar_idx ON public.trx USING btree (dstar);
+
+
+--
+-- Name: trx_dstar_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_dstar_idx_1 ON public.direct_channels USING btree (dstar);
 
 
 --
@@ -3046,10 +3993,24 @@ CREATE INDEX trx_fm_idx ON public.trx USING btree (fm);
 
 
 --
+-- Name: trx_fm_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_fm_idx_1 ON public.direct_channels USING btree (fm);
+
+
+--
 -- Name: trx_frequency_tx_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
 CREATE INDEX trx_frequency_tx_idx ON public.trx USING btree (frequency_tx);
+
+
+--
+-- Name: trx_frequency_tx_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_frequency_tx_idx_1 ON public.direct_channels USING btree (frequency_tx);
 
 
 --
@@ -3060,6 +4021,13 @@ CREATE INDEX trx_other_mode_idx ON public.trx USING btree (other_mode);
 
 
 --
+-- Name: trx_other_mode_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_other_mode_idx_1 ON public.direct_channels USING btree (other_mode);
+
+
+--
 -- Name: trx_site_name_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
@@ -3067,10 +4035,24 @@ CREATE INDEX trx_site_name_idx ON public.trx USING btree (site_name);
 
 
 --
+-- Name: trx_site_name_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_site_name_idx_1 ON public.direct_channels USING btree (site_name);
+
+
+--
 -- Name: trx_tetra_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
 CREATE INDEX trx_tetra_idx ON public.trx USING btree (tetra);
+
+
+--
+-- Name: trx_tetra_idx_1; Type: INDEX; Schema: public; Owner: dz
+--
+
+CREATE INDEX trx_tetra_idx_1 ON public.direct_channels USING btree (tetra);
 
 
 --

@@ -12,4 +12,5 @@ pg_dump vhf -t site > vhf_site.sql
 pg_dump vhf -t site > vhf_site.sql
 pg_dump vhf -t site > vhf_site.sql
 pg_dump vhf -t bands > vhf_bands.sql
+pg_dump vhf -t direct_channels > vhf_direct_channels.sql
 
