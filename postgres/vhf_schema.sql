@@ -2662,7 +2662,7 @@ CREATE VIEW public.rt_ic9700_dr AS
             'On'::text AS "Repeater Use",
             'FM'::text AS "Operating Mode",
             public.vhf_nice_display(t.site_name) AS "Name",
-            ''::text AS "Sub Name",
+            (t.callsign)::text AS "Sub Name",
                 CASE
                     WHEN ((t.ctcss_tx IS NOT NULL) AND (t.ctcss_rx IS NULL)) THEN 'TSQL'::text
                     WHEN (t.ctcss_rx IS NOT NULL) THEN 'Tone'::text
@@ -3551,7 +3551,69 @@ CREATE VIEW public.yaesu_ft3 AS
     foobar."BANK24",
     foobar."Comment",
     foobar."Dummy"
-   FROM ( SELECT 'OFF'::text AS "Priority CH",
+   FROM (( SELECT 'OFF'::text AS "Priority CH",
+            t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            (0)::double precision AS "Offset Frequency",
+            '-/+'::text AS "Offset Direction",
+            'ON'::text AS "AUTO MODE",
+            'FM'::text AS "Operating Mode",
+            'FM'::text AS "DIG/ANALOG",
+            'ON'::text AS "TAG",
+            "substring"((t.site_name)::text, 1, 16) AS "Name",
+                CASE
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Tone'::text) THEN 'TONE'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'TSQL'::text) THEN 'TONE SQL'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Cross'::text) THEN 'TONE'::text
+                    ELSE 'OFF'::text
+                END AS "Tone Mode",
+            btrim(concat(to_char(public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx), '999.9'::text), ' Hz')) AS "CSCSS Frequency",
+            '023'::text AS "DCS Code",
+            'RX Normal TX Normal'::text AS "DCS Polarity",
+            '1700 Hz'::text AS "User CTCSS",
+            'RX 00'::text AS "RX DG-ID",
+            'TX 00'::text AS "TX DG-ID",
+            'High (5W)'::text AS "Tx Power",
+            'OFF'::text AS "Skip",
+            'ON'::text AS "AUTO STEP",
+            '12.5KHz'::text AS "Step",
+            'OFF'::text AS "Memory Mask",
+            'OFF'::text AS "ATT",
+            'OFF'::text AS "S-Meter SQL",
+            'OFF'::text AS "Bell",
+            'OFF'::text AS "Narrow",
+            'OFF'::text AS "Clock Shift",
+            'OFF'::text AS "BANK1",
+            'OFF'::text AS "BANK2",
+            'OFF'::text AS "BANK3",
+            'OFF'::text AS "BANK4",
+            'OFF'::text AS "BANK5",
+            'OFF'::text AS "BANK6",
+            'OFF'::text AS "BANK7",
+            'OFF'::text AS "BANK8",
+            'OFF'::text AS "BANK9",
+            'ON'::text AS "BANK10",
+            'OFF'::text AS "BANK11",
+            'OFF'::text AS "BANK12",
+            'OFF'::text AS "BANK13",
+            'OFF'::text AS "BANK14",
+            'OFF'::text AS "BANK15",
+            'OFF'::text AS "BANK16",
+            'OFF'::text AS "BANK17",
+            'OFF'::text AS "BANK18",
+            'OFF'::text AS "BANK19",
+            'OFF'::text AS "BANK20",
+            'OFF'::text AS "BANK21",
+            'OFF'::text AS "BANK22",
+            'OFF'::text AS "BANK23",
+            'OFF'::text AS "BANK24",
+            (public.vhf_nice_display(t.site_name))::text AS "Comment",
+            '0'::text AS "Dummy"
+           FROM public.direct_channels t
+          WHERE (((t.type_of_station)::text = 'direct'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND public.vhf_band_common(t.frequency_tx))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT 'OFF'::text AS "Priority CH",
             t.frequency_tx AS "Receive Frequency",
             t.frequency_rx AS "Transmit Frequency",
             (0)::double precision AS "Offset Frequency",
@@ -3570,7 +3632,7 @@ CREATE VIEW public.yaesu_ft3 AS
             btrim(concat(to_char(public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx), '999.9'::text), ' Hz')) AS "CSCSS Frequency",
             '023'::text AS "DCS Code",
             'RX Normal TX Normal'::text AS "DCS Polarity",
-            '1600 Hz'::text AS "User CTCSS",
+            '1500 Hz'::text AS "User CTCSS",
             'RX 00'::text AS "RX DG-ID",
             'TX 00'::text AS "TX DG-ID",
             'High (5W)'::text AS "Tx Power",
@@ -3638,10 +3700,95 @@ CREATE VIEW public.yaesu_ft3 AS
             '0'::text AS "Dummy"
            FROM public.trx t
           WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND public.vhf_band_common(t.frequency_tx))
-          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx))) foobar;
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
 ALTER TABLE public.yaesu_ft3 OWNER TO dz;
+
+--
+-- Name: yaesu_ftm400; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.yaesu_ftm400 AS
+ SELECT row_number() OVER (PARTITION BY true::boolean) AS "Channel No",
+    foobar."Receive Frequency",
+    foobar."Transmit Frequency",
+    foobar."Offset Frequency",
+    foobar."Offset Direction",
+    foobar."Operating Mode",
+    foobar."Name",
+    foobar."Tone Mode",
+    foobar."CSCSS Frequency",
+    foobar."DCS Code",
+    foobar."User CTCSS",
+    foobar."Tx Power",
+    foobar."Skip",
+    foobar."Step",
+    foobar."Clock Shift",
+    foobar."Comment",
+    foobar."Dummy"
+   FROM (( SELECT t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            (0)::double precision AS "Offset Frequency",
+            '-/+'::text AS "Offset Direction",
+            'FM'::text AS "Operating Mode",
+            "substring"((t.site_name)::text, 1, 6) AS "Name",
+                CASE
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Tone'::text) THEN 'TONE ENC'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'TSQL'::text) THEN 'TONE SQL'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Cross'::text) THEN 'TONE ENC'::text
+                    ELSE 'OFF'::text
+                END AS "Tone Mode",
+            btrim(concat(to_char(public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx), '999.9'::text), ' Hz')) AS "CSCSS Frequency",
+            '023'::text AS "DCS Code",
+            '1500 Hz'::text AS "User CTCSS",
+            'HIGH'::text AS "Tx Power",
+            'SELECT'::text AS "Skip",
+            '12.5KHz'::text AS "Step",
+            '0'::text AS "Clock Shift",
+            (public.vhf_nice_display(t.site_name))::text AS "Comment",
+            '0'::text AS "Dummy"
+           FROM public.direct_channels t
+          WHERE (((t.type_of_station)::text = 'direct'::text) AND (t.fm = true) AND ((t.status)::text = 'active'::text) AND public.vhf_band_common(t.frequency_tx))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))
+        UNION ALL
+        ( SELECT t.frequency_tx AS "Receive Frequency",
+            t.frequency_rx AS "Transmit Frequency",
+            (0)::double precision AS "Offset Frequency",
+            '-/+'::text AS "Offset Direction",
+            'FM'::text AS "Operating Mode",
+            "substring"(concat(t.callsign,
+                CASE
+                    WHEN ((t.fm = true) AND (t.c4fm IS NULL)) THEN '-'::text
+                    WHEN ((t.fm = true) AND (t.c4fm = true)) THEN '*'::text
+                    ELSE 'c'::text
+                END, "substring"((public.vhf_band_name(t.frequency_tx))::text, 1, 1)), 1, 8) AS "Name",
+                CASE
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Tone'::text) THEN 'TONE ENC'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'TSQL'::text) THEN 'TONE SQL'::text
+                    WHEN ((public."vhf_chirp_Tone"(t.ctcss_tx, t.ctcss_rx))::text = 'Cross'::text) THEN 'TONE ENC'::text
+                    ELSE 'OFF'::text
+                END AS "Tone Mode",
+            btrim(concat(to_char(public.vhf_chirp_rtonefreq(t.ctcss_tx, t.ctcss_rx), '999.9'::text), ' Hz')) AS "CSCSS Frequency",
+            '023'::text AS "DCS Code",
+            '1700 Hz'::text AS "User CTCSS",
+            'HIGH'::text AS "Tx Power",
+            'SELECT'::text AS "Skip",
+            '12.5KHz'::text AS "Step",
+            '0'::text AS "Clock Shift",
+            concat(public.vhf_nice_display(t.site_name), ' ', public.vhf_band_name(t.frequency_tx), ' ',
+                CASE
+                    WHEN ((t.fm = true) AND (t.c4fm IS NULL)) THEN '(FM only)'::text
+                    WHEN ((t.fm = true) AND (t.c4fm = true)) THEN '(FM or C4FM)'::text
+                    ELSE '(C4FM only)'::text
+                END) AS "Comment",
+            '0'::text AS "Dummy"
+           FROM public.trx t
+          WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND ((t.fm = true) OR (t.c4fm = true)) AND ((t.status)::text = 'active'::text) AND public.vhf_band_common(t.frequency_tx))
+          ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
+
+
+ALTER TABLE public.yaesu_ftm400 OWNER TO dz;
 
 --
 -- Name: bands uid; Type: DEFAULT; Schema: public; Owner: dz
