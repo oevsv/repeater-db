@@ -6,7 +6,7 @@ This repository is licensed under the Apache 2.0 license.
 ## Machine
 
 Install Debian 11, add packages:
-The code below might work well with other distibutions and releases, but was only tested with Debian 11.
+The code below might work well with other distributions and releases, but was only tested with Debian 11.
 ```
     apt install postgresql nginx postgis postgresql-13-postgis-3 git certbot python3-certbot-nginx
 ```
