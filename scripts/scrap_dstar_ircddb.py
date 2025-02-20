@@ -9,17 +9,6 @@ from psycopg2 import sql
 from datetime import datetime
 from configparser import ConfigParser
 
-
-# -- SQL code to create the “dstar_ircddb” table in the PostgreSQL database
-# CREATE TABLE dstar_ircddb (
-# id SERIAL PRIMARY KEY,
-# callsign TEXT,
-# status TEXT,
-# country TEXT,
-# scraped_timestamp TIMESTAMP NOT NULL
-# );
-
-
 def load_db_config(filename='db_config.ini', section='postgresql'):
     """
     Load database configuration from an .ini file.
@@ -125,7 +114,7 @@ def main():
         with conn:
             with conn.cursor() as cur:
                 insert_sql = sql.SQL("""
-                INSERT INTO dstar_ircddb
+                INSERT INTO scrap_dstar_ircddb
                    (callsign, status, country, scraped_timestamp)
                 VALUES (%s, %s, %s, %s)
                 """)

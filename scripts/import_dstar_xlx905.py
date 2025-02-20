@@ -98,13 +98,12 @@ def main():
     db_params = load_db_config(filename='db_config.ini')
     connection = psycopg2.connect(**db_params)
 
-
     try:
         with connection:
             with connection.cursor() as cur:
                 # Construct the INSERT statement. We’ll use %s placeholders for the prepared statement.
                 insert_query = sql.SQL("""
-                    INSERT INTO dstar_ref
+                    INSERT INTO scrap_dstar_xlx905
                     (callsign, city, state, freq_2m, freq_70cm, freq_23cm, freq_23cmdd, scraped_timestamp)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """)

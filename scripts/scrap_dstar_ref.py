@@ -9,21 +9,6 @@ from psycopg2 import sql
 from datetime import datetime
 from configparser import ConfigParser
 
-
-# -- SQL code to create the “dstar_ref” table in the PostgreSQL database
-#
-# CREATE TABLE dstar_ref (
-# id SERIAL PRIMARY KEY,
-# callsign TEXT NOT NULL,
-# city TEXT NOT NULL,
-# state TEXT,
-# freq_2m TEXT,
-# freq_70cm TEXT,
-# freq_23cm TEXT,
-# freq_23cmdd TEXT,
-# scraped_timestamp TIMESTAMP NOT NULL
-# );
-
 def load_db_config(filename='db_config.ini', section='postgresql'):
     """
     Load database configuration from an .ini file.
@@ -94,8 +79,6 @@ def main():
 
         records.append((callsign, city, state, freq_2m, freq_70cm, freq_23cm, freq_23cmdd, timestamp_now))
 
-    print(records)
-
     # 3. Insert results into PostgreSQL using credentials in db_config.ini
     db_params = load_db_config(filename='db_config.ini')
     connection = psycopg2.connect(**db_params)
@@ -106,7 +89,7 @@ def main():
             with connection.cursor() as cur:
                 # Construct the INSERT statement. We’ll use %s placeholders for the prepared statement.
                 insert_query = sql.SQL("""
-                    INSERT INTO dstar_ref
+                    INSERT INTO scrap_dstar_ref
                     (callsign, city, state, freq_2m, freq_70cm, freq_23cm, freq_23cmdd, scraped_timestamp)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """)

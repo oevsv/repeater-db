@@ -1,4 +1,4 @@
-CREATE TABLE dstar_ref (
+CREATE TABLE scrap_dstar_ref (
 id SERIAL PRIMARY KEY,
 callsign TEXT NOT NULL,
 city TEXT NOT NULL,
@@ -11,7 +11,7 @@ scraped_timestamp TIMESTAMP NOT NULL
 );
 
 
-CREATE TABLE dstart_dcs009 (
+CREATE TABLE scrap_dstar_dcs009 (
 id SERIAL PRIMARY KEY,
 nr TEXT,
 dv_station TEXT,
@@ -27,24 +27,39 @@ scraped_timestamp TIMESTAMP NOT NULL
 
 CREATE TABLE dstar_xlx905 (
 id SERIAL PRIMARY KEY,
-num TEXT,
-flag TEXT,
-dv_station TEXT,
-band TEXT,
-last_heard TEXT,
-linked_for TEXT,
-protocol TEXT,
-module TEXT,
-ip TEXT,
+callsign TEXT,
+city TEXT,
+state TEXT,
+rq_2m TEXT,
+frq_70cm TEXT,
+frq_23cm TEXT,
+frq_23cmdd TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
 
 
-CREATE TABLE dstar_ircddb (
+CREATE TABLE scrap_dstar_ircddb (
 id SERIAL PRIMARY KEY,
 callsign TEXT,
 status TEXT,
 country TEXT,
 last_heard TEXT,
+scraped_timestamp TIMESTAMP NOT NULL
+);
+
+CREATE TABLE scrap_oelink (
+id SERIAL PRIMARY KEY,
+nr              TEXT,
+repeater        TEXT,
+info            TEXT,
+repeater_id     TEXT,
+ts1             TEXT,
+cq              TEXT,
+ts1_info        TEXT,
+ts2             TEXT,
+ts2_info        TEXT,
+ref             TEXT,
+start           TEXT,
+hardware        TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
