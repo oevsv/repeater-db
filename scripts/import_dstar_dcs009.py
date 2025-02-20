@@ -63,23 +63,27 @@ def main():
     response = requests.get(url, headers=headers)
     response.raise_for_status()  # Raise an error if request fails
 
-    # 2. Parse the HTML with BeautifulSoup
+    # 2) Parse the HTML
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Find all table rows with class "trow" (these contain the data we want)
+    # Find all rows (tr) with class="trow" — these should hold the data we want
     rows = soup.find_all("tr", class_="trow")
+    if not rows:
+        print("No rows found with class='trow'. Exiting.")
+        return
 
-    # Prepare a list for inserting into the DB
     records = []
-    timestamp_now = datetime.utcnow()
+    now_utc = datetime.utcnow()
 
     for row in rows:
-        # Each row should have multiple "td" cells:
-        # 0: Nr., 1: DV Station, 2: Band, 3: Linked, 4: DCS GROUP, 5: via, 6: Software, 7: HB-Timer
+        # Each row should contain 8 cells in this order:
+        #  0=Nr, 1=DV Station, 2=Band, 3=Linked, 4=DCS GROUP, 5=via, 6=Software, 7=HB-Timer
         columns = row.find_all("td")
         if len(columns) < 8:
-            continue  # Skip malformed rows
+            # Not a valid data row
+            continue
 
+        # Extract column text
         nr = columns[0].get_text(strip=True)
         dv_station = columns[1].get_text(strip=True)
         band = columns[2].get_text(strip=True)
@@ -89,27 +93,26 @@ def main():
         software = columns[6].get_text(strip=True)
         hb_timer = columns[7].get_text(strip=True)
 
-        records.append((nr, dv_station, band, linked, dcs_group, via, software, hb_timer, timestamp_now))
+        records.append((nr, dv_station, band, linked, dcs_group, via, software, hb_timer, now_utc))
 
-    # 3. Insert results into PostgreSQL using credentials in db_config.ini
-    db_params = load_db_config(filename='db_config.ini')
-    connection = psycopg2.connect(**db_params)
+    # 3. Insert the record set into PostgreSQL
+    db_params = load_db_config(filename='db_config.ini', section='postgresql')
+    conn = psycopg2.connect(**db_params)
 
     try:
-        with connection:
-            with connection.cursor() as cur:
+        with conn:
+            with conn.cursor() as cur:
                 insert_query = sql.SQL("""
-                    INSERT INTO dstart_dcs009
+                    INSERT INTO dstar_dcs009
                         (nr, dv_station, band, linked, dcs_group, via, software, hb_timer, scraped_timestamp)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """)
-
                 cur.executemany(insert_query, records)
-                print(f"Inserted {cur.rowcount} rows into dstart_dcs009.")
+                print(f"Inserted {cur.rowcount} rows into dstar_dcs009.")
     except Exception as e:
         print(f"Database error: {e}")
     finally:
-        connection.close()
+        conn.close()
 
 
 # only execute main if not imported
