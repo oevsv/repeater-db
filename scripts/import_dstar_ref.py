@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime
+from configparser import ConfigParser
 
 
 # -- SQL code to create the “dstar_ref” table in the PostgreSQL database
@@ -23,6 +24,30 @@ from datetime import datetime
 # scraped_timestamp TIMESTAMP NOT NULL
 # );
 
+def load_db_config(filename='db_config.ini', section='postgresql'):
+    """
+    Load database configuration from an .ini file.
+    Returns a dictionary of parameters for psycopg2.
+    """
+    # example 'db_config.ini'
+    # [postgresql]
+    # host = 1.2.3.4
+    # port = 5432
+    # database = vhf
+    # user = add-user-here
+    # password = add-password-here
+
+    parser = ConfigParser()
+    parser.read(filename)
+
+    if not parser.has_section(section):
+        raise Exception(f"Section {section} not found in the {filename} file.")
+
+    db_config = {}
+    for param in parser.items(section):
+        db_config[param[0]] = param[1]
+
+    return db_config
 
 def main():
     # 1. Make the POST request to dstarusers.org
@@ -71,15 +96,10 @@ def main():
 
     print(records)
 
-    # 3. Insert into PostgreSQL using a prepared statement
-    # Adjust the connection parameters as needed for your environment.
-    connection = psycopg2.connect(
-        dbname="vhf",
-        user="add-user-here",
-        password="add-password-here",
-        host="add-host-here",
-        port=5432
-    )
+    # 3. Insert results into PostgreSQL using credentials in db_config.ini
+    db_params = load_db_config(filename='db_config.ini')
+    connection = psycopg2.connect(**db_params)
+
 
     try:
         with connection:
