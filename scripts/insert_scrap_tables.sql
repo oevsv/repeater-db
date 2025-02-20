@@ -25,15 +25,17 @@ scraped_timestamp TIMESTAMP NOT NULL
 );
 
 
-CREATE TABLE dstar_xlx905 (
+CREATE TABLE scrap_dstar_xlx905 (
 id SERIAL PRIMARY KEY,
-callsign TEXT,
-city TEXT,
-state TEXT,
-rq_2m TEXT,
-frq_70cm TEXT,
-frq_23cm TEXT,
-frq_23cmdd TEXT,
+no            TEXT,
+flag          TEXT,
+dv_station    TEXT,
+band          TEXT,
+last_heard    TEXT,
+linked_for    TEXT,
+protocol      TEXT,
+module        TEXT,
+ip_address    TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
 

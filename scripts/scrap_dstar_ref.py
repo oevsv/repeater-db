@@ -96,7 +96,7 @@ def main():
 
                 # Execute the insert for all rows. executemany is a convenient approach.
                 cur.executemany(insert_query, records)
-                print(f"Inserted {cur.rowcount} rows into dstar_ref table.")
+                print(f"Inserted {cur.rowcount} rows into scrap_dstar_ref table.")
     except Exception as e:
         print(f"Error inserting data into database: {e}")
     finally:

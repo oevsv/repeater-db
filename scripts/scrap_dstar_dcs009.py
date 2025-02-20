@@ -90,7 +90,7 @@ def main():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """)
                 cur.executemany(insert_query, records)
-                print(f"Inserted {cur.rowcount} rows into dstar_dcs009.")
+                print(f"Inserted {cur.rowcount} rows into scrap_dstar_dcs009.")
     except Exception as e:
         print(f"Database error: {e}")
     finally:

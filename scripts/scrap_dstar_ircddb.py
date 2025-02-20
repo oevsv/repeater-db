@@ -119,7 +119,7 @@ def main():
                 VALUES (%s, %s, %s, %s)
                 """)
                 cur.executemany(insert_sql, records)
-                print(f"Inserted {cur.rowcount} rows into dstar_ircddb.")
+                print(f"Inserted {cur.rowcount} rows into scrap_dstar_ircddb.")
     except Exception as e:
         print(f"Database error: {e}")
     finally:
