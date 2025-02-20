@@ -10,7 +10,7 @@ from datetime import datetime
 from load_db_config import load_db_config
 
 
-def main():
+def scrap_c4fm_ycs232():
     # 1. Make GET request to the desired URL
     url = "https://ycs232.oevsv.at/_status.html"
     headers = {
@@ -103,4 +103,4 @@ def main():
 
 # only execute main if not imported
 if __name__ == "__main__":
-    main()
+    scrap_c4fm_ycs232()
