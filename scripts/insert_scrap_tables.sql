@@ -101,3 +101,19 @@ start           TEXT,
 hardware        TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
+
+CREATE TABLE scrap_c4fm_ycs232 (
+id SERIAL PRIMARY KEY,
+nr             TEXT,
+callsign       TEXT,
+group_code     TEXT,
+name           TEXT,
+qrg            TEXT,
+repeater_id    TEXT,
+dg_id          TEXT,
+name2          TEXT,
+rx_tx          TEXT,
+mode           TEXT,
+type           TEXT,
+scraped_timestamp TIMESTAMP NOT NULL
+)
