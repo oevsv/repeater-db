@@ -113,7 +113,7 @@ def main():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """)
                 cur.executemany(insert_query, records)
-                print(f"Inserted {cur.rowcount} rows into oe_link_status.")
+                print(f"Inserted {cur.rowcount} rows into scrap_oelink.")
     except Exception as e:
         print(f"Database error: {e}")
     finally:
