@@ -39,26 +39,12 @@ ip TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
 
-drop table dstar_xlx905;
-
-CREATE TABLE dstar_dcs009 (
-id SERIAL PRIMARY KEY,
-nr TEXT,
-dv_station TEXT,
-band TEXT,
-linked TEXT,
-dcs_group TEXT,
-via TEXT,
-software TEXT,
-hb_timer TEXT,
-scraped_timestamp TIMESTAMP NOT NULL
-);
-
 
 CREATE TABLE dstar_ircddb (
 id SERIAL PRIMARY KEY,
 callsign TEXT,
 status TEXT,
 country TEXT,
+last_heard TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
