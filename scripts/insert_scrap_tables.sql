@@ -65,3 +65,39 @@ start           TEXT,
 hardware        TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 );
+
+
+CREATE TABLE scrap_dmr_ipsc2 (
+id SERIAL PRIMARY KEY,
+nr              TEXT,
+repeater        TEXT,
+info            TEXT,
+repeater_id     TEXT,
+ts1             TEXT,
+cq              TEXT,
+ts1_info        TEXT,
+ts2             TEXT,
+ts2_info        TEXT,
+ref             TEXT,
+start           TEXT,
+hardware        TEXT,
+scraped_timestamp TIMESTAMP NOT NULL
+);
+
+
+CREATE TABLE scrap_dmr_ipsc2_hotspot (
+id SERIAL PRIMARY KEY,
+nr              TEXT,
+repeater        TEXT,
+info            TEXT,
+repeater_id     TEXT,
+ts1             TEXT,
+cq              TEXT,
+ts1_info        TEXT,
+ts2             TEXT,
+ts2_info        TEXT,
+ref             TEXT,
+start           TEXT,
+hardware        TEXT,
+scraped_timestamp TIMESTAMP NOT NULL
+);
