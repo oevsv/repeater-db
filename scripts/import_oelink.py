@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
-# scraps Austrian Dstar DCS009 stations
-
-# curl 'https://xlx232.oevsv.at/_status.html'
+# scraps Austrian OELINK stations
 
 import requests
 from bs4 import BeautifulSoup
@@ -10,21 +8,6 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 from configparser import ConfigParser
-
-
-# -- SQL code to create the “dcs009_ref” table in the PostgreSQL database
-# CREATE TABLE dstart_dcs009 (
-# id SERIAL PRIMARY KEY,
-# nr TEXT,
-# dv_station TEXT,
-# band TEXT,
-# linked TEXT,
-# dcs_group TEXT,
-# via TEXT,
-# software TEXT,
-# hb_timer TEXT,
-# scraped_timestamp TIMESTAMP NOT NULL
-# );
 
 
 def load_db_config(filename='db_config.ini', section='postgresql'):
@@ -55,15 +38,17 @@ def load_db_config(filename='db_config.ini', section='postgresql'):
 
 def main():
     # 1. Make GET request to the desired URL
-    url = "https://xlx232.oevsv.at/_status.html"
+    url = "https://oe-link.oevsv.at/_status.html"
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
 
     response = requests.get(url, headers=headers)
     response.raise_for_status()  # Raise an error if request fails
 
-    # 2) Parse the HTML
+    # 2. Parse the HTML
     soup = BeautifulSoup(response.text, "html.parser")
 
     # Find all rows (tr) with class="trow" — these should hold the data we want
@@ -76,26 +61,32 @@ def main():
     now_utc = datetime.utcnow()
 
     for row in rows:
-        # Each row should contain 8 cells in this order:
-        #  0=Nr, 1=DV Station, 2=Band, 3=Linked, 4=DCS GROUP, 5=via, 6=Software, 7=HB-Timer
+        # Each row should contain 12 cells in this order:
+        #   0=NR, 1=REPEATER, 2=INFO, 3=ID, 4=TS1, 5=CQ, 6=TS1-INFO,
+        #   7=TS2, 8=TS2-INFO, 9=REF, 10=START, 11=HARDWARE
         columns = row.find_all("td")
-        if len(columns) < 8:
-            # Not a valid data row
-            continue
+        if len(columns) < 12:
+            continue  # skip rows that don't match this pattern
 
-        # Extract column text
         nr = columns[0].get_text(strip=True)
-        dv_station = columns[1].get_text(strip=True)
-        band = columns[2].get_text(strip=True)
-        linked = columns[3].get_text(strip=True)
-        dcs_group = columns[4].get_text(strip=True)
-        via = columns[5].get_text(strip=True)
-        software = columns[6].get_text(strip=True)
-        hb_timer = columns[7].get_text(strip=True)
+        repeater = columns[1].get_text(strip=True)
+        info = columns[2].get_text(strip=True)
+        repeater_id = columns[3].get_text(strip=True)
+        ts1 = columns[4].get_text(strip=True)
+        cq = columns[5].get_text(strip=True)
+        ts1_info = columns[6].get_text(strip=True)
+        ts2 = columns[7].get_text(strip=True)
+        ts2_info = columns[8].get_text(strip=True)
+        ref = columns[9].get_text(strip=True)
+        start = columns[10].get_text(strip=True)
+        hardware = columns[11].get_text(strip=True)
 
-        records.append((nr, dv_station, band, linked, dcs_group, via, software, hb_timer, now_utc))
+        records.append((
+            nr, repeater, info, repeater_id, ts1, cq, ts1_info,
+            ts2, ts2_info, ref, start, hardware, now_utc
+        ))
 
-    # 3. Insert the record set into PostgreSQL
+    # 3. Insert records into PostgreSQL
     db_params = load_db_config(filename='db_config.ini', section='postgresql')
     conn = psycopg2.connect(**db_params)
 
@@ -103,17 +94,30 @@ def main():
         with conn:
             with conn.cursor() as cur:
                 insert_query = sql.SQL("""
-                    INSERT INTO dstar_dcs009
-                        (nr, dv_station, band, linked, dcs_group, via, software, hb_timer, scraped_timestamp)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO scrap_oelink
+                    (
+                        nr, 
+                        repeater, 
+                        info, 
+                        repeater_id, 
+                        ts1, 
+                        cq, 
+                        ts1_info, 
+                        ts2, 
+                        ts2_info, 
+                        ref, 
+                        start, 
+                        hardware,
+                        scraped_timestamp
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """)
                 cur.executemany(insert_query, records)
-                print(f"Inserted {cur.rowcount} rows into dstar_dcs009.")
+                print(f"Inserted {cur.rowcount} rows into oe_link_status.")
     except Exception as e:
         print(f"Database error: {e}")
     finally:
         conn.close()
-
 
 # only execute main if not imported
 if __name__ == "__main__":
