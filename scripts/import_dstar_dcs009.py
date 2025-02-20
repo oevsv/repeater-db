@@ -9,11 +9,22 @@ from bs4 import BeautifulSoup
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime
-
-
-# -- SQL code to create the “dstar_ref” table in the PostgreSQL database
-
 from configparser import ConfigParser
+
+
+# -- SQL code to create the “dcs009_ref” table in the PostgreSQL database
+# CREATE TABLE dstart_dcs009 (
+# id SERIAL PRIMARY KEY,
+# nr TEXT,
+# dv_station TEXT,
+# band TEXT,
+# linked TEXT,
+# dcs_group TEXT,
+# via TEXT,
+# software TEXT,
+# hb_timer TEXT,
+# scraped_timestamp TIMESTAMP NOT NULL
+# );
 
 
 def load_db_config(filename='db_config.ini', section='postgresql'):
