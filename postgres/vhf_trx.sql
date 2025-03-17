@@ -686,7 +686,7 @@ COPY public.trx (uid, type_of_station, frequency_tx, frequency_rx, callsign, ant
 2054	repeater_voice	438.55	430.95	OE2XZR	\N	Gaisberg	OE2RPL	https://oe2.oevsv.at/funkbetrieb/oe2xzr/	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232222	t	\N	\N	t	t	32	\N	\N	\N	\N	\N	\N	\N	wrong QRG in IPSC2	2021-10-16 14:40:51.350258+02	1
 2323	repeater_voice	438.075	430.475	OE6XDG	\N	Klosterneuburgerhütte	OE6POD	\N	Motorola DR3000	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232608	t	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
 2324	repeater_voice	438.475	430.875	OE7XWT	\N	Weinbergerhaus	OE7MPI	\N	\N	t	\N	\N	active	\N	\N	\N	\N	\N	\N	232750	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-10-16 14:40:51.350258+02	1
-2322	repeaer_voice	438.625	431.025	OE3XVA	\N	Viehart	\N	\N	Motorola DR3000	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232071	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-11-04 20:39:42.723905+01	1
+2322	repeater_voice	438.625	431.025	OE3XVA	\N	Viehart	\N	\N	Motorola DR3000	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232071	t	\N	t	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2021-11-04 20:39:42.723905+01	1
 2374	atv	\N	1250	OE5XUL	\N	Geiersberg	OE5MLL	http://video.oe5xul.ampr.at/index.html	\N	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	t	H FM TT 6.5 MHz	ATV-input	Update 18.11.21	2021-11-18 16:10:59.432651+01	\N
 2327	repeater_voice	438.275	430.675	OE9XMH	\N	Muttersberg	OE9KBV	\N	Hytera RD625	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232907	t	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 6.11.21	2021-11-05 01:03:15.647638+01	1
 2325	repeater_voice	438.2875	430.6875	OE9XVI	\N	Vorderälpele	OE9PKV	\N	Motorola DR3000	\N	\N	\N	active	\N	\N	\N	\N	\N	\N	232902	t	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	Update 8.11.21	2021-10-16 14:40:51.350258+02	1
