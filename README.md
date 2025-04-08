@@ -11,7 +11,7 @@ The code below might work well with other distributions and releases, but was on
     apt install postgresql nginx postgis postgresql-13-postgis-3 git certbot python3-certbot-nginx
 ```
 
-##Web server certificate
+## Web server certificate
 ```
 # create 'Let's encrypt' certificate for repeater.oevsv.at
 certbot certonly
@@ -23,7 +23,7 @@ certbot certonly
 ## create web root
 mkdir /var/www/repeater.oevsv.at
 ```
-##Database
+## Database
 Setup users, tables and add OpenData sources
 ### Setup database vhf
 ```
