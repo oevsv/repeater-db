@@ -7,6 +7,7 @@ from scrap_dstar_ircddb import *
 from scrap_dstar_ref import *
 from scrap_dstar_xlx905 import *
 from scrap_oelink import *
+from scrap_winlink_pactor import *
 
 
 def scrap_all():
@@ -19,6 +20,7 @@ def scrap_all():
     status_dstar_ref = scrap_dstar_ref()
     status_dstar_xlx905 = scrap_dstar_xlx905()
     status_oelink = scrap_oelink()
+    status_winlink_pactor = scrap_winlink_pactor()
 
     # Accumulate
     statuses = [
@@ -29,7 +31,8 @@ def scrap_all():
         status_dstar_ircddb,
         status_dstar_ref,
         status_dstar_xlx905,
-        status_oelink
+        status_oelink,
+        status_winlink_pactor,
     ]
 
     # Check if any status code is non-zero
