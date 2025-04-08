@@ -117,3 +117,20 @@ mode           TEXT,
 type           TEXT,
 scraped_timestamp TIMESTAMP NOT NULL
 )
+
+-- scrap_winlink_gateways_init.sql
+CREATE TABLE scrap_winlink_pactor (
+    id SERIAL PRIMARY KEY,
+    posted TEXT,
+    callsign TEXT,
+    grid_square TEXT,
+    frequency TEXT,
+    mode TEXT,
+    hours TEXT,
+    qth TEXT,
+    contact_name TEXT,
+    contact_email TEXT,
+    contact_address TEXT,
+    contact_phone TEXT,
+    scraped_timestamp TIMESTAMP NOT NULL
+);
