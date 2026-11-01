@@ -98,18 +98,19 @@ COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and fun
 -- Name: geo(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
 --
 
-CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(distance double precision, site_name character varying)
-    LANGUAGE plpgsql
+CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(distance double precision, site_name character varying, longitude double precision, latitude double precision, fm boolean, dmr boolean, c4fm boolean, dstar boolean, digipeater boolean, beacon boolean, tetra boolean, atv boolean)
+    LANGUAGE sql STABLE
     AS $_$
-BEGIN
-   return query
-   
-   select round(ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom)) as distance,site.
-  site_name as site_name from site where ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom) < 199999
-          order by 
-                    ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom) limit 10;
- 
-END ;
+    WITH here AS (
+        SELECT public.st_setsrid(public.st_makepoint(x, y), 4326)::public.geography AS g
+    )
+    SELECT round(public.st_distance(here.g, public.st_transform(s.geom, 4326)::public.geography)) AS distance,
+           s.site_name, s.longitude, s.latitude,
+           s.fm, s.dmr, s.c4fm, s.dstar, s.digipeater, s.beacon, s.tetra, s.atv
+      FROM api.site_type s, here
+     WHERE public.st_dwithin(here.g, public.st_transform(s.geom, 4326)::public.geography, 200000)
+     ORDER BY distance
+     LIMIT 10;
 $_$;
 
 
