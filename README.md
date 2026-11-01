@@ -109,7 +109,8 @@ psql vhf -1 -f vhf_setting_options.sql
 ```
 
 ## Setup postgrest
-Postgrest is used to provide a REST interface to the database.
+Postgrest is used to provide a REST interface to the database. Its configuration is
+`/etc/postgrest/postgrest.conf`, see `postgres/postgrest.conf` for a template.
 ```
 # setup /etc/postgrest/postgrest.conf
 # test API
@@ -119,3 +120,54 @@ wget https://repeater.oevsv.at/api/trx
 wget https://repeater.oevsv.at/api/trx?dmr=eq.true&band=eq.2m
 ```
 
+### Shared secret for logged-in users (JWT)
+Without a token every request runs as `web_anon` (the public API above). Logged-in
+users of the web page reach PostgREST through the web page's login service
+(`repeater-website/auth-prototype`): it signs a short-lived token (JWT, HS256) per request,
+with role `web_user` and the user's `sub` / `callsign`. PostgREST checks the signature with
+a secret it shares with the login service, then runs the request as `web_user` with the
+token's claims available in SQL (`current_setting('request.jwt.claims', true)`). This is
+how `api.user_login()` knows who logged in.
+
+The secret is a random string of at least 32 characters. It must be **identical** in
+PostgREST (`jwt-secret`) and in the login service (`PGRST_JWT_SECRET`), and it must not go
+into this repository.
+
+```
+# 1. Create the secret once, readable only by root and PostgREST.
+#    (PostgREST ignores the trailing newline that echo / openssl write.)
+openssl rand -hex 32 > /etc/postgrest/jwt-secret
+chown root:<user PostgREST runs as> /etc/postgrest/jwt-secret   # see: systemctl cat postgrest
+chmod 640 /etc/postgrest/jwt-secret
+
+# 2. PostgREST: in /etc/postgrest/postgrest.conf, load it from that file
+#    ("@" = read from file, so the secret is not in the config itself)
+jwt-secret = "@/etc/postgrest/jwt-secret"
+#    Keep the defaults: jwt-secret-is-base64 = false (the string is the key as it is) and
+#    jwt-role-claim-key = ".role" (the token's "role" claim selects the Postgres role).
+
+# 3. Login service: the same value in its environment file /etc/repeater-auth.env
+echo "PGRST_JWT_SECRET=$(cat /etc/postgrest/jwt-secret)" >> /etc/repeater-auth.env
+
+# 4. Restart both
+systemctl restart postgrest repeater-auth
+```
+
+The roles used by the tokens are created by the migrations (`web_user`, granted to
+`authenticator`, in `postgres/migrations/2026-11-01_users.sql`).
+
+Check:
+```
+# no token: anonymous, not allowed -> 401
+curl -s -X POST http://127.0.0.1:3000/rpc/user_login
+# token signed with another secret -> 401 "No suitable key or wrong key type"
+# public API unchanged -> 200
+curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:3000/rpc/geo?x=16.37&y=48.2'
+# then log in on the web page: a row appears / last_seen changes
+psql vhf -c 'select callsign, first_seen, last_seen from users order by last_seen desc limit 5'
+```
+If logins work but no row appears, the secrets differ: the login service logs
+`user_login: HTTP 401 ...` (`journalctl -u repeater-auth`).
+
+To change the secret, write a new one to `/etc/postgrest/jwt-secret` and
+`/etc/repeater-auth.env` and restart both services; old tokens live only 30 seconds.

@@ -135,6 +135,74 @@ $_$;
 ALTER FUNCTION api.point_info(x double precision, y double precision) OWNER TO dz;
 
 --
+-- Name: users; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.users (
+    id uuid NOT NULL,
+    callsign character varying(20),
+    first_seen timestamp with time zone DEFAULT now() NOT NULL,
+    last_seen timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.users OWNER TO dz;
+
+--
+-- Name: TABLE users; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON TABLE public.users IS 'Users who logged in via OpenID Connect; written by api.user_login()';
+
+
+--
+-- Name: COLUMN users.id; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.users.id IS 'OpenID subject (sub) from Keycloak';
+
+
+--
+-- Name: COLUMN users.callsign; Type: COMMENT; Schema: public; Owner: dz
+--
+
+COMMENT ON COLUMN public.users.callsign IS 'Callsign from the latest login (preferred_username, upper case); may be NULL';
+
+
+--
+-- Name: user_login(); Type: FUNCTION; Schema: api; Owner: dz
+--
+
+CREATE FUNCTION api.user_login() RETURNS public.users
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    claims json := nullif(current_setting('request.jwt.claims', true), '')::json;
+    user_id uuid := (claims ->> 'sub')::uuid;
+    user_callsign character varying := nullif(upper(btrim(claims ->> 'callsign')), '');
+    result public.users;
+BEGIN
+    IF user_id IS NULL THEN
+        RAISE EXCEPTION 'no user in token (claim sub missing)'
+            USING ERRCODE = '42501'; -- insufficient_privilege: PostgREST answers 401/403
+    END IF;
+
+    INSERT INTO public.users AS u (id, callsign, first_seen, last_seen)
+    VALUES (user_id, user_callsign, now(), now())
+    ON CONFLICT (id) DO UPDATE
+        SET callsign = EXCLUDED.callsign,
+            last_seen = now()
+    RETURNING u.* INTO result;
+
+    RETURN result;
+END;
+$$;
+
+
+ALTER FUNCTION api.user_login() OWNER TO dz;
+
+--
 -- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
@@ -4801,6 +4869,14 @@ ALTER TABLE ONLY public.direct_channels
 
 
 --
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: band_uid_idx; Type: INDEX; Schema: public; Owner: dz
 --
 
@@ -5058,6 +5134,7 @@ CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW 
 
 GRANT USAGE ON SCHEMA api TO web_anon;
 GRANT ALL ON SCHEMA api TO dz;
+GRANT USAGE ON SCHEMA api TO web_user;
 
 
 --
@@ -5080,6 +5157,14 @@ GRANT ALL ON FUNCTION api.geo(x double precision, y double precision) TO web_ano
 --
 
 GRANT ALL ON FUNCTION api.point_info(x double precision, y double precision) TO web_anon;
+
+
+--
+-- Name: FUNCTION user_login(); Type: ACL; Schema: api; Owner: dz
+--
+
+REVOKE ALL ON FUNCTION api.user_login() FROM PUBLIC;
+GRANT ALL ON FUNCTION api.user_login() TO web_user;
 
 
 --
