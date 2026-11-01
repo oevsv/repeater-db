@@ -147,7 +147,10 @@ jwt-secret = "@/etc/postgrest/jwt-secret"
 #    jwt-role-claim-key = ".role" (the token's "role" claim selects the Postgres role).
 
 # 3. Login service: the same value in its environment file /etc/repeater-auth.env
-echo "PGRST_JWT_SECRET=$(cat /etc/postgrest/jwt-secret)" >> /etc/repeater-auth.env
+#    (drops an older PGRST_JWT_SECRET line; the leading \n protects against a last
+#    line without newline, which would otherwise swallow the new line)
+sed -i '/^PGRST_JWT_SECRET=/d' /etc/repeater-auth.env
+printf '\nPGRST_JWT_SECRET=%s\n' "$(cat /etc/postgrest/jwt-secret)" >> /etc/repeater-auth.env
 
 # 4. Restart both
 systemctl restart postgrest repeater-auth
@@ -166,8 +169,25 @@ curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:3000/rpc/geo?x=16.37&
 # then log in on the web page: a row appears / last_seen changes
 psql vhf -c 'select callsign, first_seen, last_seen from users order by last_seen desc limit 5'
 ```
-If logins work but no row appears, the secrets differ: the login service logs
-`user_login: HTTP 401 ...` (`journalctl -u repeater-auth`).
+If logins work but no row appears, look at the login service's log
+(`journalctl -u repeater-auth -n 50`). After each login it writes one of:
+
+| Log line | Meaning |
+|---|---|
+| `user_login: OE1ABC <id>, first seen ...` | recorded |
+| `user_login skipped: PGRST_JWT_SECRET is not set ...` | the secret doesn't reach the service (env file, restart) |
+| `user_login: HTTP 401 ... No suitable key ...` | the two secrets differ |
+| `user_login: HTTP 404 ...` | migration `2026-11-01_users.sql` not applied |
+| `user_login failed: fetch failed` / `... timeout` | PostgREST not reachable at `PGRST_UPSTREAM` |
+| nothing at all | the service runs an older `server.js` (redeploy, restart) |
+
+The service's start-up lines also show `jwt-secret set` or `jwt-secret NOT SET`. To check
+that both secrets are equal without printing them:
+```
+tr -d '\n' < /etc/postgrest/jwt-secret | sha256sum
+pid=$(systemctl show -p MainPID --value repeater-auth)
+tr '\0' '\n' < /proc/$pid/environ | sed -n 's/^PGRST_JWT_SECRET=//p' | tr -d '\n' | sha256sum
+```
 
 To change the secret, write a new one to `/etc/postgrest/jwt-secret` and
 `/etc/repeater-auth.env` and restart both services; old tokens live only 30 seconds.
