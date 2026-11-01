@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+\restrict bNM1Y1Q8oHnQGcc5dsnTbk8hrASQicW7ZpuW8qVEs5cdNyXcs2Bdcg6og91ciJ0
+
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -125,4 +127,6 @@ SELECT pg_catalog.setval('public.bl_kz_prefix_uid_seq', 9, true);
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict bNM1Y1Q8oHnQGcc5dsnTbk8hrASQicW7ZpuW8qVEs5cdNyXcs2Bdcg6og91ciJ0
 

@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+\restrict nSiHtEC5kq5NxrBU4tY9GklVRdrJgLfn2vkjTxncMol2mRZmPSUuf5b9Il5PAIh
+
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -24,6 +26,15 @@ CREATE SCHEMA api;
 
 
 ALTER SCHEMA api OWNER TO postgres;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO postgres;
 
 --
 -- Name: topology; Type: SCHEMA; Schema: -; Owner: postgres
@@ -82,6 +93,27 @@ CREATE EXTENSION IF NOT EXISTS postgis_topology WITH SCHEMA topology;
 
 COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and functions';
 
+
+--
+-- Name: geo(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
+--
+
+CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(distance double precision, site_name character varying)
+    LANGUAGE plpgsql
+    AS $_$
+BEGIN
+   return query
+   
+   select round(ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom)) as distance,site.
+  site_name as site_name from site where ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom) < 199999
+          order by 
+                    ST_distance((ST_Transform(ST_SetSRID(ST_MakePoint($1::FLOAT,$2::FLOAT),4326),3857)),site.geom) limit 10;
+ 
+END ;
+$_$;
+
+
+ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO dz;
 
 --
 -- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: dz
@@ -369,27 +401,37 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
     LANGUAGE plpgsql
     AS $$
    DECLARE
-      loc varchar;
+      loc varchar;                --  123456789012345678
+                                  --  123456789012345678901234
       alphabet_c constant varchar := 'ABCDEFGHIJKLMNOPQRSTUVWX';
       alphabet_n constant varchar := '0123456789';
-      lat_offset constant float8 := 90;
-      lat_range constant float8 := 180;
-      lat_rem float8;
+
       long_offset constant float8 := 180;
       long_range constant float8 := 360;
       long_rem float8;
+     
+      lat_offset constant float8 := 90;
+      lat_range constant float8 := 180;
+      lat_rem float8;
+
       digit_n int;
       base int;
       c varchar;
       -- minimum number of pairs (e.g. JN68UB)      
       pairs_min constant int := 3;
-      -- maximum pair number (goes beyond IARUs recommendation)
+      -- maximum pair number
       pairs_max constant int := 10;
       counter int;
       
    BEGIN
       --  Lat 48.07823  Long 13.730722 Locator: JN68UB78QS  => J6I7Q und N8B8S
+
+	  -- longitude: -180..+180, east is positive 
+	  -- latitude: -90..+90, north is positive
+	   
       -- range check parameters
+	  -- raise notice 'Longitude: "%" ', longitude;
+	  -- raise notice 'Latitude: "%" ', latitude; 
       if (latitude > 90 or latitude < -90 or
           longitude > 180 or longitude < -180 or
           pairs < pairs_min or pairs > pairs_max) then 
@@ -397,8 +439,10 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
       end if;
 
       loc = '';
-      lat_rem = (latitude + lat_offset)/lat_range;
       long_rem = (longitude + long_offset)/long_range;
+      lat_rem = (latitude + lat_offset)/lat_range;
+      -- raise notice 'Long rem: "%" ', long_rem;
+	  -- raise notice 'Lat rem: "%" ', lat_rem;
       -- long 180 and -180 are the same place, thus should have the same locator
       if long_rem = 1 then
         long_rem = 0;
@@ -423,23 +467,29 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
            end if;    
          end if;   
          -- raise notice 'base: %', base;
+        
          -- longitude first in pair
-          digit_n = trunc(long_rem*base);
-          if (digit_n > base) then
-            digit_n = base;
-          end if;
-          long_rem = (long_rem*base - digit_n);
+          -- longitude is singlar at poles, IARU R1 defines to use the first character
+          if (latitude = 90 or latitude = -90) then
+            digit_n=0;
+          else
+            digit_n = trunc(long_rem*base);
+            if (digit_n > base-1) then
+              digit_n = base-1;
+            end if;
+            long_rem = (long_rem*base - digit_n);
+          end if; 
           if (mod(counter,2)=1) then
             c = substr(alphabet_c,digit_n+1,1);
           else
             c = substr(alphabet_n,digit_n+1,1);
           end if;
           loc = concat (loc,c);
-          -- raise notice 'Longitude: % % ', digit_n,lat_rem;
+          -- raise notice 'Longitude: "%" % % ', c,digit_n,long_rem;
           -- latitude second in pair
           digit_n = trunc(lat_rem*base);
-          if (digit_n > base) then
-            digit_n = base;
+          if (digit_n > base-1) then
+            digit_n = base-1;
           end if;
           lat_rem = (lat_rem*base - digit_n);
           if (mod(counter,2)=1) then
@@ -448,7 +498,7 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
             c = substr(alphabet_n,digit_n+1,1);
           end if;
           loc = concat (loc,c);
-          -- raise notice 'Latitude: % % ', digit_n,lat_rem;
+          -- raise notice 'Latitude: "%" % % ', c, digit_n,lat_rem;
       end loop;            
      RETURN loc;
    END
@@ -681,10 +731,25 @@ CREATE VIEW api.settings AS
  SELECT setting_options.uid,
     setting_options.object,
     setting_options.filter
-   FROM public.setting_options;
+   FROM public.setting_options
+  WHERE (setting_options.uid = 1);
 
 
 ALTER TABLE api.settings OWNER TO postgres;
+
+--
+-- Name: settings2; Type: VIEW; Schema: api; Owner: dz
+--
+
+CREATE VIEW api.settings2 AS
+ SELECT setting_options.uid,
+    setting_options.object,
+    setting_options.filter
+   FROM public.setting_options
+  WHERE (setting_options.uid = 2);
+
+
+ALTER TABLE api.settings2 OWNER TO dz;
 
 --
 -- Name: site; Type: TABLE; Schema: public; Owner: dz
@@ -1116,6 +1181,41 @@ COMMENT ON COLUMN public.trx.cc IS 'Color Code (default DMR code is 1)';
 
 
 --
+-- Name: site_type; Type: VIEW; Schema: api; Owner: dz
+--
+
+CREATE VIEW api.site_type AS
+ SELECT site.site_name,
+    site.city,
+    bool_or((((trx.status)::text = 'active'::text) AND trx.fm AND ((trx.type_of_station)::text = 'repeater_voice'::text))) AS fm,
+    bool_or((((trx.status)::text = 'active'::text) AND trx.dmr AND ((trx.type_of_station)::text = 'repeater_voice'::text))) AS dmr,
+    bool_or((((trx.status)::text = 'active'::text) AND trx.c4fm AND ((trx.type_of_station)::text = 'repeater_voice'::text))) AS c4fm,
+    bool_or((((trx.status)::text = 'active'::text) AND trx.dstar AND ((trx.type_of_station)::text = 'repeater_voice'::text))) AS dstar,
+    bool_or((((trx.status)::text = 'active'::text) AND ((trx.type_of_station)::text = 'digipeater'::text))) AS digipeater,
+    bool_or((((trx.status)::text = 'active'::text) AND ((trx.type_of_station)::text = 'beacon'::text))) AS beacon,
+    bool_or((((trx.status)::text = 'active'::text) AND trx.tetra AND ((trx.type_of_station)::text = 'repeater_voice'::text))) AS tetra,
+    bool_or((((trx.status)::text = 'active'::text) AND ((trx.type_of_station)::text = 'atv'::text))) AS atv,
+    array_to_json(array_agg(DISTINCT trx.callsign)) AS callsigns,
+    site.longitude,
+    site.latitude,
+    public.vhf_nice_geo(site.longitude) AS longitude_formated,
+    public.vhf_nice_geo(site.latitude) AS latitude_formated,
+    site.sea_level,
+    site.locator_short,
+    site.locator_long,
+    site.geo_prefix,
+    site.bev_gid,
+    site.geom,
+    public.st_askml(site.geom) AS st_askml
+   FROM (public.site site
+     LEFT JOIN public.trx USING (site_name))
+  WHERE ((trx.status)::text = 'active'::text)
+  GROUP BY site.site_name, site.city, site.longitude, site.latitude, (public.vhf_nice_geo(site.longitude)), (public.vhf_nice_geo(site.latitude)), site.sea_level, site.locator_short, site.locator_long, site.geo_prefix, site.bev_gid, site.geom;
+
+
+ALTER TABLE api.site_type OWNER TO dz;
+
+--
 -- Name: trx; Type: VIEW; Schema: api; Owner: dz
 --
 
@@ -1161,6 +1261,229 @@ CREATE VIEW api.trx AS
 
 
 ALTER TABLE api.trx OWNER TO dz;
+
+--
+-- Name: oesterreich_bev_vgd_lam; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.oesterreich_bev_vgd_lam (
+    gid integer NOT NULL,
+    meridian smallint,
+    gkz integer,
+    bkz smallint,
+    fa_nr smallint,
+    bl_kz smallint,
+    st_kz smallint,
+    fl double precision,
+    kg_nr character varying(6),
+    kg character varying(50),
+    pg character varying(50),
+    pb character varying(50),
+    fa character varying(50),
+    gb_kz character varying(3),
+    gb character varying(50),
+    va_nr character varying(2),
+    va character varying(50),
+    bl character varying(50),
+    st character varying(50),
+    geom public.geometry(MultiPolygon,31287)
+);
+
+
+ALTER TABLE public.oesterreich_bev_vgd_lam OWNER TO postgres;
+
+--
+-- Name: trx_list; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.trx_list AS
+ SELECT public.vhf_band_name(t.frequency_tx) AS band,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
+    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
+    t.uid,
+    t.type_of_station,
+    t.frequency_tx,
+    t.frequency_rx,
+    t.callsign,
+    t.antenna_heigth,
+    t.site_name,
+    t.sysop,
+    t.url,
+    t.hardware,
+    t.mmdvm,
+    t.solar_power,
+    t.battery_power,
+    t.status,
+    t.fm,
+    t.fm_wakeup,
+    t.ctcss_tx,
+    t.ctcss_rx,
+    t.echolink,
+    t.echolink_id,
+    t.digital_id,
+    t.dmr,
+    t.ipsc2,
+    t.brandmeister,
+    t.network_registered,
+    t.c4fm,
+    t.c4fm_groups,
+    t.dstar,
+    t.dstar_rpt1,
+    NULL::character varying(1) AS dstar_rpt2,
+    t.tetra,
+    t.other_mode,
+    t.other_mode_name,
+    t.comment,
+    t.created_at,
+    s.city,
+    s.longitude,
+    s.latitude,
+    s.sea_level,
+    s.locator_short,
+    s.locator_long,
+    s.geo_prefix,
+    s.bev_gid,
+    s.geom,
+    o.kg,
+    o.pg,
+    o.bl,
+    t.cc,
+    concat("substring"((t.callsign)::text, 3, 4), '-',
+        CASE
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true)) THEN
+            CASE
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '6m'::text) THEN '6'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '2m'::text) THEN '2'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '70cm'::text) THEN '7'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '23cm'::text) THEN '3'::text
+                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '13cm'::text) THEN '1'::text
+                ELSE '0'::text
+            END
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true)) THEN 'D'::text
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.c4fm = true)) THEN 'C'::text
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true)) THEN 'I'::text
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.tetra = true)) THEN 'T'::text
+            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.other_mode = true)) THEN 'X'::text
+            WHEN ((t.type_of_station)::text = 'atv'::text) THEN 'A'::text
+            WHEN ((t.type_of_station)::text = 'digipeater'::text) THEN 'P'::text
+            WHEN ((t.type_of_station)::text = 'beacon'::text) THEN 'B'::text
+            ELSE 'N'::text
+        END) AS label
+   FROM ((public.trx t
+     LEFT JOIN public.site s ON (((s.site_name)::text = (t.site_name)::text)))
+     LEFT JOIN public.oesterreich_bev_vgd_lam o ON ((o.gid = s.bev_gid)))
+  WHERE ((t.status)::text = 'active'::text)
+  ORDER BY s.geo_prefix, t.frequency_tx;
+
+
+ALTER TABLE public.trx_list OWNER TO dz;
+
+--
+-- Name: trx_list; Type: VIEW; Schema: api; Owner: dz
+--
+
+CREATE VIEW api.trx_list AS
+ SELECT trx_list.band,
+    trx_list.ch,
+    trx_list.ch_new,
+    trx_list.uid,
+    trx_list.type_of_station,
+    trx_list.frequency_tx,
+    trx_list.frequency_rx,
+    trx_list.callsign,
+    trx_list.antenna_heigth,
+    trx_list.site_name,
+    trx_list.sysop,
+    trx_list.url,
+    trx_list.hardware,
+    trx_list.mmdvm,
+    trx_list.solar_power,
+    trx_list.battery_power,
+    trx_list.status,
+    trx_list.fm,
+    trx_list.fm_wakeup,
+    trx_list.ctcss_tx,
+    trx_list.ctcss_rx,
+    trx_list.echolink,
+    trx_list.echolink_id,
+    trx_list.digital_id,
+    trx_list.dmr,
+    trx_list.ipsc2,
+    trx_list.brandmeister,
+    trx_list.network_registered,
+    trx_list.c4fm,
+    trx_list.c4fm_groups,
+    trx_list.dstar,
+    trx_list.dstar_rpt1,
+    trx_list.tetra,
+    trx_list.other_mode,
+    trx_list.other_mode_name,
+    trx_list.comment,
+    trx_list.created_at,
+    trx_list.city,
+    trx_list.longitude,
+    trx_list.latitude,
+    trx_list.sea_level,
+    trx_list.locator_short,
+    trx_list.locator_long,
+    trx_list.geo_prefix,
+    trx_list.bev_gid,
+    trx_list.geom,
+    trx_list.kg,
+    trx_list.pg,
+    trx_list.bl,
+    trx_list.cc,
+    trx_list.label
+   FROM public.trx_list;
+
+
+ALTER TABLE api.trx_list OWNER TO dz;
+
+--
+-- Name: trx_type; Type: VIEW; Schema: api; Owner: dz
+--
+
+CREATE VIEW api.trx_type AS
+ SELECT trx.site_name,
+    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.fm IS TRUE)) AS fm,
+    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.dmr IS TRUE)) AS dmr,
+    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.c4fm IS TRUE)) AS c4fm,
+    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.dstar IS TRUE)) AS dstar,
+    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.tetra IS TRUE)) AS tetra,
+    ((trx.type_of_station)::text = 'beacon'::text) AS beacon,
+    ((trx.type_of_station)::text = 'digipeater'::text) AS digipeater,
+    ((trx.type_of_station)::text = 'atv'::text) AS atv,
+    COALESCE(public.vhf_band_name(trx.frequency_tx), public.vhf_band_name(trx.frequency_rx)) AS band,
+    trx.frequency_tx,
+    trx.frequency_rx,
+    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 0) AS ch,
+    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 1) AS ch_new,
+    trx.callsign,
+    trx.antenna_heigth,
+    trx.sysop,
+    trx.url,
+    trx.hardware,
+    trx.mmdvm,
+    trx.solar_power,
+    trx.battery_power,
+    trx.fm_wakeup,
+    trx.ctcss_tx,
+    trx.ctcss_rx,
+    trx.echolink,
+    trx.echolink_id,
+    trx.digital_id,
+    trx.cc,
+    trx.ipsc2,
+    trx.brandmeister,
+    trx.c4fm_groups,
+    trx.dstar_rpt1,
+    trx.other_mode_name,
+    trx.comment
+   FROM public.trx
+  WHERE ((trx.status)::text = 'active'::text);
+
+
+ALTER TABLE api.trx_type OWNER TO dz;
 
 --
 -- Name: bands; Type: TABLE; Schema: public; Owner: dz
@@ -2369,36 +2692,6 @@ ALTER SEQUENCE public.licenses_uid_seq OWNED BY public.licenses.uid;
 
 
 --
--- Name: oesterreich_bev_vgd_lam; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.oesterreich_bev_vgd_lam (
-    gid integer NOT NULL,
-    meridian smallint,
-    gkz integer,
-    bkz smallint,
-    fa_nr smallint,
-    bl_kz smallint,
-    st_kz smallint,
-    fl double precision,
-    kg_nr character varying(6),
-    kg character varying(50),
-    pg character varying(50),
-    pb character varying(50),
-    fa character varying(50),
-    gb_kz character varying(3),
-    gb character varying(50),
-    va_nr character varying(2),
-    va character varying(50),
-    bl character varying(50),
-    st character varying(50),
-    geom public.geometry(MultiPolygon,31287)
-);
-
-
-ALTER TABLE public.oesterreich_bev_vgd_lam OWNER TO postgres;
-
---
 -- Name: oesterreich_bev_vgd_lam_gid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -2757,6 +3050,398 @@ CREATE VIEW public.rt_ic9700_fm AS
 ALTER TABLE public.rt_ic9700_fm OWNER TO dz;
 
 --
+-- Name: scrap_c4fm_ycs232; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_c4fm_ycs232 (
+    id integer NOT NULL,
+    nr text,
+    callsign text,
+    group_code text,
+    name text,
+    qrg text,
+    repeater_id text,
+    dg_id text,
+    name2 text,
+    rx_tx text,
+    mode text,
+    type text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_c4fm_ycs232 OWNER TO dz;
+
+--
+-- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_c4fm_ycs232_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_c4fm_ycs232_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_c4fm_ycs232_id_seq OWNED BY public.scrap_c4fm_ycs232.id;
+
+
+--
+-- Name: scrap_dmr_ipsc2; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dmr_ipsc2 (
+    id integer NOT NULL,
+    nr text,
+    repeater text,
+    info text,
+    repeater_id text,
+    ts1 text,
+    cq text,
+    ts1_info text,
+    ts2 text,
+    ts2_info text,
+    ref text,
+    start text,
+    hardware text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dmr_ipsc2 OWNER TO dz;
+
+--
+-- Name: scrap_dmr_ipsc2_hotspot; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dmr_ipsc2_hotspot (
+    id integer NOT NULL,
+    nr text,
+    repeater text,
+    info text,
+    repeater_id text,
+    ts1 text,
+    cq text,
+    ts1_info text,
+    ts2 text,
+    ts2_info text,
+    ref text,
+    start text,
+    hardware text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dmr_ipsc2_hotspot OWNER TO dz;
+
+--
+-- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dmr_ipsc2_hotspot_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq OWNED BY public.scrap_dmr_ipsc2_hotspot.id;
+
+
+--
+-- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dmr_ipsc2_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dmr_ipsc2_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dmr_ipsc2_id_seq OWNED BY public.scrap_dmr_ipsc2.id;
+
+
+--
+-- Name: scrap_dstar_dcs009; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dstar_dcs009 (
+    id integer NOT NULL,
+    nr text,
+    dv_station text,
+    band text,
+    linked text,
+    dcs_group text,
+    via text,
+    software text,
+    hb_timer text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dstar_dcs009 OWNER TO dz;
+
+--
+-- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dstar_dcs009_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dstar_dcs009_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dstar_dcs009_id_seq OWNED BY public.scrap_dstar_dcs009.id;
+
+
+--
+-- Name: scrap_dstar_ircddb; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dstar_ircddb (
+    id integer NOT NULL,
+    callsign text,
+    status text,
+    country text,
+    last_heard text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dstar_ircddb OWNER TO dz;
+
+--
+-- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dstar_ircddb_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dstar_ircddb_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dstar_ircddb_id_seq OWNED BY public.scrap_dstar_ircddb.id;
+
+
+--
+-- Name: scrap_dstar_ref; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dstar_ref (
+    id integer NOT NULL,
+    callsign text NOT NULL,
+    city text NOT NULL,
+    state text,
+    freq_2m text,
+    freq_70cm text,
+    freq_23cm text,
+    freq_23cmdd text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dstar_ref OWNER TO dz;
+
+--
+-- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dstar_ref_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dstar_ref_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dstar_ref_id_seq OWNED BY public.scrap_dstar_ref.id;
+
+
+--
+-- Name: scrap_dstar_xlx905; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_dstar_xlx905 (
+    id integer NOT NULL,
+    no text,
+    flag text,
+    dv_station text,
+    band text,
+    last_heard text,
+    linked_for text,
+    protocol text,
+    module text,
+    ip_address text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dstar_xlx905 OWNER TO dz;
+
+--
+-- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_dstar_xlx905_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_dstar_xlx905_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_dstar_xlx905_id_seq OWNED BY public.scrap_dstar_xlx905.id;
+
+
+--
+-- Name: scrap_oelink; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_oelink (
+    id integer NOT NULL,
+    nr text,
+    repeater text,
+    info text,
+    repeater_id text,
+    ts1 text,
+    cq text,
+    ts1_info text,
+    ts2 text,
+    ts2_info text,
+    ref text,
+    start text,
+    hardware text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_oelink OWNER TO dz;
+
+--
+-- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_oelink_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_oelink_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_oelink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_oelink_id_seq OWNED BY public.scrap_oelink.id;
+
+
+--
+-- Name: scrap_winlink_pactor; Type: TABLE; Schema: public; Owner: dz
+--
+
+CREATE TABLE public.scrap_winlink_pactor (
+    id integer NOT NULL,
+    posted text,
+    callsign text,
+    grid_square text,
+    frequency text,
+    mode text,
+    hours text,
+    qth text,
+    contact_name text,
+    contact_email text,
+    contact_address text,
+    contact_phone text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_winlink_pactor OWNER TO dz;
+
+--
+-- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+--
+
+CREATE SEQUENCE public.scrap_winlink_pactor_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.scrap_winlink_pactor_id_seq OWNER TO dz;
+
+--
+-- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+--
+
+ALTER SEQUENCE public.scrap_winlink_pactor_id_seq OWNED BY public.scrap_winlink_pactor.id;
+
+
+--
 -- Name: setting_options_uid_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -2921,7 +3606,8 @@ CREATE VIEW public.site_callsigns_fm AS
     s.site_name AS name,
     s.city,
     string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
-    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx,
+    string_agg(DISTINCT (trx.ctcss_rx)::text, '/'::text ORDER BY (trx.ctcss_rx)::text DESC) AS ctcss
    FROM (public.site s
      LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
   WHERE ((trx.fm = true) AND ((trx.status)::text = 'active'::text))
@@ -2929,6 +3615,26 @@ CREATE VIEW public.site_callsigns_fm AS
 
 
 ALTER TABLE public.site_callsigns_fm OWNER TO dz;
+
+--
+-- Name: site_callsigns_oe_link; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.site_callsigns_oe_link AS
+ SELECT s.uid,
+    s.geom,
+    s.site_name AS name,
+    s.city,
+    string_agg(DISTINCT (trx.callsign)::text, ' '::text ORDER BY (trx.callsign)::text) AS callsigns,
+    string_agg(DISTINCT (public.vhf_nice_frq(trx.frequency_tx))::text, '/'::text ORDER BY (public.vhf_nice_frq(trx.frequency_tx))::text) AS frequencies_tx,
+    string_agg(DISTINCT (trx.ctcss_rx)::text, '/'::text ORDER BY (trx.ctcss_rx)::text DESC) AS ctcss
+   FROM (public.site s
+     LEFT JOIN public.trx ON (((s.site_name)::text = (trx.site_name)::text)))
+  WHERE ((trx.fm = true) AND ((trx.status)::text = 'active'::text) AND ((trx.comment)::text = 'OE-Link'::text))
+  GROUP BY s.site_name, s.geom, s.city, s.uid;
+
+
+ALTER TABLE public.site_callsigns_oe_link OWNER TO dz;
 
 --
 -- Name: site_callsigns_tetra; Type: VIEW; Schema: public; Owner: dz
@@ -3108,104 +3814,19 @@ ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 
 
 --
--- Name: trx_list; Type: VIEW; Schema: public; Owner: dz
---
-
-CREATE VIEW public.trx_list AS
- SELECT public.vhf_band_name(t.frequency_tx) AS band,
-    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 0) AS ch,
-    public.vhf_channel_name(t.frequency_tx, t.frequency_rx, 1) AS ch_new,
-    t.uid,
-    t.type_of_station,
-    t.frequency_tx,
-    t.frequency_rx,
-    t.callsign,
-    t.antenna_heigth,
-    t.site_name,
-    t.sysop,
-    t.url,
-    t.hardware,
-    t.mmdvm,
-    t.solar_power,
-    t.battery_power,
-    t.status,
-    t.fm,
-    t.fm_wakeup,
-    t.ctcss_tx,
-    t.ctcss_rx,
-    t.echolink,
-    t.echolink_id,
-    t.digital_id,
-    t.dmr,
-    t.ipsc2,
-    t.brandmeister,
-    t.network_registered,
-    t.c4fm,
-    t.c4fm_groups,
-    t.dstar,
-    t.dstar_rpt1,
-    t.dstar_rpt2,
-    t.tetra,
-    t.other_mode,
-    t.other_mode_name,
-    t.comment,
-    t.created_at,
-    s.city,
-    s.longitude,
-    s.latitude,
-    s.sea_level,
-    s.locator_short,
-    s.locator_long,
-    s.geo_prefix,
-    s.bev_gid,
-    s.geom,
-    o.kg,
-    o.pg,
-    o.bl,
-    t.cc,
-    concat("substring"((t.callsign)::text, 3, 4), '-',
-        CASE
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.fm = true)) THEN
-            CASE
-                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '6m'::text) THEN '6'::text
-                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '2m'::text) THEN '2'::text
-                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '70cm'::text) THEN '7'::text
-                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '23cm'::text) THEN '3'::text
-                WHEN ((public.vhf_band_name(t.frequency_tx))::text = '13cm'::text) THEN '1'::text
-                ELSE '0'::text
-            END
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dmr = true)) THEN 'D'::text
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.c4fm = true)) THEN 'C'::text
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true)) THEN 'I'::text
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.tetra = true)) THEN 'T'::text
-            WHEN (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.other_mode = true)) THEN 'X'::text
-            WHEN ((t.type_of_station)::text = 'atv'::text) THEN 'A'::text
-            WHEN ((t.type_of_station)::text = 'digipeater'::text) THEN 'P'::text
-            WHEN ((t.type_of_station)::text = 'beacon'::text) THEN 'B'::text
-            ELSE 'N'::text
-        END) AS label
-   FROM ((public.trx t
-     LEFT JOIN public.site s ON (((s.site_name)::text = (t.site_name)::text)))
-     LEFT JOIN public.oesterreich_bev_vgd_lam o ON ((o.gid = s.bev_gid)))
-  WHERE ((t.status)::text = 'active'::text)
-  ORDER BY s.geo_prefix, t.frequency_tx;
-
-
-ALTER TABLE public.trx_list OWNER TO dz;
-
---
 -- Name: trx_list_atv; Type: VIEW; Schema: public; Owner: dz
 --
 
 CREATE VIEW public.trx_list_atv AS
  SELECT COALESCE(t.band, public.vhf_band_name(t.frequency_rx)) AS "Band",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3246,13 +3867,14 @@ ALTER TABLE public.trx_list_beacon OWNER TO dz;
 CREATE VIEW public.trx_list_c4fm AS
  SELECT t.band AS "Band",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3288,6 +3910,7 @@ CREATE VIEW public.trx_list_digipeater AS
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.other_mode_name AS "Mode",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3305,14 +3928,15 @@ ALTER TABLE public.trx_list_digipeater OWNER TO dz;
 CREATE VIEW public.trx_list_dmr AS
  SELECT t.band AS "Band",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.digital_id AS "Digital ID",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3350,12 +3974,13 @@ ALTER TABLE public.trx_list_dmr OWNER TO dz;
 CREATE VIEW public.trx_list_dstar AS
  SELECT t.band AS "Band",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.ch AS "Ch",
     t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3382,8 +4007,8 @@ CREATE VIEW public.trx_list_fm AS
  SELECT t.band AS "Band",
     t.label AS "Label",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frequency RX",
     t.ch AS "Ch",
@@ -3393,6 +4018,7 @@ CREATE VIEW public.trx_list_fm AS
     t.sysop AS "Sysop",
     t.echolink_id AS "Echolink",
     t.comment AS "Comment",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel"
@@ -3403,18 +4029,74 @@ CREATE VIEW public.trx_list_fm AS
 ALTER TABLE public.trx_list_fm OWNER TO dz;
 
 --
+-- Name: trx_list_fm_oe_link; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.trx_list_fm_oe_link AS
+ SELECT t.band AS "Band",
+    t.label AS "Label",
+    t.callsign AS "Callsign",
+    t.site_name AS "Site",
+    t.city AS "City",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frequency RX",
+    t.ch AS "Ch",
+    t.ctcss_tx AS "CTCSS TX",
+    t.ctcss_rx AS "CTCSS RX",
+    t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
+    t.sea_level AS "Sealevel"
+   FROM public.trx_list t
+  WHERE ((t.fm = true) AND ((t.comment)::text = 'OE-Link'::text));
+
+
+ALTER TABLE public.trx_list_fm_oe_link OWNER TO dz;
+
+--
+-- Name: trx_list_fm_qsp; Type: VIEW; Schema: public; Owner: dz
+--
+
+CREATE VIEW public.trx_list_fm_qsp AS
+ SELECT t.band AS "Band",
+    t.label AS "Label",
+    t.callsign AS "Callsign",
+    t.site_name AS "Site",
+    t.city AS "City",
+    public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
+    public.vhf_nice_frq(t.frequency_rx) AS "Frequency RX",
+    t.ch AS "Ch",
+    t.ctcss_tx AS "CTCSS TX",
+    t.ctcss_rx AS "CTCSS RX",
+    t.fm_wakeup AS "Wakeup",
+    t.sysop AS "Sysop",
+    t.echolink_id AS "Echolink",
+    t.comment AS "Comment",
+    t.locator_short AS "Locator",
+    public.vhf_nice_geo(t.longitude) AS "Longitude",
+    public.vhf_nice_geo(t.latitude) AS "Latitude",
+    t.sea_level AS "Sealevel"
+   FROM public.trx_list t
+  WHERE (t.fm = true);
+
+
+ALTER TABLE public.trx_list_fm_qsp OWNER TO dz;
+
+--
 -- Name: trx_list_tetra; Type: VIEW; Schema: public; Owner: dz
 --
 
 CREATE VIEW public.trx_list_tetra AS
  SELECT t.band AS "Band",
     t.callsign AS "Callsign",
-    t.city AS "City",
     t.site_name AS "Site",
+    t.city AS "City",
     public.vhf_nice_frq(t.frequency_tx) AS "Frequency TX",
     public.vhf_nice_frq(t.frequency_rx) AS "Frquency RX",
     t.hardware AS "Hardware",
     t.sysop AS "Sysop",
+    t.locator_short AS "Locator",
     public.vhf_nice_geo(t.longitude) AS "Longitude",
     public.vhf_nice_geo(t.latitude) AS "Latitude",
     t.sea_level AS "Sealevel",
@@ -3463,7 +4145,7 @@ CREATE VIEW public.trx_verylong AS
     t.c4fm_groups,
     t.dstar,
     t.dstar_rpt1,
-    t.dstar_rpt2,
+    NULL::character varying(1) AS dstar_rpt2,
     t.tetra,
     t.other_mode,
     t.other_mode_name,
@@ -3882,6 +4564,69 @@ ALTER TABLE ONLY public.packet_import ALTER COLUMN uid SET DEFAULT nextval('publ
 
 
 --
+-- Name: scrap_c4fm_ycs232 id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_c4fm_ycs232 ALTER COLUMN id SET DEFAULT nextval('public.scrap_c4fm_ycs232_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dmr_ipsc2 id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_ipsc2_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dmr_ipsc2_hotspot id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2_hotspot ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_ipsc2_hotspot_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dstar_dcs009 id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_dcs009 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_dcs009_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dstar_ircddb id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ircddb ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_ircddb_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dstar_ref id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ref ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_ref_id_seq'::regclass);
+
+
+--
+-- Name: scrap_dstar_xlx905 id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_xlx905 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_xlx905_id_seq'::regclass);
+
+
+--
+-- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_oelink ALTER COLUMN id SET DEFAULT nextval('public.scrap_oelink_id_seq'::regclass);
+
+
+--
+-- Name: scrap_winlink_pactor id; Type: DEFAULT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_winlink_pactor ALTER COLUMN id SET DEFAULT nextval('public.scrap_winlink_pactor_id_seq'::regclass);
+
+
+--
 -- Name: setting_options uid; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -3946,6 +4691,78 @@ ALTER TABLE ONLY public.import_hamnet_site
 
 ALTER TABLE ONLY public.site
     ADD CONSTRAINT pk_site PRIMARY KEY (uid);
+
+
+--
+-- Name: scrap_c4fm_ycs232 scrap_c4fm_ycs232_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_c4fm_ycs232
+    ADD CONSTRAINT scrap_c4fm_ycs232_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dmr_ipsc2_hotspot scrap_dmr_ipsc2_hotspot_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2_hotspot
+    ADD CONSTRAINT scrap_dmr_ipsc2_hotspot_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dmr_ipsc2 scrap_dmr_ipsc2_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2
+    ADD CONSTRAINT scrap_dmr_ipsc2_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dstar_dcs009 scrap_dstar_dcs009_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_dcs009
+    ADD CONSTRAINT scrap_dstar_dcs009_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dstar_ircddb scrap_dstar_ircddb_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ircddb
+    ADD CONSTRAINT scrap_dstar_ircddb_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dstar_ref scrap_dstar_ref_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ref
+    ADD CONSTRAINT scrap_dstar_ref_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dstar_xlx905 scrap_dstar_xlx905_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_dstar_xlx905
+    ADD CONSTRAINT scrap_dstar_xlx905_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_oelink scrap_oelink_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_oelink
+    ADD CONSTRAINT scrap_oelink_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_winlink_pactor scrap_winlink_pactor_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.scrap_winlink_pactor
+    ADD CONSTRAINT scrap_winlink_pactor_pkey PRIMARY KEY (id);
 
 
 --
@@ -4225,6 +5042,21 @@ GRANT ALL ON SCHEMA api TO dz;
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- Name: FUNCTION geo(x double precision, y double precision); Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT ALL ON FUNCTION api.geo(x double precision, y double precision) TO web_anon;
+
+
+--
 -- Name: TABLE setting_options; Type: ACL; Schema: public; Owner: postgres
 --
 
@@ -4240,6 +5072,13 @@ GRANT SELECT ON TABLE api.settings TO web_anon;
 
 
 --
+-- Name: TABLE settings2; Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT SELECT ON TABLE api.settings2 TO web_anon;
+
+
+--
 -- Name: TABLE site; Type: ACL; Schema: api; Owner: dz
 --
 
@@ -4247,10 +5086,38 @@ GRANT SELECT ON TABLE api.site TO web_anon;
 
 
 --
+-- Name: TABLE site_type; Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT SELECT ON TABLE api.site_type TO web_anon;
+
+
+--
 -- Name: TABLE trx; Type: ACL; Schema: api; Owner: dz
 --
 
 GRANT SELECT ON TABLE api.trx TO web_anon;
+
+
+--
+-- Name: TABLE oesterreich_bev_vgd_lam; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.oesterreich_bev_vgd_lam TO dz;
+
+
+--
+-- Name: TABLE trx_list; Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT SELECT ON TABLE api.trx_list TO web_anon;
+
+
+--
+-- Name: TABLE trx_type; Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT SELECT ON TABLE api.trx_type TO web_anon;
 
 
 --
@@ -4268,13 +5135,8 @@ GRANT ALL ON TABLE public.dhm TO dz;
 
 
 --
--- Name: TABLE oesterreich_bev_vgd_lam; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT ON TABLE public.oesterreich_bev_vgd_lam TO dz;
-
-
---
 -- PostgreSQL database dump complete
 --
+
+\unrestrict nSiHtEC5kq5NxrBU4tY9GklVRdrJgLfn2vkjTxncMol2mRZmPSUuf5b9Il5PAIh
 

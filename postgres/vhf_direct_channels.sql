@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+\restrict OPzMc19sziPanbqKkCCLkuo6zrPFiX4sCnALhk0Lmik7ZWXxa0N6Efg3obzhUjA
+
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -409,4 +411,6 @@ CREATE INDEX trx_tetra_idx_1 ON public.direct_channels USING btree (tetra);
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict OPzMc19sziPanbqKkCCLkuo6zrPFiX4sCnALhk0Lmik7ZWXxa0N6Efg3obzhUjA
 

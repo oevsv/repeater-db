@@ -2,8 +2,10 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-0+deb11u1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-0+deb11u1)
+\restrict ZjyuR2vHeSSCUO67WO0TQsajTfeCHZwKYwDMbgp38O9RPQPZBOgly3bUelCRo0e
+
+-- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
+-- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -131,4 +133,6 @@ GRANT SELECT ON TABLE public.bands TO web_anon;
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict ZjyuR2vHeSSCUO67WO0TQsajTfeCHZwKYwDMbgp38O9RPQPZBOgly3bUelCRo0e
 
