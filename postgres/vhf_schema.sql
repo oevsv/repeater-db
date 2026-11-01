@@ -120,14 +120,15 @@ ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO dz;
 -- Name: point_info(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
 --
 
-CREATE FUNCTION api.point_info(x double precision, y double precision) RETURNS TABLE(longitude double precision, latitude double precision, longitude_formated character varying, latitude_formated character varying, locator_6 character varying, locator_10 character varying)
+CREATE FUNCTION api.point_info(x double precision, y double precision) RETURNS TABLE(longitude double precision, latitude double precision, longitude_formated character varying, latitude_formated character varying, locator_6 character varying, locator_10 character varying, locator_20 character varying)
     LANGUAGE sql STABLE
     AS $_$
     SELECT x, y,
            btrim(public.vhf_nice_geo(x))::character varying,
            btrim(public.vhf_nice_geo(y))::character varying,
            public.vhf_maidenhead_loc(x, y, 3),
-           public.vhf_maidenhead_loc(x, y, 5);
+           public.vhf_maidenhead_loc(x, y, 5),
+           public.vhf_maidenhead_loc(x, y, 10);
 $_$;
 
 
