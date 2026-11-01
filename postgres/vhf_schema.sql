@@ -117,6 +117,23 @@ $$;
 ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO dz;
 
 --
+-- Name: point_info(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
+--
+
+CREATE FUNCTION api.point_info(x double precision, y double precision) RETURNS TABLE(longitude double precision, latitude double precision, longitude_formated character varying, latitude_formated character varying, locator_6 character varying, locator_10 character varying)
+    LANGUAGE sql STABLE
+    AS $_$
+    SELECT x, y,
+           btrim(public.vhf_nice_geo(x))::character varying,
+           btrim(public.vhf_nice_geo(y))::character varying,
+           public.vhf_maidenhead_loc(x, y, 3),
+           public.vhf_maidenhead_loc(x, y, 5);
+$_$;
+
+
+ALTER FUNCTION api.point_info(x double precision, y double precision) OWNER TO dz;
+
+--
 -- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: dz
 --
 
@@ -5055,6 +5072,13 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 --
 
 GRANT ALL ON FUNCTION api.geo(x double precision, y double precision) TO web_anon;
+
+
+--
+-- Name: FUNCTION point_info(x double precision, y double precision); Type: ACL; Schema: api; Owner: dz
+--
+
+GRANT ALL ON FUNCTION api.point_info(x double precision, y double precision) TO web_anon;
 
 
 --
