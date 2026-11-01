@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nSiHtEC5kq5NxrBU4tY9GklVRdrJgLfn2vkjTxncMol2mRZmPSUuf5b9Il5PAIh
+\restrict 8CYXLwuEISxxsR8wVarnwnolNkrYBRjIv6c8UMJkJE7kkjg3GhRAAFCzCqXFSpo
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -100,7 +100,7 @@ COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and fun
 
 CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(distance double precision, site_name character varying, longitude double precision, latitude double precision, fm boolean, dmr boolean, c4fm boolean, dstar boolean, digipeater boolean, beacon boolean, tetra boolean, atv boolean)
     LANGUAGE sql STABLE
-    AS $_$
+    AS $$
     WITH here AS (
         SELECT public.st_setsrid(public.st_makepoint(x, y), 4326)::public.geography AS g
     )
@@ -111,7 +111,7 @@ CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(di
      WHERE public.st_dwithin(here.g, public.st_transform(s.geom, 4326)::public.geography, 200000)
      ORDER BY distance
      LIMIT 10;
-$_$;
+$$;
 
 
 ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO dz;
@@ -5139,5 +5139,5 @@ GRANT ALL ON TABLE public.dhm TO dz;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nSiHtEC5kq5NxrBU4tY9GklVRdrJgLfn2vkjTxncMol2mRZmPSUuf5b9Il5PAIh
+\unrestrict 8CYXLwuEISxxsR8wVarnwnolNkrYBRjIv6c8UMJkJE7kkjg3GhRAAFCzCqXFSpo
 

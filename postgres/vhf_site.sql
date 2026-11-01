@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WXPevMnh6GTP5tHQrJZJCWVWpEmb8dntnvKbXHtw2al0PdoPRZLTKwmpiGIJWrk
+\restrict ebKRkAFTyp9uCEbJplADysOX9GCYbyFK29In3OF3giBOu8zQAlhxKIF4wtMnf7w
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -18,148 +18,13 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- Name: site; Type: TABLE; Schema: public; Owner: dz
---
-
-CREATE TABLE public.site (
-    uid bigint NOT NULL,
-    site_name character varying(100) NOT NULL,
-    city character varying(100),
-    longitude double precision,
-    latitude double precision,
-    sea_level double precision,
-    locator_short character varying(6),
-    locator_long character varying(20),
-    geo_prefix character varying(3),
-    bev_gid integer,
-    geom public.geometry(Geometry,3857),
-    internal character varying(1000)
-);
-
-
-ALTER TABLE public.site OWNER TO dz;
-
---
--- Name: COLUMN site.uid; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.uid IS 'UID';
-
-
---
--- Name: COLUMN site.site_name; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.site_name IS 'Name of station, e.g. Grünberg';
-
-
---
--- Name: COLUMN site.city; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.city IS 'Bigger city around station (to identify station)';
-
-
---
--- Name: COLUMN site.longitude; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.longitude IS 'Longitude of station, e.g. 48. North is positive';
-
-
---
--- Name: COLUMN site.latitude; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.latitude IS 'Latitude of station, e.g. 15. East is positive';
-
-
---
--- Name: COLUMN site.sea_level; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.sea_level IS 'See level using WGS84 geoid in meter.';
-
-
---
--- Name: COLUMN site.locator_short; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.locator_short IS 'Short locator, e.g. JN78ab';
-
-
---
--- Name: COLUMN site.locator_long; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.locator_long IS 'Long locator (exact location)';
-
-
---
--- Name: COLUMN site.geo_prefix; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.geo_prefix IS 'Amateur radio prefix of Austrian location, e.g. OE3';
-
-
---
--- Name: COLUMN site.bev_gid; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.bev_gid IS 'GID of BEV table (pointer to community, etc.)';
-
-
---
--- Name: COLUMN site.geom; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.geom IS 'Geometry of location';
-
-
---
--- Name: COLUMN site.internal; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.site.internal IS 'Internal comment';
-
-
---
--- Name: station_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
---
-
-CREATE SEQUENCE public.station_uid_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.station_uid_seq OWNER TO dz;
-
---
--- Name: station_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
---
-
-ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
-
-
---
--- Name: site uid; Type: DEFAULT; Schema: public; Owner: dz
---
-
-ALTER TABLE ONLY public.site ALTER COLUMN uid SET DEFAULT nextval('public.station_uid_seq'::regclass);
-
-
 --
 -- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: dz
 --
+
+SET SESSION AUTHORIZATION DEFAULT;
+
+ALTER TABLE public.site DISABLE TRIGGER ALL;
 
 COPY public.site (uid, site_name, city, longitude, latitude, sea_level, locator_short, locator_long, geo_prefix, bev_gid, geom, internal) FROM stdin;
 139	Kuhberg/Egelsee	Krems	15.582438111305239	48.41759159326165	397	JN78SK	JN78SK90VF43FG26FE44	OE3	209	0101000020110F000028196C13E5773A4136AB20A1D88F5741	\N
@@ -340,6 +205,8 @@ COPY public.site (uid, site_name, city, longitude, latitude, sea_level, locator_
 \.
 
 
+ALTER TABLE public.site ENABLE TRIGGER ALL;
+
 --
 -- Name: station_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
 --
@@ -348,37 +215,8 @@ SELECT pg_catalog.setval('public.station_uid_seq', 182, true);
 
 
 --
--- Name: site pk_site; Type: CONSTRAINT; Schema: public; Owner: dz
---
-
-ALTER TABLE ONLY public.site
-    ADD CONSTRAINT pk_site PRIMARY KEY (uid);
-
-
---
--- Name: site_geom_gix; Type: INDEX; Schema: public; Owner: dz
---
-
-CREATE INDEX site_geom_gix ON public.site USING gist (geom);
-
-
---
--- Name: site_name_idx; Type: INDEX; Schema: public; Owner: dz
---
-
-CREATE UNIQUE INDEX site_name_idx ON public.site USING btree (site_name);
-
-
---
--- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: dz
---
-
-CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_site();
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WXPevMnh6GTP5tHQrJZJCWVWpEmb8dntnvKbXHtw2al0PdoPRZLTKwmpiGIJWrk
+\unrestrict ebKRkAFTyp9uCEbJplADysOX9GCYbyFK29In3OF3giBOu8zQAlhxKIF4wtMnf7w
 

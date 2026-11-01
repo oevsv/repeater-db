@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZjyuR2vHeSSCUO67WO0TQsajTfeCHZwKYwDMbgp38O9RPQPZBOgly3bUelCRo0e
+\restrict 5D4ZlPperzvDEjW5b9d61TKlbtJib6XgDgrqeAE40BnM590w2NyQPogMv7FUisf
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -18,64 +18,13 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- Name: bands; Type: TABLE; Schema: public; Owner: dz
---
-
-CREATE TABLE public.bands (
-    uid integer NOT NULL,
-    band_name character varying(30),
-    frequency_from double precision,
-    frequency_to double precision,
-    common_band boolean
-);
-
-
-ALTER TABLE public.bands OWNER TO dz;
-
---
--- Name: COLUMN bands.common_band; Type: COMMENT; Schema: public; Owner: dz
---
-
-COMMENT ON COLUMN public.bands.common_band IS 'Band available on all common transceivers';
-
-
---
--- Name: band_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
---
-
-CREATE SEQUENCE public.band_uid_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.band_uid_seq OWNER TO dz;
-
---
--- Name: band_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
---
-
-ALTER SEQUENCE public.band_uid_seq OWNED BY public.bands.uid;
-
-
---
--- Name: bands uid; Type: DEFAULT; Schema: public; Owner: dz
---
-
-ALTER TABLE ONLY public.bands ALTER COLUMN uid SET DEFAULT nextval('public.band_uid_seq'::regclass);
-
-
 --
 -- Data for Name: bands; Type: TABLE DATA; Schema: public; Owner: dz
 --
+
+SET SESSION AUTHORIZATION DEFAULT;
+
+ALTER TABLE public.bands DISABLE TRIGGER ALL;
 
 COPY public.bands (uid, band_name, frequency_from, frequency_to, common_band) FROM stdin;
 1	2200m	0.1357	0.1378	\N
@@ -109,6 +58,8 @@ COPY public.bands (uid, band_name, frequency_from, frequency_to, common_band) FR
 \.
 
 
+ALTER TABLE public.bands ENABLE TRIGGER ALL;
+
 --
 -- Name: band_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
 --
@@ -117,22 +68,8 @@ SELECT pg_catalog.setval('public.band_uid_seq', 28, true);
 
 
 --
--- Name: band_uid_idx; Type: INDEX; Schema: public; Owner: dz
---
-
-CREATE UNIQUE INDEX band_uid_idx ON public.bands USING btree (uid);
-
-
---
--- Name: TABLE bands; Type: ACL; Schema: public; Owner: dz
---
-
-GRANT SELECT ON TABLE public.bands TO web_anon;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZjyuR2vHeSSCUO67WO0TQsajTfeCHZwKYwDMbgp38O9RPQPZBOgly3bUelCRo0e
+\unrestrict 5D4ZlPperzvDEjW5b9d61TKlbtJib6XgDgrqeAE40BnM590w2NyQPogMv7FUisf
 
