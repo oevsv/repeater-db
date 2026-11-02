@@ -6,9 +6,10 @@
 --               (dv_station "OE9XGV-B", station "HB9DR-2") and callsign has
 --               it without the suffix (OE9XGV, HB9DR).
 --
--- Also creates the role repeater_scrap the scrapers connect as (systemd
--- service repeater-scrap, peer authentication over the local socket), allowed
--- to INSERT into these tables only. The tables are owned by vhf_owner.
+-- Also creates the role repeater_scrap the scrapers log in as (systemd
+-- service repeater-scrap), allowed to INSERT into these tables only. Its
+-- password and pg_hba.conf entry are set up separately, see README.md
+-- "Database login". The tables are owned by vhf_owner.
 --
 -- Drops and recreates the tables: ALL SCRAPED DATA IS DELETED.
 -- Run as postgres (creates a role):  sudo -u postgres psql vhf -f create_scrap_tables.sql

@@ -15,6 +15,7 @@ original value is stored as well and "callsign" holds it without the suffix
 ("OE9XGV"), see base_callsign().
 """
 
+import getpass
 import os
 import re
 from datetime import datetime, timezone
@@ -114,8 +115,17 @@ def save(table, items, to_record):
         sql.SQL(", ").join(map(sql.Identifier, columns)),
         sql.SQL(", ").join(sql.Placeholder() * len(columns)),
     )
+    db_config = load_db_config(filename=DB_CONFIG_FILE, section='postgresql')
+    try:
+        conn = psycopg.connect(**db_config)
+    except psycopg.OperationalError as e:
+        # Name what was tried: with a password login the role and config
+        # matter; with peer authentication (local socket) also the system user,
+        # which must have the role's name.
+        raise ScrapError(f"{e} (system user {getpass.getuser()!r}, database role "
+                         f"{db_config.get('user')!r}, config {DB_CONFIG_FILE})") from e
     # The connection commits on success, rolls back on an exception, then closes.
-    with psycopg.connect(**load_db_config(filename=DB_CONFIG_FILE, section='postgresql')) as conn:
+    with conn:
         conn.cursor().executemany(query, [(*r.values(), now) for r in records])
     print(f"Inserted {len(records)} rows into {table}.", flush=True)
     return len(records)

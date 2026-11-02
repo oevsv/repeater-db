@@ -2,11 +2,14 @@
 # Install: see /opt/repeater-scrap/README.md, section "Service (systemd)".
 #
 # The scripts are in /opt/repeater-scrap (a copy of repeater-db/scripts). The
-# database config /etc/repeater-scrap/db_config.ini (root only) is passed in
-# as a credential. The service runs as a temporary user "repeater_scrap",
-# which connects to PostgreSQL over the local socket as the role of the same
-# name (peer authentication, no password); create_scrap_tables.sql creates
-# that role and allows it to INSERT into the scrap_* tables only.
+# service runs as the system user "repeater_scrap" (create it once: useradd
+# --system --no-create-home --shell /usr/sbin/nologin repeater_scrap) and logs
+# into PostgreSQL as the role repeater_scrap with the password from
+# /etc/repeater-scrap/db_config.ini. That file stays root-only: systemd passes
+# the service a private copy (LoadCredential=). create_scrap_tables.sql creates
+# the role and allows it to INSERT into the scrap_* tables only.
+# (A fixed user rather than DynamicUser=, so that the alternative login over the
+# local socket - peer authentication, see README - works as well.)
 #
 # A run with a failed scraper exits with status 1: the unit is then "failed"
 # (systemctl status repeater-scrap, journalctl -u repeater-scrap).
@@ -24,15 +27,19 @@ WorkingDirectory=/opt/repeater-scrap
 # A hanging run must not block the next one (every download times out after 15 s).
 TimeoutStartSec=10min
 
-DynamicUser=yes
 User=repeater_scrap
+Group=repeater_scrap
 LoadCredential=db_config.ini:/etc/repeater-scrap/db_config.ini
 # /opt/repeater-scrap is read-only for the service: no __pycache__ there.
 Environment=PYTHONDONTWRITEBYTECODE=1
 
 # Hardening: only network + local sockets, nothing writable.
+NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
+PrivateTmp=yes
+RemoveIPC=yes
+RestrictSUIDSGID=yes
 PrivateDevices=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes

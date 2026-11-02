@@ -43,18 +43,46 @@ sudo -u postgres psql vhf -f create_scrap_tables.sql         # DELETES data in e
 `create_scrap_tables.sql` creates the tables (owner `vhf_owner`) and the role `repeater_scrap`, which
 may only insert into them; run it as postgres, as it creates a role.
 
-Database connection: `db_config.ini` (libpq parameter names):
+## Database login (password)
+
+The scrapers log in as `repeater_scrap` with a password, over TCP:
+
+```
+# 1. Password for the role (prompted, so it stays out of the shell history)
+sudo -u postgres psql -c '\password repeater_scrap'
+
+# 2. pg_hba.conf on the database server: allow the role from the scrapers' address.
+#    The first matching line wins: put it before more general "host" lines with
+#    another method. Scrapers on the same machine: 127.0.0.1/32.
+host  vhf  repeater_scrap  <address of the scraper machine>/32  scram-sha-256
+
+# 3. Make PostgreSQL read pg_hba.conf again
+systemctl reload postgresql
+```
+
+PostgreSQL must listen on the address the scrapers connect to (`listen_addresses` in
+`postgresql.conf`; the default is localhost only).
+
+`db_config.ini` (libpq parameter names; comments only on lines of their own):
 
 ```ini
 [postgresql]
-host = /var/run/postgresql
+# PostgreSQL server; 127.0.0.1 if it runs on the same machine
+host = 10.43.48.1
+port = 5432
 dbname = vhf
 user = repeater_scrap
-# password = ...   (not needed for the local socket with peer authentication)
+password = <the password set with \password>
 ```
 
-The scripts look for it in the directory systemd passes credentials in (see below), else
-next to the scripts (gitignored).
+It contains the password: keep it readable by root only. The service gets it as a
+credential (see below); for runs by hand the scripts also look for it next to themselves
+(gitignored).
+
+Alternative without password, only if PostgreSQL runs on the same machine: `host =
+/var/run/postgresql` and no `password`. That uses peer authentication on the local socket,
+which requires the connecting system user to have the role's name (`repeater_scrap`, as
+the service does).
 
 ## Run by hand
 
@@ -68,26 +96,35 @@ some fail (site down, page layout changed, database error), prints a summary and
 status 1 if any failed, 0 otherwise (2 for an unknown scraper name). A page without the
 expected rows counts as a failure, as it usually means its layout changed.
 
+On the server, with the config of the service (as root):
+
+```
+CREDENTIALS_DIRECTORY=/etc/repeater-scrap python3 /opt/repeater-scrap/scrap_all.py scrap_oelink
+```
+
 ## Service (systemd)
 
 `repeater-scrap.service` runs `scrap_all.py` once, `repeater-scrap.timer` starts it hourly.
-The service runs as a temporary user `repeater_scrap` (`DynamicUser=`), which logs into
-PostgreSQL over the local socket as the role of the same name (peer authentication, no
-password). It can't write anywhere; the database config is passed in as a credential, so
-it stays root-only.
+The service runs as the system user `repeater_scrap` and can't write anywhere. The database
+config with the password stays root-only: systemd hands the service a private copy
+(`LoadCredential=`).
 
 ```
+# 0. System user
+useradd --system --no-create-home --shell /usr/sbin/nologin repeater_scrap
+
 # 1. Scripts (a copy of this directory; the service only reads it)
 install -d /opt/repeater-scrap
 cp *.py README.md /opt/repeater-scrap/
 
-# 2. Database config, root only
+# 2. Tables and role (only once: deletes existing scraped data), then password and
+#    pg_hba.conf, see "Database login" above
+sudo -u postgres psql vhf -f create_scrap_tables.sql
+
+# 3. Database config, root only
 install -d -m 700 /etc/repeater-scrap
 install -m 600 /dev/null /etc/repeater-scrap/db_config.ini
-editor /etc/repeater-scrap/db_config.ini        # see "Setup" above
-
-# 3. Tables and role (only once: deletes existing scraped data)
-sudo -u postgres psql vhf -f create_scrap_tables.sql
+editor /etc/repeater-scrap/db_config.ini        # see "Database login" above
 
 # 4. Units
 cp systemd/repeater-scrap.service systemd/repeater-scrap.timer /etc/systemd/system/
@@ -100,11 +137,28 @@ Check:
 ```
 systemctl list-timers repeater-scrap.timer      # next run
 systemctl status repeater-scrap.service         # last run: "failed" if a scraper failed
-journalctl -u repeater-scrap.service            # output of the runs
+journalctl -u repeater-scrap.service -n 30 --no-pager -o cat   # output of the last runs
 ```
 
 Update: copy the changed scripts to `/opt/repeater-scrap` again (no restart needed, every run
 starts fresh). Another interval: `OnCalendar=` in the timer, then `systemctl daemon-reload`.
+
+## Troubleshooting the database login
+
+A failed login names the system user, the database role and the config file used. The
+message from PostgreSQL says why:
+
+| Message | Cause |
+|---|---|
+| `password authentication failed for user "repeater_scrap"` | Wrong password in `db_config.ini`, or none set (`\password repeater_scrap`) |
+| `no pg_hba.conf entry for host "…", user "repeater_scrap", database "vhf"` | No `pg_hba.conf` line for that address, or PostgreSQL not reloaded |
+| `Connection refused` / timeout | PostgreSQL doesn't listen on that address (`listen_addresses`), or a firewall |
+| `Peer authentication failed for user "repeater_scrap"` | The config uses the local socket (`host = /var/run/postgresql`, or no `host` at all), not the password login |
+| `permission denied for table scrap_…` | The role lacks its rights: run the grant part of `create_scrap_tables.sql` |
+| `Database config … not found or not readable` | Config missing, or the service doesn't get it (`LoadCredential=` path) |
+
+PostgreSQL logs the exact reason of a refused login in its own log
+(`/var/log/postgresql/postgresql-*-main.log`).
 
 ## Adding a source
 
