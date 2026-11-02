@@ -124,6 +124,9 @@ CREATE TABLE scrap_dstar_dcs009 (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
+CREATE INDEX scrap_dstar_dcs009_callsign_ts_idx ON scrap_dstar_dcs009 (callsign, scraped_timestamp DESC);
+
 -- D-STAR XLX905: http://xlx905.oevsv.at:8888/index.php?show=repeaters
 CREATE TABLE scrap_dstar_xlx905 (
     id SERIAL PRIMARY KEY,
@@ -140,6 +143,9 @@ CREATE TABLE scrap_dstar_xlx905 (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
+CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON scrap_dstar_xlx905 (callsign, scraped_timestamp DESC);
+
 -- D-STAR ircDDB gateways: https://status.ircddb.net/cgi-bin/ircddb-gw?AUT
 CREATE TABLE scrap_dstar_ircddb (
     id SERIAL PRIMARY KEY,
@@ -148,6 +154,9 @@ CREATE TABLE scrap_dstar_ircddb (
     country TEXT,      -- ISO 3166 alpha-3, e.g. AUT
     scraped_timestamp TIMESTAMP NOT NULL
 );
+
+-- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
+CREATE INDEX scrap_dstar_ircddb_callsign_ts_idx ON scrap_dstar_ircddb (callsign, scraped_timestamp DESC);
 
 -- D-STAR REF: https://dstarusers.org/repeaters.php (country Austria)
 CREATE TABLE scrap_dstar_ref (

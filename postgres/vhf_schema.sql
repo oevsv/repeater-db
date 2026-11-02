@@ -3357,6 +3357,37 @@ CREATE TABLE public.scrap_dstar_dcs009 (
 ALTER TABLE public.scrap_dstar_dcs009 OWNER TO vhf_owner;
 
 --
+-- Name: dcs009_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.dcs009_status AS
+ WITH latest AS (
+         SELECT scrap_dstar_dcs009.callsign,
+            max(scrap_dstar_dcs009.scraped_timestamp) AS ts
+           FROM public.scrap_dstar_dcs009
+          WHERE (COALESCE(scrap_dstar_dcs009.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_dstar_dcs009.callsign
+        )
+ SELECT callsign,
+    'DCS009'::text AS network,
+    ( SELECT string_agg(DISTINCT replace(d.band, ' Meter'::text, 'm'::text), ', '::text) AS string_agg
+           FROM public.scrap_dstar_dcs009 d
+          WHERE ((d.callsign = l.callsign) AND (d.scraped_timestamp = l.ts))) AS text,
+    ((ts AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (ts AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest l;
+
+
+ALTER VIEW api.dcs009_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW dcs009_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.dcs009_status IS 'Live status of the D-STAR repeaters on DCS009 (active = listed within 120 minutes)';
+
+
+--
 -- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -3392,6 +3423,37 @@ CREATE TABLE public.scrap_dstar_ircddb (
 
 
 ALTER TABLE public.scrap_dstar_ircddb OWNER TO vhf_owner;
+
+--
+-- Name: ircddb_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.ircddb_status AS
+ WITH per_callsign AS (
+         SELECT scrap_dstar_ircddb.callsign,
+            max(scrap_dstar_ircddb.scraped_timestamp) AS last_listed,
+            max(scrap_dstar_ircddb.scraped_timestamp) FILTER (WHERE (scrap_dstar_ircddb.status = 'Online'::text)) AS last_online
+           FROM public.scrap_dstar_ircddb
+          WHERE (COALESCE(scrap_dstar_ircddb.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_dstar_ircddb.callsign
+        )
+ SELECT callsign,
+    'ircDDB'::text AS network,
+    ''::text AS text,
+    ((last_online = last_listed) AND ((last_online AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval))) AS active,
+    (last_online AT TIME ZONE 'UTC'::text) AS last_active
+   FROM per_callsign
+  WHERE (last_online IS NOT NULL);
+
+
+ALTER VIEW api.ircddb_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW ircddb_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.ircddb_status IS 'Live status of the D-STAR gateways on ircDDB (active = latest listing Online, within 120 minutes)';
+
 
 --
 -- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
@@ -3477,6 +3539,37 @@ CREATE TABLE public.scrap_dstar_xlx905 (
 
 
 ALTER TABLE public.scrap_dstar_xlx905 OWNER TO vhf_owner;
+
+--
+-- Name: xlx905_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.xlx905_status AS
+ WITH latest AS (
+         SELECT scrap_dstar_xlx905.callsign,
+            max(scrap_dstar_xlx905.scraped_timestamp) AS ts
+           FROM public.scrap_dstar_xlx905
+          WHERE (COALESCE(scrap_dstar_xlx905.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_dstar_xlx905.callsign
+        )
+ SELECT callsign,
+    'XLX905'::text AS network,
+    ( SELECT string_agg(DISTINCT concat_ws(' '::text, NULLIF(x.dv_station, ''::text), NULLIF(x.band, ''::text)), ', '::text) AS string_agg
+           FROM public.scrap_dstar_xlx905 x
+          WHERE ((x.callsign = l.callsign) AND (x.scraped_timestamp = l.ts))) AS text,
+    ((ts AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (ts AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest l;
+
+
+ALTER VIEW api.xlx905_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW xlx905_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.xlx905_status IS 'Live status of the D-STAR repeaters on XLX905 (active = listed within 120 minutes)';
+
 
 --
 -- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
@@ -3582,7 +3675,31 @@ UNION ALL
     ycs232_status.text,
     ycs232_status.active,
     ycs232_status.last_active
-   FROM api.ycs232_status;
+   FROM api.ycs232_status
+UNION ALL
+ SELECT dcs009_status.callsign,
+    dcs009_status.network,
+    'dstar'::text AS technology,
+    dcs009_status.text,
+    dcs009_status.active,
+    dcs009_status.last_active
+   FROM api.dcs009_status
+UNION ALL
+ SELECT xlx905_status.callsign,
+    xlx905_status.network,
+    'dstar'::text AS technology,
+    xlx905_status.text,
+    xlx905_status.active,
+    xlx905_status.last_active
+   FROM api.xlx905_status
+UNION ALL
+ SELECT ircddb_status.callsign,
+    ircddb_status.network,
+    'dstar'::text AS technology,
+    ircddb_status.text,
+    ircddb_status.active,
+    ircddb_status.last_active
+   FROM api.ircddb_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -3591,7 +3708,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR, YCS232: C4FM)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR)';
 
 
 --
@@ -5111,6 +5228,27 @@ CREATE INDEX scrap_dmr_ipsc2_callsign_ts_idx ON public.scrap_dmr_ipsc2 USING btr
 
 
 --
+-- Name: scrap_dstar_dcs009_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dstar_dcs009_callsign_ts_idx ON public.scrap_dstar_dcs009 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_dstar_ircddb_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dstar_ircddb_callsign_ts_idx ON public.scrap_dstar_ircddb USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_dstar_xlx905_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON public.scrap_dstar_xlx905 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
 -- Name: scrap_oelink_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -5498,6 +5636,13 @@ GRANT INSERT ON TABLE public.scrap_dstar_dcs009 TO repeater_scrap;
 
 
 --
+-- Name: TABLE dcs009_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.dcs009_status TO web_anon;
+
+
+--
 -- Name: SEQUENCE scrap_dstar_dcs009_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -5509,6 +5654,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_dcs009_id_seq TO repeater_scrap;
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_ircddb TO repeater_scrap;
+
+
+--
+-- Name: TABLE ircddb_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.ircddb_status TO web_anon;
 
 
 --
@@ -5537,6 +5689,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_ref_id_seq TO repeater_scrap;
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_xlx905 TO repeater_scrap;
+
+
+--
+-- Name: TABLE xlx905_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.xlx905_status TO web_anon;
 
 
 --
