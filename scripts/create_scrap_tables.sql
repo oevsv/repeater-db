@@ -101,6 +101,9 @@ CREATE TABLE scrap_oelink (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- api.oelink_status reads the latest row per callsign (migration 2026-11-02_oelink_status.sql).
+CREATE INDEX scrap_oelink_callsign_ts_idx ON scrap_oelink (callsign, scraped_timestamp DESC);
+
 -- D-STAR DCS009: https://xlx232.oevsv.at/_status.html
 CREATE TABLE scrap_dstar_dcs009 (
     id SERIAL PRIMARY KEY,

@@ -3463,6 +3463,37 @@ CREATE TABLE public.scrap_oelink (
 ALTER TABLE public.scrap_oelink OWNER TO vhf_owner;
 
 --
+-- Name: oelink_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.oelink_status AS
+ WITH latest AS (
+         SELECT DISTINCT ON (scrap_oelink.callsign) scrap_oelink.callsign,
+            scrap_oelink.repeater_id,
+            scrap_oelink.hardware,
+            scrap_oelink.scraped_timestamp
+           FROM public.scrap_oelink
+          WHERE (COALESCE(scrap_oelink.callsign, ''::text) <> ''::text)
+          ORDER BY scrap_oelink.callsign, scrap_oelink.scraped_timestamp DESC
+        )
+ SELECT callsign,
+    'OE-LINK'::text AS network,
+    concat_ws(' '::text, NULLIF(repeater_id, ''::text), NULLIF(hardware, ''::text)) AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.oelink_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW oelink_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.oelink_status IS 'Live status of the FM repeaters on OE-Link (active = listed within 120 minutes)';
+
+
+--
 -- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -4965,6 +4996,13 @@ CREATE INDEX oesterreich_bev_vgd_lam_geom_idx ON public.oesterreich_bev_vgd_lam 
 
 
 --
+-- Name: scrap_oelink_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_oelink_callsign_ts_idx ON public.scrap_oelink USING btree (callsign, scraped_timestamp DESC);
+
+
+--
 -- Name: site_geom_gix; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -5384,6 +5422,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
 --
 
 GRANT INSERT ON TABLE public.scrap_oelink TO repeater_scrap;
+
+
+--
+-- Name: TABLE oelink_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.oelink_status TO web_anon;
 
 
 --
