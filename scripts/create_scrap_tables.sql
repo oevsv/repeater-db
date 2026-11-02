@@ -65,6 +65,9 @@ CREATE TABLE scrap_dmr_ipsc2 (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- api.ipsc2_status reads the latest row per callsign (migration 2026-11-02_ipsc2_network_status.sql).
+CREATE INDEX scrap_dmr_ipsc2_callsign_ts_idx ON scrap_dmr_ipsc2 (callsign, scraped_timestamp DESC);
+
 -- https://dmo.oevsv.at/_status.html
 CREATE TABLE scrap_dmr_ipsc2_hotspot (
     id SERIAL PRIMARY KEY,

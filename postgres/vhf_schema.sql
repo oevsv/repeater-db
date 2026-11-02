@@ -3207,6 +3207,37 @@ CREATE TABLE public.scrap_dmr_ipsc2 (
 ALTER TABLE public.scrap_dmr_ipsc2 OWNER TO vhf_owner;
 
 --
+-- Name: ipsc2_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.ipsc2_status AS
+ WITH latest AS (
+         SELECT DISTINCT ON (scrap_dmr_ipsc2.callsign) scrap_dmr_ipsc2.callsign,
+            scrap_dmr_ipsc2.repeater_id,
+            scrap_dmr_ipsc2.hardware,
+            scrap_dmr_ipsc2.scraped_timestamp
+           FROM public.scrap_dmr_ipsc2
+          WHERE (COALESCE(scrap_dmr_ipsc2.callsign, ''::text) <> ''::text)
+          ORDER BY scrap_dmr_ipsc2.callsign, scrap_dmr_ipsc2.scraped_timestamp DESC
+        )
+ SELECT callsign,
+    'IPSC2'::text AS network,
+    concat_ws(' '::text, NULLIF(repeater_id, ''::text), NULLIF(hardware, ''::text)) AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.ipsc2_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW ipsc2_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.ipsc2_status IS 'Live status of the DMR repeaters on IPSC2 (active = listed within 120 minutes)';
+
+
+--
 -- Name: scrap_dmr_ipsc2_hotspot; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -3491,6 +3522,37 @@ ALTER VIEW api.oelink_status OWNER TO vhf_owner;
 --
 
 COMMENT ON VIEW api.oelink_status IS 'Live status of the FM repeaters on OE-Link (active = listed within 120 minutes)';
+
+
+--
+-- Name: network_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.network_status AS
+ SELECT oelink_status.callsign,
+    oelink_status.network,
+    'fm'::text AS technology,
+    oelink_status.text,
+    oelink_status.active,
+    oelink_status.last_active
+   FROM api.oelink_status
+UNION ALL
+ SELECT ipsc2_status.callsign,
+    ipsc2_status.network,
+    'dmr'::text AS technology,
+    ipsc2_status.text,
+    ipsc2_status.active,
+    ipsc2_status.last_active
+   FROM api.ipsc2_status;
+
+
+ALTER VIEW api.network_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR)';
 
 
 --
@@ -4996,6 +5058,13 @@ CREATE INDEX oesterreich_bev_vgd_lam_geom_idx ON public.oesterreich_bev_vgd_lam 
 
 
 --
+-- Name: scrap_dmr_ipsc2_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dmr_ipsc2_callsign_ts_idx ON public.scrap_dmr_ipsc2 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
 -- Name: scrap_oelink_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -5341,6 +5410,13 @@ GRANT INSERT ON TABLE public.scrap_dmr_ipsc2 TO repeater_scrap;
 
 
 --
+-- Name: TABLE ipsc2_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.ipsc2_status TO web_anon;
+
+
+--
 -- Name: TABLE scrap_dmr_ipsc2_hotspot; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -5429,6 +5505,13 @@ GRANT INSERT ON TABLE public.scrap_oelink TO repeater_scrap;
 --
 
 GRANT SELECT ON TABLE api.oelink_status TO web_anon;
+
+
+--
+-- Name: TABLE network_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.network_status TO web_anon;
 
 
 --
