@@ -1,47 +1,41 @@
-from load_db_config import load_db_config
-from scrap_c4fm_ycs232 import *
-from scrap_dmr_ipsc2 import *
-from scrap_dmr_ipsc2_hotspot import *
-from scrap_dstar_dcs009 import *
-from scrap_dstar_ircddb import *
-from scrap_dstar_ref import *
-from scrap_dstar_xlx905 import *
-from scrap_oelink import *
-from scrap_winlink_pactor import *
+#!/usr/bin/python3
+"""Runs the scrapers: all of them, or those named on the command line.
+
+    python3 scrap_all.py                      # all
+    python3 scrap_all.py scrap_dmr_ipsc2 ...  # only these (names = table names)
+
+Each scraper appends a snapshot to its scrap_* table. A failing scraper (site
+down, page layout changed, database error) is reported and the others still
+run. Exit status: 0 if all succeeded, 1 otherwise (the systemd unit then fails), 2 for
+an unknown scraper name.
+"""
+
+import sys
+import traceback
+
+from scrapers import SCRAPERS
 
 
-def scrap_all():
-    # Assume each function returns 0 on success and non-zero on failure
-    status_c4fm_ycs232 = scrap_c4fm_ycs232()
-    status_dmr_ipsc2 = scrap_dmr_ipsc2()
-    status_dmr_ipsc2_hotspot = scrap_dmr_ipsc2_hotspot()
-    status_dstar_dcs009 = scrap_dstar_dcs009()
-    status_dstar_ircddb = scrap_dstar_ircddb()
-    status_dstar_ref = scrap_dstar_ref()
-    status_dstar_xlx905 = scrap_dstar_xlx905()
-    status_oelink = scrap_oelink()
-    status_winlink_pactor = scrap_winlink_pactor()
-
-    # Accumulate
-    statuses = [
-        status_c4fm_ycs232,
-        status_dmr_ipsc2,
-        status_dmr_ipsc2_hotspot,
-        status_dstar_dcs009,
-        status_dstar_ircddb,
-        status_dstar_ref,
-        status_dstar_xlx905,
-        status_oelink,
-        status_winlink_pactor,
-    ]
-
-    # Check if any status code is non-zero
-    if any(status != 0 for status in statuses):
-        return -1
-
-    return 0
+def scrap_all(names=None):
+    """Runs the given scrapers (default: all); returns 0 if all succeeded, else 1."""
+    names = names or list(SCRAPERS)
+    failed = []
+    for name in names:
+        try:
+            SCRAPERS[name]()
+        except Exception as e:
+            failed.append(name)
+            print(f"FAILED {name}: {e}", file=sys.stderr, flush=True)
+            traceback.print_exc(file=sys.stderr)
+    print(f"{len(names) - len(failed)} of {len(names)} scrapers succeeded"
+          + (f", failed: {', '.join(failed)}" if failed else "."), flush=True)
+    return 1 if failed else 0
 
 
-# only execute main if not imported
 if __name__ == "__main__":
-    scrap_all()
+    unknown = [n for n in sys.argv[1:] if n not in SCRAPERS]
+    if unknown:
+        print(f"Unknown scraper(s): {', '.join(unknown)}. Available: {', '.join(SCRAPERS)}",
+              file=sys.stderr)
+        sys.exit(2)
+    sys.exit(scrap_all(sys.argv[1:]))

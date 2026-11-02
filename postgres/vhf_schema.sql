@@ -979,7 +979,7 @@ CREATE TABLE public.trx (
     frequency_rx double precision,
     callsign character varying(10),
     antenna_heigth double precision,
-    site_name character varying(100),
+    site_name character varying(100) NOT NULL,
     sysop character varying(10),
     url character varying(500),
     hardware character varying(100),
@@ -3144,6 +3144,7 @@ CREATE TABLE public.scrap_c4fm_ycs232 (
     id integer NOT NULL,
     nr text,
     callsign text,
+    station text,
     group_code text,
     name text,
     qrg text,
@@ -3188,7 +3189,7 @@ ALTER SEQUENCE public.scrap_c4fm_ycs232_id_seq OWNED BY public.scrap_c4fm_ycs232
 CREATE TABLE public.scrap_dmr_ipsc2 (
     id integer NOT NULL,
     nr text,
-    repeater text,
+    callsign text,
     info text,
     repeater_id text,
     ts1 text,
@@ -3212,7 +3213,7 @@ ALTER TABLE public.scrap_dmr_ipsc2 OWNER TO dz;
 CREATE TABLE public.scrap_dmr_ipsc2_hotspot (
     id integer NOT NULL,
     nr text,
-    repeater text,
+    callsign text,
     info text,
     repeater_id text,
     ts1 text,
@@ -3280,7 +3281,7 @@ ALTER SEQUENCE public.scrap_dmr_ipsc2_id_seq OWNED BY public.scrap_dmr_ipsc2.id;
 CREATE TABLE public.scrap_dstar_dcs009 (
     id integer NOT NULL,
     nr text,
-    dv_station text,
+    callsign text,
     band text,
     linked text,
     dcs_group text,
@@ -3324,7 +3325,6 @@ CREATE TABLE public.scrap_dstar_ircddb (
     callsign text,
     status text,
     country text,
-    last_heard text,
     scraped_timestamp timestamp without time zone NOT NULL
 );
 
@@ -3359,8 +3359,8 @@ ALTER SEQUENCE public.scrap_dstar_ircddb_id_seq OWNED BY public.scrap_dstar_ircd
 
 CREATE TABLE public.scrap_dstar_ref (
     id integer NOT NULL,
-    callsign text NOT NULL,
-    city text NOT NULL,
+    callsign text,
+    city text,
     state text,
     freq_2m text,
     freq_70cm text,
@@ -3402,6 +3402,7 @@ CREATE TABLE public.scrap_dstar_xlx905 (
     id integer NOT NULL,
     no text,
     flag text,
+    callsign text,
     dv_station text,
     band text,
     last_heard text,
@@ -3444,7 +3445,7 @@ ALTER SEQUENCE public.scrap_dstar_xlx905_id_seq OWNED BY public.scrap_dstar_xlx9
 CREATE TABLE public.scrap_oelink (
     id integer NOT NULL,
     nr text,
-    repeater text,
+    callsign text,
     info text,
     repeater_id text,
     ts1 text,
@@ -3496,10 +3497,6 @@ CREATE TABLE public.scrap_winlink_pactor (
     mode text,
     hours text,
     qth text,
-    contact_name text,
-    contact_email text,
-    contact_address text,
-    contact_phone text,
     scraped_timestamp timestamp without time zone NOT NULL
 );
 
@@ -5129,6 +5126,14 @@ CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW 
 
 
 --
+-- Name: trx trx_site_fk; Type: FK CONSTRAINT; Schema: public; Owner: dz
+--
+
+ALTER TABLE ONLY public.trx
+    ADD CONSTRAINT trx_site_fk FOREIGN KEY (site_name) REFERENCES public.site(site_name) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
 -- Name: SCHEMA api; Type: ACL; Schema: -; Owner: postgres
 --
 
@@ -5250,4 +5255,137 @@ GRANT ALL ON TABLE public.dhm TO dz;
 --
 
 \unrestrict 8CYXLwuEISxxsR8wVarnwnolNkrYBRjIv6c8UMJkJE7kkjg3GhRAAFCzCqXFSpo
+
+
+--
+-- Name: TABLE scrap_c4fm_ycs232; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_c4fm_ycs232 TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_c4fm_ycs232_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_c4fm_ycs232_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dmr_ipsc2; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dmr_ipsc2 TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dmr_ipsc2_hotspot; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dmr_ipsc2_hotspot TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dmr_ipsc2_hotspot_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dmr_ipsc2_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dmr_ipsc2_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dstar_dcs009; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dstar_dcs009 TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dstar_dcs009_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dstar_dcs009_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dstar_ircddb; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dstar_ircddb TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dstar_ircddb_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dstar_ircddb_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dstar_ref; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dstar_ref TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dstar_ref_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dstar_ref_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_dstar_xlx905; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_dstar_xlx905 TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dstar_xlx905_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_oelink; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_oelink TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_oelink_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_oelink_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE scrap_winlink_pactor; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT INSERT ON TABLE public.scrap_winlink_pactor TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_winlink_pactor_id_seq; Type: ACL; Schema: public; Owner: dz
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_winlink_pactor_id_seq TO repeater_scrap;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict Fz5p5ifHVpvgiiZdameBgeYqEaI3vWE706OKTkho1dzBocTuqd36UV4egrYbWSl
 

@@ -1,0 +1,14 @@
+# Starts repeater-scrap.service every hour. Change OnCalendar for another
+# interval (e.g. "*:0/30" = every 30 minutes), then: systemctl daemon-reload
+# A run missed while the server was off is made up after booting (Persistent).
+
+[Unit]
+Description=Scrape repeater lists into the vhf database, hourly
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

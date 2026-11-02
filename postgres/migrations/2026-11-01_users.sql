@@ -9,7 +9,7 @@
 --   last_seen   latest login
 --
 -- api.user_login()  (POST /api/rpc/user_login, no parameters)
---   Called by the web page's login service (auth-prototype) right after a
+--   Called by the web page's login service (auth-service) right after a
 --   successful login, with the PostgREST token it mints for the user (role
 --   web_user). The user is taken from that verified token's claims (sub,
 --   callsign), never from parameters, so nobody can record a login for

@@ -123,7 +123,7 @@ wget https://repeater.oevsv.at/api/trx?dmr=eq.true&band=eq.2m
 ### Shared secret for logged-in users (JWT)
 Without a token every request runs as `web_anon` (the public API above). Logged-in
 users of the web page reach PostgREST through the web page's login service
-(`repeater-website/auth-prototype`): it signs a short-lived token (JWT, HS256) per request,
+(`repeater-website/auth-service`): it signs a short-lived token (JWT, HS256) per request,
 with role `web_user` and the user's `sub` / `callsign`. PostgREST checks the signature with
 a secret it shares with the login service, then runs the request as `web_user` with the
 token's claims available in SQL (`current_setting('request.jwt.claims', true)`). This is
