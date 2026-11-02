@@ -95,7 +95,7 @@ COMMENT ON EXTENSION postgis_topology IS 'PostGIS topology spatial types and fun
 
 
 --
--- Name: geo(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
+-- Name: geo(double precision, double precision); Type: FUNCTION; Schema: api; Owner: vhf_owner
 --
 
 CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(distance double precision, site_name character varying, longitude double precision, latitude double precision, fm boolean, dmr boolean, c4fm boolean, dstar boolean, digipeater boolean, beacon boolean, tetra boolean, atv boolean)
@@ -114,10 +114,10 @@ CREATE FUNCTION api.geo(x double precision, y double precision) RETURNS TABLE(di
 $$;
 
 
-ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO dz;
+ALTER FUNCTION api.geo(x double precision, y double precision) OWNER TO vhf_owner;
 
 --
--- Name: point_info(double precision, double precision); Type: FUNCTION; Schema: api; Owner: dz
+-- Name: point_info(double precision, double precision); Type: FUNCTION; Schema: api; Owner: vhf_owner
 --
 
 CREATE FUNCTION api.point_info(x double precision, y double precision) RETURNS TABLE(longitude double precision, latitude double precision, longitude_formated character varying, latitude_formated character varying, locator_6 character varying, locator_10 character varying, locator_20 character varying)
@@ -132,10 +132,10 @@ CREATE FUNCTION api.point_info(x double precision, y double precision) RETURNS T
 $_$;
 
 
-ALTER FUNCTION api.point_info(x double precision, y double precision) OWNER TO dz;
+ALTER FUNCTION api.point_info(x double precision, y double precision) OWNER TO vhf_owner;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: dz
+-- Name: users; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.users (
@@ -146,31 +146,31 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO dz;
+ALTER TABLE public.users OWNER TO vhf_owner;
 
 --
--- Name: TABLE users; Type: COMMENT; Schema: public; Owner: dz
+-- Name: TABLE users; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON TABLE public.users IS 'Users who logged in via OpenID Connect; written by api.user_login()';
 
 
 --
--- Name: COLUMN users.id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN users.id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.users.id IS 'OpenID subject (sub) from Keycloak';
 
 
 --
--- Name: COLUMN users.callsign; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN users.callsign; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.users.callsign IS 'Callsign from the latest login (preferred_username, upper case); may be NULL';
 
 
 --
--- Name: user_login(); Type: FUNCTION; Schema: api; Owner: dz
+-- Name: user_login(); Type: FUNCTION; Schema: api; Owner: vhf_login_writer
 --
 
 CREATE FUNCTION api.user_login() RETURNS public.users
@@ -200,10 +200,10 @@ END;
 $$;
 
 
-ALTER FUNCTION api.user_login() OWNER TO dz;
+ALTER FUNCTION api.user_login() OWNER TO vhf_login_writer;
 
 --
--- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_band_common(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_band_common(frequency double precision) RETURNS boolean
@@ -223,10 +223,10 @@ select common_band into common from bands where
 $$;
 
 
-ALTER FUNCTION public.vhf_band_common(frequency double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_band_common(frequency double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_band_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_band_name(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_band_name(frequency double precision) RETURNS character varying
@@ -246,10 +246,10 @@ select band_name into name from bands where
 $$;
 
 
-ALTER FUNCTION public.vhf_band_name(frequency double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_band_name(frequency double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_channel_name(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_channel_name(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_channel_name(frequency_tx double precision) RETURNS character varying
@@ -263,10 +263,10 @@ CREATE FUNCTION public.vhf_channel_name(frequency_tx double precision) RETURNS c
 $$;
 
 
-ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_channel_name(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_channel_name(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_channel_name(frequency_tx double precision, frequency_rx double precision, format integer) RETURNS character varying
@@ -383,10 +383,10 @@ chan2m_old varchar[] := '{"R00", "R00x", "R0", "R0x","R1","R1x","R2","R2x","R3",
 $$;
 
 
-ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision, frequency_rx double precision, format integer) OWNER TO dz;
+ALTER FUNCTION public.vhf_channel_name(frequency_tx double precision, frequency_rx double precision, format integer) OWNER TO vhf_owner;
 
 --
--- Name: vhf_chirp_Tone(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_chirp_Tone(double precision, double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public."vhf_chirp_Tone"(ctcss_tx double precision, ctcss_rx double precision) RETURNS character varying
@@ -412,10 +412,10 @@ end if;
 $$;
 
 
-ALTER FUNCTION public."vhf_chirp_Tone"(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
+ALTER FUNCTION public."vhf_chirp_Tone"(ctcss_tx double precision, ctcss_rx double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_chirp_ctonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_chirp_ctonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_chirp_ctonefreq(ctcss_tx double precision, ctcss_rx double precision) RETURNS double precision
@@ -436,10 +436,10 @@ end if;
 $$;
 
 
-ALTER FUNCTION public.vhf_chirp_ctonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_chirp_ctonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_chirp_rtonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_chirp_rtonefreq(double precision, double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_chirp_rtonefreq(ctcss_tx double precision, ctcss_rx double precision) RETURNS double precision
@@ -461,10 +461,10 @@ end if;
 $$;
 
 
-ALTER FUNCTION public.vhf_chirp_rtonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_chirp_rtonefreq(ctcss_tx double precision, ctcss_rx double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_maidenhead_loc(double precision, double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision) RETURNS character varying
@@ -478,10 +478,10 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
 $$;
 
 
-ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_maidenhead_loc(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_maidenhead_loc(double precision, double precision, integer); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision, pairs integer) RETURNS character varying
@@ -592,10 +592,10 @@ CREATE FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude d
 $$;
 
 
-ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision, pairs integer) OWNER TO dz;
+ALTER FUNCTION public.vhf_maidenhead_loc(longitude double precision, latitude double precision, pairs integer) OWNER TO vhf_owner;
 
 --
--- Name: vhf_nice_display(character varying); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_display(character varying); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_nice_display(org character varying) RETURNS character varying
@@ -615,10 +615,10 @@ CREATE FUNCTION public.vhf_nice_display(org character varying) RETURNS character
 $$;
 
 
-ALTER FUNCTION public.vhf_nice_display(org character varying) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_display(org character varying) OWNER TO vhf_owner;
 
 --
--- Name: vhf_nice_frq(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_frq(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_nice_frq(frequency double precision) RETURNS character varying
@@ -644,10 +644,10 @@ CREATE FUNCTION public.vhf_nice_frq(frequency double precision) RETURNS characte
 $$;
 
 
-ALTER FUNCTION public.vhf_nice_frq(frequency double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_frq(frequency double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_nice_geo(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_geo(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_nice_geo(geo double precision) RETURNS character varying
@@ -671,10 +671,10 @@ CREATE FUNCTION public.vhf_nice_geo(geo double precision) RETURNS character vary
 $$;
 
 
-ALTER FUNCTION public.vhf_nice_geo(geo double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_geo(geo double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_nice_geo_dms(double precision); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_nice_geo_dms(double precision); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_nice_geo_dms(geo double precision) RETURNS character varying
@@ -703,10 +703,10 @@ CREATE FUNCTION public.vhf_nice_geo_dms(geo double precision) RETURNS character 
 $$;
 
 
-ALTER FUNCTION public.vhf_nice_geo_dms(geo double precision) OWNER TO dz;
+ALTER FUNCTION public.vhf_nice_geo_dms(geo double precision) OWNER TO vhf_owner;
 
 --
--- Name: vhf_trigger_import_hamnet_site(); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_trigger_import_hamnet_site(); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_trigger_import_hamnet_site() RETURNS trigger
@@ -747,10 +747,10 @@ CREATE FUNCTION public.vhf_trigger_import_hamnet_site() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.vhf_trigger_import_hamnet_site() OWNER TO dz;
+ALTER FUNCTION public.vhf_trigger_import_hamnet_site() OWNER TO vhf_owner;
 
 --
--- Name: vhf_trigger_site(); Type: FUNCTION; Schema: public; Owner: dz
+-- Name: vhf_trigger_site(); Type: FUNCTION; Schema: public; Owner: vhf_owner
 --
 
 CREATE FUNCTION public.vhf_trigger_site() RETURNS trigger
@@ -791,7 +791,7 @@ CREATE FUNCTION public.vhf_trigger_site() RETURNS trigger
 $$;
 
 
-ALTER FUNCTION public.vhf_trigger_site() OWNER TO dz;
+ALTER FUNCTION public.vhf_trigger_site() OWNER TO vhf_owner;
 
 SET default_tablespace = '';
 
@@ -825,7 +825,7 @@ CREATE VIEW api.settings AS
 ALTER TABLE api.settings OWNER TO postgres;
 
 --
--- Name: settings2; Type: VIEW; Schema: api; Owner: dz
+-- Name: settings2; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.settings2 AS
@@ -836,10 +836,10 @@ CREATE VIEW api.settings2 AS
   WHERE (setting_options.uid = 2);
 
 
-ALTER TABLE api.settings2 OWNER TO dz;
+ALTER TABLE api.settings2 OWNER TO vhf_owner;
 
 --
--- Name: site; Type: TABLE; Schema: public; Owner: dz
+-- Name: site; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.site (
@@ -858,94 +858,94 @@ CREATE TABLE public.site (
 );
 
 
-ALTER TABLE public.site OWNER TO dz;
+ALTER TABLE public.site OWNER TO vhf_owner;
 
 --
--- Name: COLUMN site.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.uid IS 'UID';
 
 
 --
--- Name: COLUMN site.site_name; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.site_name; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.site_name IS 'Name of station, e.g. Grünberg';
 
 
 --
--- Name: COLUMN site.city; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.city; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.city IS 'Bigger city around station (to identify station)';
 
 
 --
--- Name: COLUMN site.longitude; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.longitude; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.longitude IS 'Longitude of station, e.g. 48. North is positive';
 
 
 --
--- Name: COLUMN site.latitude; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.latitude; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.latitude IS 'Latitude of station, e.g. 15. East is positive';
 
 
 --
--- Name: COLUMN site.sea_level; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.sea_level; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.sea_level IS 'See level using WGS84 geoid in meter.';
 
 
 --
--- Name: COLUMN site.locator_short; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.locator_short; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.locator_short IS 'Short locator, e.g. JN78ab';
 
 
 --
--- Name: COLUMN site.locator_long; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.locator_long; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.locator_long IS 'Long locator (exact location)';
 
 
 --
--- Name: COLUMN site.geo_prefix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.geo_prefix; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.geo_prefix IS 'Amateur radio prefix of Austrian location, e.g. OE3';
 
 
 --
--- Name: COLUMN site.bev_gid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.bev_gid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.bev_gid IS 'GID of BEV table (pointer to community, etc.)';
 
 
 --
--- Name: COLUMN site.geom; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.geom; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.geom IS 'Geometry of location';
 
 
 --
--- Name: COLUMN site.internal; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN site.internal; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.site.internal IS 'Internal comment';
 
 
 --
--- Name: site; Type: VIEW; Schema: api; Owner: dz
+-- Name: site; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.site AS
@@ -966,10 +966,10 @@ CREATE VIEW api.site AS
    FROM public.site;
 
 
-ALTER TABLE api.site OWNER TO dz;
+ALTER TABLE api.site OWNER TO vhf_owner;
 
 --
--- Name: trx; Type: TABLE; Schema: public; Owner: dz
+-- Name: trx; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.trx (
@@ -1013,262 +1013,262 @@ CREATE TABLE public.trx (
 );
 
 
-ALTER TABLE public.trx OWNER TO dz;
+ALTER TABLE public.trx OWNER TO vhf_owner;
 
 --
--- Name: TABLE trx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: TABLE trx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON TABLE public.trx IS 'All OE repeater, including packet radio and beacons (and other stuff using spectrum in the relevant bands, eg. transponders)';
 
 
 --
--- Name: COLUMN trx.frequency_tx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.frequency_tx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.frequency_tx IS 'in MHz';
 
 
 --
--- Name: COLUMN trx.frequency_rx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.frequency_rx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.frequency_rx IS 'in MHz';
 
 
 --
--- Name: COLUMN trx.callsign; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.callsign; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.callsign IS 'Callsign with all characters in upper case without SSID';
 
 
 --
--- Name: COLUMN trx.antenna_heigth; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.antenna_heigth; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.antenna_heigth IS 'heigth about ground in m';
 
 
 --
--- Name: COLUMN trx.site_name; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.site_name; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.site_name IS 'Name of location, should fully identify station without city';
 
 
 --
--- Name: COLUMN trx.sysop; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.sysop; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.sysop IS 'Callsign of sysop/keeper of station; might not be legally responsible for station';
 
 
 --
--- Name: COLUMN trx.url; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.url; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.url IS 'URL including https://-Prefix of station, should be deep link';
 
 
 --
--- Name: COLUMN trx.hardware; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.hardware; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.hardware IS 'Hardware of station';
 
 
 --
--- Name: COLUMN trx.mmdvm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.mmdvm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.mmdvm IS 'True if station is based on MMDVM-concept';
 
 
 --
--- Name: COLUMN trx.solar_power; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.solar_power; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.solar_power IS 'True if solar powered station';
 
 
 --
--- Name: COLUMN trx.battery_power; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.battery_power; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.battery_power IS 'True if battery powered station';
 
 
 --
--- Name: COLUMN trx.status; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.status; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.status IS 'Status of operation: planed, active, inactive';
 
 
 --
--- Name: COLUMN trx.fm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.fm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.fm IS 'Analogue FM station';
 
 
 --
--- Name: COLUMN trx.fm_wakeup; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.fm_wakeup; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.fm_wakeup IS 'Tone or DTMF needed for activation of repeater, eg. "1750 Hz" or "DTMF 1"; Subtone is not relevant here';
 
 
 --
--- Name: COLUMN trx.ctcss_tx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.ctcss_tx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.ctcss_tx IS 'CTCSS tone send by transmitter in Hz; NULL if no tone ';
 
 
 --
--- Name: COLUMN trx.ctcss_rx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.ctcss_rx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.ctcss_rx IS 'CTCSS tone required by receiver in Hz; NULL if no tone needed';
 
 
 --
--- Name: COLUMN trx.echolink; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.echolink; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.echolink IS 'True if connected to Echolink';
 
 
 --
--- Name: COLUMN trx.echolink_id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.echolink_id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.echolink_id IS 'Numeric ID in Echolink system';
 
 
 --
--- Name: COLUMN trx.digital_id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.digital_id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.digital_id IS 'Digital (DMR) ID of station, eg. 23205 or private ID eg. 932832';
 
 
 --
--- Name: COLUMN trx.dmr; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.dmr; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.dmr IS 'True if station supports DMR mode';
 
 
 --
--- Name: COLUMN trx.ipsc2; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.ipsc2; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.ipsc2 IS 'True if station is connected to IPSC2';
 
 
 --
--- Name: COLUMN trx.brandmeister; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.brandmeister; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.brandmeister IS 'True if stations is connected to Brandmeister';
 
 
 --
--- Name: COLUMN trx.network_registered; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.network_registered; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.network_registered IS 'True if station is registered on digital network (including FM stations)';
 
 
 --
--- Name: COLUMN trx.c4fm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.c4fm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.c4fm IS 'True if C4FM is supported';
 
 
 --
--- Name: COLUMN trx.c4fm_groups; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.c4fm_groups; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.c4fm_groups IS 'Comma separated list of C4FM groups';
 
 
 --
--- Name: COLUMN trx.dstar; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.dstar; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.dstar IS 'True if Dstar is supported';
 
 
 --
--- Name: COLUMN trx.dstar_rpt1; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.dstar_rpt1; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.dstar_rpt1 IS 'Dstar Repeater 1 - Upper case character, eg. A';
 
 
 --
--- Name: COLUMN trx.dstar_rpt2; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.dstar_rpt2; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.dstar_rpt2 IS 'Dstar Repeater 2 - Upper case character, eg. A';
 
 
 --
--- Name: COLUMN trx.tetra; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.tetra; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.tetra IS 'True if Tetra station';
 
 
 --
--- Name: COLUMN trx.other_mode; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.other_mode; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.other_mode IS 'True if other mode (digital or analogue)';
 
 
 --
--- Name: COLUMN trx.other_mode_name; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.other_mode_name; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.other_mode_name IS 'Short description of the other mode (eg SSB USB)';
 
 
 --
--- Name: COLUMN trx.comment; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.comment; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.comment IS 'Public visible comment';
 
 
 --
--- Name: COLUMN trx.internal; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.internal; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.internal IS 'Internal comment (for administrative perposes)';
 
 
 --
--- Name: COLUMN trx.created_at; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.created_at; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.created_at IS 'Timestamp of insert';
 
 
 --
--- Name: COLUMN trx.cc; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN trx.cc; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.trx.cc IS 'Color Code (default DMR code is 1)';
 
 
 --
--- Name: site_type; Type: VIEW; Schema: api; Owner: dz
+-- Name: site_type; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.site_type AS
@@ -1300,10 +1300,10 @@ CREATE VIEW api.site_type AS
   GROUP BY site.site_name, site.city, site.longitude, site.latitude, (public.vhf_nice_geo(site.longitude)), (public.vhf_nice_geo(site.latitude)), site.sea_level, site.locator_short, site.locator_long, site.geo_prefix, site.bev_gid, site.geom;
 
 
-ALTER TABLE api.site_type OWNER TO dz;
+ALTER TABLE api.site_type OWNER TO vhf_owner;
 
 --
--- Name: trx; Type: VIEW; Schema: api; Owner: dz
+-- Name: trx; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.trx AS
@@ -1347,7 +1347,7 @@ CREATE VIEW api.trx AS
    FROM public.trx;
 
 
-ALTER TABLE api.trx OWNER TO dz;
+ALTER TABLE api.trx OWNER TO vhf_owner;
 
 --
 -- Name: oesterreich_bev_vgd_lam; Type: TABLE; Schema: public; Owner: postgres
@@ -1380,7 +1380,7 @@ CREATE TABLE public.oesterreich_bev_vgd_lam (
 ALTER TABLE public.oesterreich_bev_vgd_lam OWNER TO postgres;
 
 --
--- Name: trx_list; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list AS
@@ -1463,10 +1463,10 @@ CREATE VIEW public.trx_list AS
   ORDER BY s.geo_prefix, t.frequency_tx;
 
 
-ALTER TABLE public.trx_list OWNER TO dz;
+ALTER TABLE public.trx_list OWNER TO vhf_owner;
 
 --
--- Name: trx_list; Type: VIEW; Schema: api; Owner: dz
+-- Name: trx_list; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.trx_list AS
@@ -1524,10 +1524,10 @@ CREATE VIEW api.trx_list AS
    FROM public.trx_list;
 
 
-ALTER TABLE api.trx_list OWNER TO dz;
+ALTER TABLE api.trx_list OWNER TO vhf_owner;
 
 --
--- Name: trx_type; Type: VIEW; Schema: api; Owner: dz
+-- Name: trx_type; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
 CREATE VIEW api.trx_type AS
@@ -1570,10 +1570,10 @@ CREATE VIEW api.trx_type AS
   WHERE ((trx.status)::text = 'active'::text);
 
 
-ALTER TABLE api.trx_type OWNER TO dz;
+ALTER TABLE api.trx_type OWNER TO vhf_owner;
 
 --
--- Name: bands; Type: TABLE; Schema: public; Owner: dz
+-- Name: bands; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.bands (
@@ -1585,17 +1585,17 @@ CREATE TABLE public.bands (
 );
 
 
-ALTER TABLE public.bands OWNER TO dz;
+ALTER TABLE public.bands OWNER TO vhf_owner;
 
 --
--- Name: COLUMN bands.common_band; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN bands.common_band; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.bands.common_band IS 'Band available on all common transceivers';
 
 
 --
--- Name: band_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: band_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.band_uid_seq
@@ -1607,17 +1607,17 @@ CREATE SEQUENCE public.band_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.band_uid_seq OWNER TO dz;
+ALTER TABLE public.band_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: band_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: band_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.band_uid_seq OWNED BY public.bands.uid;
 
 
 --
--- Name: beacon_import; Type: TABLE; Schema: public; Owner: dz
+-- Name: beacon_import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.beacon_import (
@@ -1634,17 +1634,17 @@ CREATE TABLE public.beacon_import (
 );
 
 
-ALTER TABLE public.beacon_import OWNER TO dz;
+ALTER TABLE public.beacon_import OWNER TO vhf_owner;
 
 --
--- Name: COLUMN beacon_import.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN beacon_import.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.beacon_import.uid IS 'UID';
 
 
 --
--- Name: beacon_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: beacon_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.beacon_import_uid_seq
@@ -1656,17 +1656,17 @@ CREATE SEQUENCE public.beacon_import_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.beacon_import_uid_seq OWNER TO dz;
+ALTER TABLE public.beacon_import_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: beacon_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: beacon_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.beacon_import_uid_seq OWNED BY public.beacon_import.uid;
 
 
 --
--- Name: bl_kz_prefix; Type: TABLE; Schema: public; Owner: dz
+-- Name: bl_kz_prefix; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.bl_kz_prefix (
@@ -1677,45 +1677,45 @@ CREATE TABLE public.bl_kz_prefix (
 );
 
 
-ALTER TABLE public.bl_kz_prefix OWNER TO dz;
+ALTER TABLE public.bl_kz_prefix OWNER TO vhf_owner;
 
 --
--- Name: TABLE bl_kz_prefix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: TABLE bl_kz_prefix; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON TABLE public.bl_kz_prefix IS 'Mapping between BEV Bundesländerkennzeichen and amateur radio prefix';
 
 
 --
--- Name: COLUMN bl_kz_prefix.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN bl_kz_prefix.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.bl_kz_prefix.uid IS 'UID';
 
 
 --
--- Name: COLUMN bl_kz_prefix.bl_kz; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN bl_kz_prefix.bl_kz; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.bl_kz_prefix.bl_kz IS 'Austria regional ID according to BEV';
 
 
 --
--- Name: COLUMN bl_kz_prefix.prefix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN bl_kz_prefix.prefix; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.bl_kz_prefix.prefix IS 'Prefix of Austrian amateur radio callsigns in this area';
 
 
 --
--- Name: COLUMN bl_kz_prefix.manager; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN bl_kz_prefix.manager; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.bl_kz_prefix.manager IS 'VHF-Manager of region (UKW Referent im LV)';
 
 
 --
--- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.bl_kz_prefix_uid_seq
@@ -1727,17 +1727,17 @@ CREATE SEQUENCE public.bl_kz_prefix_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.bl_kz_prefix_uid_seq OWNER TO dz;
+ALTER TABLE public.bl_kz_prefix_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.bl_kz_prefix_uid_seq OWNED BY public.bl_kz_prefix.uid;
 
 
 --
--- Name: repeater_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: repeater_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.repeater_uid_seq
@@ -1748,17 +1748,17 @@ CREATE SEQUENCE public.repeater_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.repeater_uid_seq OWNER TO dz;
+ALTER TABLE public.repeater_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: repeater_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: repeater_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.repeater_uid_seq OWNED BY public.trx.uid;
 
 
 --
--- Name: direct_channels; Type: TABLE; Schema: public; Owner: dz
+-- Name: direct_channels; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.direct_channels (
@@ -1802,255 +1802,255 @@ CREATE TABLE public.direct_channels (
 );
 
 
-ALTER TABLE public.direct_channels OWNER TO dz;
+ALTER TABLE public.direct_channels OWNER TO vhf_owner;
 
 --
--- Name: COLUMN direct_channels.frequency_tx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.frequency_tx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.frequency_tx IS 'in MHz';
 
 
 --
--- Name: COLUMN direct_channels.frequency_rx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.frequency_rx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.frequency_rx IS 'in MHz';
 
 
 --
--- Name: COLUMN direct_channels.callsign; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.callsign; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.callsign IS 'Callsign with all characters in upper case without SSID';
 
 
 --
--- Name: COLUMN direct_channels.antenna_heigth; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.antenna_heigth; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.antenna_heigth IS 'heigth about ground in m';
 
 
 --
--- Name: COLUMN direct_channels.site_name; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.site_name; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.site_name IS 'Name of location, should fully identify station without city';
 
 
 --
--- Name: COLUMN direct_channels.sysop; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.sysop; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.sysop IS 'Callsign of sysop/keeper of station; might not be legally responsible for station';
 
 
 --
--- Name: COLUMN direct_channels.url; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.url; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.url IS 'URL including https://-Prefix of station, should be deep link';
 
 
 --
--- Name: COLUMN direct_channels.hardware; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.hardware; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.hardware IS 'Hardware of station';
 
 
 --
--- Name: COLUMN direct_channels.mmdvm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.mmdvm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.mmdvm IS 'True if station is based on MMDVM-concept';
 
 
 --
--- Name: COLUMN direct_channels.solar_power; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.solar_power; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.solar_power IS 'True if solar powered station';
 
 
 --
--- Name: COLUMN direct_channels.battery_power; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.battery_power; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.battery_power IS 'True if battery powered station';
 
 
 --
--- Name: COLUMN direct_channels.status; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.status; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.status IS 'Status of operation: planed, active, inactive';
 
 
 --
--- Name: COLUMN direct_channels.fm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.fm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.fm IS 'Analogue FM station';
 
 
 --
--- Name: COLUMN direct_channels.fm_wakeup; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.fm_wakeup; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.fm_wakeup IS 'Tone or DTMF needed for activation of repeater, eg. "1750 Hz" or "DTMF 1"; Subtone is not relevant here';
 
 
 --
--- Name: COLUMN direct_channels.ctcss_tx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.ctcss_tx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.ctcss_tx IS 'CTCSS tone send by transmitter in Hz; NULL if no tone ';
 
 
 --
--- Name: COLUMN direct_channels.ctcss_rx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.ctcss_rx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.ctcss_rx IS 'CTCSS tone required by receiver in Hz; NULL if no tone needed';
 
 
 --
--- Name: COLUMN direct_channels.echolink; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.echolink; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.echolink IS 'True if connected to Echolink';
 
 
 --
--- Name: COLUMN direct_channels.echolink_id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.echolink_id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.echolink_id IS 'Numeric ID in Echolink system';
 
 
 --
--- Name: COLUMN direct_channels.digital_id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.digital_id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.digital_id IS 'Digital (DMR) ID of station, eg. 23205 or private ID eg. 932832';
 
 
 --
--- Name: COLUMN direct_channels.dmr; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.dmr; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.dmr IS 'True if station supports DMR mode';
 
 
 --
--- Name: COLUMN direct_channels.ipsc2; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.ipsc2; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.ipsc2 IS 'True if station is connected to IPSC2';
 
 
 --
--- Name: COLUMN direct_channels.brandmeister; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.brandmeister; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.brandmeister IS 'True if stations is connected to Brandmeister';
 
 
 --
--- Name: COLUMN direct_channels.network_registered; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.network_registered; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.network_registered IS 'True if station is registered on digital network (including FM stations)';
 
 
 --
--- Name: COLUMN direct_channels.c4fm; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.c4fm; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.c4fm IS 'True if C4FM is supported';
 
 
 --
--- Name: COLUMN direct_channels.c4fm_groups; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.c4fm_groups; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.c4fm_groups IS 'Comma separated list of C4FM groups';
 
 
 --
--- Name: COLUMN direct_channels.dstar; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.dstar; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.dstar IS 'True if Dstar is supported';
 
 
 --
--- Name: COLUMN direct_channels.dstar_rpt1; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.dstar_rpt1; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.dstar_rpt1 IS 'Dstar Repeater 1 - Upper case character, eg. A';
 
 
 --
--- Name: COLUMN direct_channels.dstar_rpt2; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.dstar_rpt2; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.dstar_rpt2 IS 'Dstar Repeater 2 - Upper case character, eg. A';
 
 
 --
--- Name: COLUMN direct_channels.tetra; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.tetra; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.tetra IS 'True if Tetra station';
 
 
 --
--- Name: COLUMN direct_channels.other_mode; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.other_mode; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.other_mode IS 'True if other mode (digital or analogue)';
 
 
 --
--- Name: COLUMN direct_channels.other_mode_name; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.other_mode_name; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.other_mode_name IS 'Short description of the other mode (eg SSB USB)';
 
 
 --
--- Name: COLUMN direct_channels.comment; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.comment; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.comment IS 'Public visible comment';
 
 
 --
--- Name: COLUMN direct_channels.internal; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.internal; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.internal IS 'Internal comment (for administrative perposes)';
 
 
 --
--- Name: COLUMN direct_channels.created_at; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.created_at; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.created_at IS 'Timestamp of insert';
 
 
 --
--- Name: COLUMN direct_channels.cc; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN direct_channels.cc; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.direct_channels.cc IS 'Color Code (default DMR code is 1)';
 
 
 --
--- Name: chirp_fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: chirp_fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.chirp_fm AS
@@ -2115,10 +2115,10 @@ CREATE VIEW public.chirp_fm AS
           ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
-ALTER TABLE public.chirp_fm OWNER TO dz;
+ALTER TABLE public.chirp_fm OWNER TO vhf_owner;
 
 --
--- Name: chirp_fm_short; Type: VIEW; Schema: public; Owner: dz
+-- Name: chirp_fm_short; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.chirp_fm_short AS
@@ -2183,7 +2183,7 @@ CREATE VIEW public.chirp_fm_short AS
           ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
-ALTER TABLE public.chirp_fm_short OWNER TO dz;
+ALTER TABLE public.chirp_fm_short OWNER TO vhf_owner;
 
 --
 -- Name: dhm; Type: TABLE; Schema: public; Owner: postgres
@@ -2220,7 +2220,7 @@ ALTER SEQUENCE public.dhm_rid_seq OWNED BY public.dhm.rid;
 
 
 --
--- Name: digital_repeater_id_import; Type: TABLE; Schema: public; Owner: dz
+-- Name: digital_repeater_id_import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.digital_repeater_id_import (
@@ -2231,17 +2231,17 @@ CREATE TABLE public.digital_repeater_id_import (
 );
 
 
-ALTER TABLE public.digital_repeater_id_import OWNER TO dz;
+ALTER TABLE public.digital_repeater_id_import OWNER TO vhf_owner;
 
 --
--- Name: COLUMN digital_repeater_id_import.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN digital_repeater_id_import.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.digital_repeater_id_import.uid IS 'UID';
 
 
 --
--- Name: digital_repeater_id_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: digital_repeater_id_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.digital_repeater_id_import_uid_seq
@@ -2252,17 +2252,17 @@ CREATE SEQUENCE public.digital_repeater_id_import_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.digital_repeater_id_import_uid_seq OWNER TO dz;
+ALTER TABLE public.digital_repeater_id_import_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: digital_repeater_id_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: digital_repeater_id_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.digital_repeater_id_import_uid_seq OWNED BY public.digital_repeater_id_import.uid;
 
 
 --
--- Name: dmr_groups; Type: TABLE; Schema: public; Owner: dz
+-- Name: dmr_groups; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.dmr_groups (
@@ -2274,45 +2274,45 @@ CREATE TABLE public.dmr_groups (
 );
 
 
-ALTER TABLE public.dmr_groups OWNER TO dz;
+ALTER TABLE public.dmr_groups OWNER TO vhf_owner;
 
 --
--- Name: COLUMN dmr_groups.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dmr_groups.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dmr_groups.uid IS 'UID';
 
 
 --
--- Name: COLUMN dmr_groups.number; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dmr_groups.number; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dmr_groups.number IS 'index';
 
 
 --
--- Name: COLUMN dmr_groups.id; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dmr_groups.id; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dmr_groups.id IS 'DMR ID';
 
 
 --
--- Name: COLUMN dmr_groups."Type"; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dmr_groups."Type"; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dmr_groups."Type" IS 'Private/Group';
 
 
 --
--- Name: COLUMN dmr_groups."Name"; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dmr_groups."Name"; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dmr_groups."Name" IS 'Usage';
 
 
 --
--- Name: dmr-groups_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: dmr-groups_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public."dmr-groups_uid_seq"
@@ -2324,17 +2324,17 @@ CREATE SEQUENCE public."dmr-groups_uid_seq"
     CACHE 1;
 
 
-ALTER TABLE public."dmr-groups_uid_seq" OWNER TO dz;
+ALTER TABLE public."dmr-groups_uid_seq" OWNER TO vhf_owner;
 
 --
--- Name: dmr-groups_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: dmr-groups_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public."dmr-groups_uid_seq" OWNED BY public.dmr_groups.uid;
 
 
 --
--- Name: dstar_at_import; Type: TABLE; Schema: public; Owner: dz
+-- Name: dstar_at_import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.dstar_at_import (
@@ -2350,17 +2350,17 @@ CREATE TABLE public.dstar_at_import (
 );
 
 
-ALTER TABLE public.dstar_at_import OWNER TO dz;
+ALTER TABLE public.dstar_at_import OWNER TO vhf_owner;
 
 --
--- Name: COLUMN dstar_at_import.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN dstar_at_import.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.dstar_at_import.uid IS 'UID';
 
 
 --
--- Name: dstar-import_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: dstar-import_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public."dstar-import_uid_seq"
@@ -2372,17 +2372,17 @@ CREATE SEQUENCE public."dstar-import_uid_seq"
     CACHE 1;
 
 
-ALTER TABLE public."dstar-import_uid_seq" OWNER TO dz;
+ALTER TABLE public."dstar-import_uid_seq" OWNER TO vhf_owner;
 
 --
--- Name: dstar-import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: dstar-import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public."dstar-import_uid_seq" OWNED BY public.dstar_at_import.uid;
 
 
 --
--- Name: dstar-oevsv-import; Type: TABLE; Schema: public; Owner: dz
+-- Name: dstar-oevsv-import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public."dstar-oevsv-import" (
@@ -2398,17 +2398,17 @@ CREATE TABLE public."dstar-oevsv-import" (
 );
 
 
-ALTER TABLE public."dstar-oevsv-import" OWNER TO dz;
+ALTER TABLE public."dstar-oevsv-import" OWNER TO vhf_owner;
 
 --
--- Name: COLUMN "dstar-oevsv-import".uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN "dstar-oevsv-import".uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public."dstar-oevsv-import".uid IS 'UID';
 
 
 --
--- Name: dstar-oevsv-import_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: dstar-oevsv-import_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public."dstar-oevsv-import_uid_seq"
@@ -2420,17 +2420,17 @@ CREATE SEQUENCE public."dstar-oevsv-import_uid_seq"
     CACHE 1;
 
 
-ALTER TABLE public."dstar-oevsv-import_uid_seq" OWNER TO dz;
+ALTER TABLE public."dstar-oevsv-import_uid_seq" OWNER TO vhf_owner;
 
 --
--- Name: dstar-oevsv-import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: dstar-oevsv-import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public."dstar-oevsv-import_uid_seq" OWNED BY public."dstar-oevsv-import".uid;
 
 
 --
--- Name: echolink-import; Type: TABLE; Schema: public; Owner: dz
+-- Name: echolink-import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public."echolink-import" (
@@ -2443,17 +2443,17 @@ CREATE TABLE public."echolink-import" (
 );
 
 
-ALTER TABLE public."echolink-import" OWNER TO dz;
+ALTER TABLE public."echolink-import" OWNER TO vhf_owner;
 
 --
--- Name: COLUMN "echolink-import".uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN "echolink-import".uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public."echolink-import".uid IS 'UID';
 
 
 --
--- Name: echolink_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: echolink_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.echolink_uid_seq
@@ -2465,17 +2465,17 @@ CREATE SEQUENCE public.echolink_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.echolink_uid_seq OWNER TO dz;
+ALTER TABLE public.echolink_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: echolink_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: echolink_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.echolink_uid_seq OWNED BY public."echolink-import".uid;
 
 
 --
--- Name: gd77; Type: VIEW; Schema: public; Owner: dz
+-- Name: gd77; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.gd77 AS
@@ -2538,10 +2538,10 @@ CREATE VIEW public.gd77 AS
   ORDER BY foobar."Name";
 
 
-ALTER TABLE public.gd77 OWNER TO dz;
+ALTER TABLE public.gd77 OWNER TO vhf_owner;
 
 --
--- Name: gd77_groups; Type: VIEW; Schema: public; Owner: dz
+-- Name: gd77_groups; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.gd77_groups AS
@@ -2555,10 +2555,10 @@ CREATE VIEW public.gd77_groups AS
   ORDER BY d.number;
 
 
-ALTER TABLE public.gd77_groups OWNER TO dz;
+ALTER TABLE public.gd77_groups OWNER TO vhf_owner;
 
 --
--- Name: ic9700_dr; Type: VIEW; Schema: public; Owner: dz
+-- Name: ic9700_dr; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.ic9700_dr AS
@@ -2608,10 +2608,10 @@ CREATE VIEW public.ic9700_dr AS
   ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx));
 
 
-ALTER TABLE public.ic9700_dr OWNER TO dz;
+ALTER TABLE public.ic9700_dr OWNER TO vhf_owner;
 
 --
--- Name: import_hamnet_site; Type: TABLE; Schema: public; Owner: dz
+-- Name: import_hamnet_site; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.import_hamnet_site (
@@ -2645,17 +2645,17 @@ CREATE TABLE public.import_hamnet_site (
 );
 
 
-ALTER TABLE public.import_hamnet_site OWNER TO dz;
+ALTER TABLE public.import_hamnet_site OWNER TO vhf_owner;
 
 --
--- Name: COLUMN import_hamnet_site.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN import_hamnet_site.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.import_hamnet_site.uid IS 'UID';
 
 
 --
--- Name: import_hamnet_site_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: import_hamnet_site_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.import_hamnet_site_uid_seq
@@ -2666,17 +2666,17 @@ CREATE SEQUENCE public.import_hamnet_site_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.import_hamnet_site_uid_seq OWNER TO dz;
+ALTER TABLE public.import_hamnet_site_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: import_hamnet_site_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: import_hamnet_site_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.import_hamnet_site_uid_seq OWNED BY public.import_hamnet_site.uid;
 
 
 --
--- Name: licenses; Type: TABLE; Schema: public; Owner: dz
+-- Name: licenses; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.licenses (
@@ -2692,73 +2692,73 @@ CREATE TABLE public.licenses (
 );
 
 
-ALTER TABLE public.licenses OWNER TO dz;
+ALTER TABLE public.licenses OWNER TO vhf_owner;
 
 --
--- Name: COLUMN licenses.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.uid IS 'UID';
 
 
 --
--- Name: COLUMN licenses.callsign; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.callsign; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.callsign IS 'Callsign in upper case letters';
 
 
 --
--- Name: COLUMN licenses.suffix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.suffix; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.suffix IS 'Suffix of callsign (eg. AAA)';
 
 
 --
--- Name: COLUMN licenses.prefix; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.prefix; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.prefix IS 'Prefix of callsign, e.g. OE1';
 
 
 --
--- Name: COLUMN licenses.name_address; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.name_address; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.name_address IS 'Name and address of licencee';
 
 
 --
--- Name: COLUMN licenses.issue; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.issue; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.issue IS 'Issue of register (e.g. 2021-09)';
 
 
 --
--- Name: COLUMN licenses.created_at; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.created_at; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.created_at IS 'Timestamp of insert';
 
 
 --
--- Name: COLUMN licenses.internal; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.internal; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.internal IS 'Internal note';
 
 
 --
--- Name: COLUMN licenses.class; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN licenses.class; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.licenses.class IS 'Lic classe (e.g. 1)';
 
 
 --
--- Name: licenses_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: licenses_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.licenses_uid_seq
@@ -2769,10 +2769,10 @@ CREATE SEQUENCE public.licenses_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.licenses_uid_seq OWNER TO dz;
+ALTER TABLE public.licenses_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: licenses_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: licenses_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.licenses_uid_seq OWNED BY public.licenses.uid;
@@ -2801,7 +2801,7 @@ ALTER SEQUENCE public.oesterreich_bev_vgd_lam_gid_seq OWNED BY public.oesterreic
 
 
 --
--- Name: packet_import; Type: TABLE; Schema: public; Owner: dz
+-- Name: packet_import; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.packet_import (
@@ -2821,10 +2821,10 @@ CREATE TABLE public.packet_import (
 );
 
 
-ALTER TABLE public.packet_import OWNER TO dz;
+ALTER TABLE public.packet_import OWNER TO vhf_owner;
 
 --
--- Name: packet_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: packet_import_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.packet_import_uid_seq
@@ -2836,17 +2836,17 @@ CREATE SEQUENCE public.packet_import_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.packet_import_uid_seq OWNER TO dz;
+ALTER TABLE public.packet_import_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: packet_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: packet_import_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.packet_import_uid_seq OWNED BY public.packet_import.uid;
 
 
 --
--- Name: rfinder_fr; Type: VIEW; Schema: public; Owner: dz
+-- Name: rfinder_fr; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.rfinder_fr AS
@@ -2982,10 +2982,10 @@ CREATE VIEW public.rfinder_fr AS
           WHERE (((t.type_of_station)::text = 'repeater_voice'::text) AND (t.dstar = true) AND ((t.status)::text = 'active'::text))) foobar;
 
 
-ALTER TABLE public.rfinder_fr OWNER TO dz;
+ALTER TABLE public.rfinder_fr OWNER TO vhf_owner;
 
 --
--- Name: rt_ic9700_dr; Type: VIEW; Schema: public; Owner: dz
+-- Name: rt_ic9700_dr; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.rt_ic9700_dr AS
@@ -3068,10 +3068,10 @@ CREATE VIEW public.rt_ic9700_dr AS
           ORDER BY t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
-ALTER TABLE public.rt_ic9700_dr OWNER TO dz;
+ALTER TABLE public.rt_ic9700_dr OWNER TO vhf_owner;
 
 --
--- Name: rt_ic9700_fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: rt_ic9700_fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.rt_ic9700_fm AS
@@ -3134,10 +3134,10 @@ CREATE VIEW public.rt_ic9700_fm AS
           ORDER BY ROW(public.vhf_band_name(t.frequency_tx), t.callsign)) foobar;
 
 
-ALTER TABLE public.rt_ic9700_fm OWNER TO dz;
+ALTER TABLE public.rt_ic9700_fm OWNER TO vhf_owner;
 
 --
--- Name: scrap_c4fm_ycs232; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_c4fm_ycs232; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_c4fm_ycs232 (
@@ -3158,10 +3158,10 @@ CREATE TABLE public.scrap_c4fm_ycs232 (
 );
 
 
-ALTER TABLE public.scrap_c4fm_ycs232 OWNER TO dz;
+ALTER TABLE public.scrap_c4fm_ycs232 OWNER TO vhf_owner;
 
 --
--- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_c4fm_ycs232_id_seq
@@ -3173,17 +3173,17 @@ CREATE SEQUENCE public.scrap_c4fm_ycs232_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_c4fm_ycs232_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_c4fm_ycs232_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_c4fm_ycs232_id_seq OWNED BY public.scrap_c4fm_ycs232.id;
 
 
 --
--- Name: scrap_dmr_ipsc2; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dmr_ipsc2 (
@@ -3204,10 +3204,10 @@ CREATE TABLE public.scrap_dmr_ipsc2 (
 );
 
 
-ALTER TABLE public.scrap_dmr_ipsc2 OWNER TO dz;
+ALTER TABLE public.scrap_dmr_ipsc2 OWNER TO vhf_owner;
 
 --
--- Name: scrap_dmr_ipsc2_hotspot; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_hotspot; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dmr_ipsc2_hotspot (
@@ -3228,10 +3228,10 @@ CREATE TABLE public.scrap_dmr_ipsc2_hotspot (
 );
 
 
-ALTER TABLE public.scrap_dmr_ipsc2_hotspot OWNER TO dz;
+ALTER TABLE public.scrap_dmr_ipsc2_hotspot OWNER TO vhf_owner;
 
 --
--- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq
@@ -3243,17 +3243,17 @@ CREATE SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dmr_ipsc2_hotspot_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dmr_ipsc2_hotspot_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_hotspot_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq OWNED BY public.scrap_dmr_ipsc2_hotspot.id;
 
 
 --
--- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dmr_ipsc2_id_seq
@@ -3265,17 +3265,17 @@ CREATE SEQUENCE public.scrap_dmr_ipsc2_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dmr_ipsc2_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dmr_ipsc2_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dmr_ipsc2_id_seq OWNED BY public.scrap_dmr_ipsc2.id;
 
 
 --
--- Name: scrap_dstar_dcs009; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dstar_dcs009; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dstar_dcs009 (
@@ -3292,10 +3292,10 @@ CREATE TABLE public.scrap_dstar_dcs009 (
 );
 
 
-ALTER TABLE public.scrap_dstar_dcs009 OWNER TO dz;
+ALTER TABLE public.scrap_dstar_dcs009 OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dstar_dcs009_id_seq
@@ -3307,17 +3307,17 @@ CREATE SEQUENCE public.scrap_dstar_dcs009_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dstar_dcs009_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dstar_dcs009_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dstar_dcs009_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dstar_dcs009_id_seq OWNED BY public.scrap_dstar_dcs009.id;
 
 
 --
--- Name: scrap_dstar_ircddb; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dstar_ircddb; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dstar_ircddb (
@@ -3329,10 +3329,10 @@ CREATE TABLE public.scrap_dstar_ircddb (
 );
 
 
-ALTER TABLE public.scrap_dstar_ircddb OWNER TO dz;
+ALTER TABLE public.scrap_dstar_ircddb OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dstar_ircddb_id_seq
@@ -3344,17 +3344,17 @@ CREATE SEQUENCE public.scrap_dstar_ircddb_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dstar_ircddb_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dstar_ircddb_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dstar_ircddb_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dstar_ircddb_id_seq OWNED BY public.scrap_dstar_ircddb.id;
 
 
 --
--- Name: scrap_dstar_ref; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dstar_ref; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dstar_ref (
@@ -3370,10 +3370,10 @@ CREATE TABLE public.scrap_dstar_ref (
 );
 
 
-ALTER TABLE public.scrap_dstar_ref OWNER TO dz;
+ALTER TABLE public.scrap_dstar_ref OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dstar_ref_id_seq
@@ -3385,17 +3385,17 @@ CREATE SEQUENCE public.scrap_dstar_ref_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dstar_ref_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dstar_ref_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dstar_ref_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dstar_ref_id_seq OWNED BY public.scrap_dstar_ref.id;
 
 
 --
--- Name: scrap_dstar_xlx905; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_dstar_xlx905; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_dstar_xlx905 (
@@ -3414,10 +3414,10 @@ CREATE TABLE public.scrap_dstar_xlx905 (
 );
 
 
-ALTER TABLE public.scrap_dstar_xlx905 OWNER TO dz;
+ALTER TABLE public.scrap_dstar_xlx905 OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_dstar_xlx905_id_seq
@@ -3429,17 +3429,17 @@ CREATE SEQUENCE public.scrap_dstar_xlx905_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_dstar_xlx905_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_dstar_xlx905_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_dstar_xlx905_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_dstar_xlx905_id_seq OWNED BY public.scrap_dstar_xlx905.id;
 
 
 --
--- Name: scrap_oelink; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_oelink; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_oelink (
@@ -3460,10 +3460,10 @@ CREATE TABLE public.scrap_oelink (
 );
 
 
-ALTER TABLE public.scrap_oelink OWNER TO dz;
+ALTER TABLE public.scrap_oelink OWNER TO vhf_owner;
 
 --
--- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_oelink_id_seq
@@ -3475,17 +3475,17 @@ CREATE SEQUENCE public.scrap_oelink_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_oelink_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_oelink_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_oelink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_oelink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_oelink_id_seq OWNED BY public.scrap_oelink.id;
 
 
 --
--- Name: scrap_winlink_pactor; Type: TABLE; Schema: public; Owner: dz
+-- Name: scrap_winlink_pactor; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.scrap_winlink_pactor (
@@ -3501,10 +3501,10 @@ CREATE TABLE public.scrap_winlink_pactor (
 );
 
 
-ALTER TABLE public.scrap_winlink_pactor OWNER TO dz;
+ALTER TABLE public.scrap_winlink_pactor OWNER TO vhf_owner;
 
 --
--- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.scrap_winlink_pactor_id_seq
@@ -3516,10 +3516,10 @@ CREATE SEQUENCE public.scrap_winlink_pactor_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.scrap_winlink_pactor_id_seq OWNER TO dz;
+ALTER TABLE public.scrap_winlink_pactor_id_seq OWNER TO vhf_owner;
 
 --
--- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: scrap_winlink_pactor_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_winlink_pactor_id_seq OWNED BY public.scrap_winlink_pactor.id;
@@ -3548,7 +3548,7 @@ ALTER SEQUENCE public.setting_options_uid_seq OWNED BY public.setting_options.ui
 
 
 --
--- Name: site_callsigns_all; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_all; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_all AS
@@ -3564,10 +3564,10 @@ CREATE VIEW public.site_callsigns_all AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_all OWNER TO dz;
+ALTER TABLE public.site_callsigns_all OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_atv; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_atv; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_atv AS
@@ -3583,10 +3583,10 @@ CREATE VIEW public.site_callsigns_atv AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_atv OWNER TO dz;
+ALTER TABLE public.site_callsigns_atv OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_beacon; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_beacon; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_beacon AS
@@ -3602,10 +3602,10 @@ CREATE VIEW public.site_callsigns_beacon AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_beacon OWNER TO dz;
+ALTER TABLE public.site_callsigns_beacon OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_c4fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_c4fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_c4fm AS
@@ -3621,10 +3621,10 @@ CREATE VIEW public.site_callsigns_c4fm AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_c4fm OWNER TO dz;
+ALTER TABLE public.site_callsigns_c4fm OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_digipeater; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_digipeater; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_digipeater AS
@@ -3640,10 +3640,10 @@ CREATE VIEW public.site_callsigns_digipeater AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_digipeater OWNER TO dz;
+ALTER TABLE public.site_callsigns_digipeater OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_dmr; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_dmr; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_dmr AS
@@ -3659,10 +3659,10 @@ CREATE VIEW public.site_callsigns_dmr AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_dmr OWNER TO dz;
+ALTER TABLE public.site_callsigns_dmr OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_dstar; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_dstar; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_dstar AS
@@ -3678,10 +3678,10 @@ CREATE VIEW public.site_callsigns_dstar AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_dstar OWNER TO dz;
+ALTER TABLE public.site_callsigns_dstar OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_fm AS
@@ -3698,10 +3698,10 @@ CREATE VIEW public.site_callsigns_fm AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_fm OWNER TO dz;
+ALTER TABLE public.site_callsigns_fm OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_oe_link; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_oe_link; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_oe_link AS
@@ -3718,10 +3718,10 @@ CREATE VIEW public.site_callsigns_oe_link AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_oe_link OWNER TO dz;
+ALTER TABLE public.site_callsigns_oe_link OWNER TO vhf_owner;
 
 --
--- Name: site_callsigns_tetra; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_callsigns_tetra; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_callsigns_tetra AS
@@ -3737,10 +3737,10 @@ CREATE VIEW public.site_callsigns_tetra AS
   GROUP BY s.site_name, s.geom, s.city, s.uid;
 
 
-ALTER TABLE public.site_callsigns_tetra OWNER TO dz;
+ALTER TABLE public.site_callsigns_tetra OWNER TO vhf_owner;
 
 --
--- Name: site_list; Type: VIEW; Schema: public; Owner: dz
+-- Name: site_list; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.site_list AS
@@ -3760,10 +3760,10 @@ CREATE VIEW public.site_list AS
   ORDER BY s.site_name;
 
 
-ALTER TABLE public.site_list OWNER TO dz;
+ALTER TABLE public.site_list OWNER TO vhf_owner;
 
 --
--- Name: srv07_mapping; Type: TABLE; Schema: public; Owner: dz
+-- Name: srv07_mapping; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.srv07_mapping (
@@ -3774,38 +3774,38 @@ CREATE TABLE public.srv07_mapping (
 );
 
 
-ALTER TABLE public.srv07_mapping OWNER TO dz;
+ALTER TABLE public.srv07_mapping OWNER TO vhf_owner;
 
 --
--- Name: COLUMN srv07_mapping.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN srv07_mapping.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.srv07_mapping.uid IS 'UID';
 
 
 --
--- Name: COLUMN srv07_mapping.callsign; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN srv07_mapping.callsign; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.srv07_mapping.callsign IS 'Callsign of mapped station';
 
 
 --
--- Name: COLUMN srv07_mapping.frequency_tx; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN srv07_mapping.frequency_tx; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.srv07_mapping.frequency_tx IS 'Frequency according to repeater table (correct frequency)';
 
 
 --
--- Name: COLUMN srv07_mapping.frequency_srv07; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN srv07_mapping.frequency_srv07; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.srv07_mapping.frequency_srv07 IS 'Frequency according to src07 (IPSC2)';
 
 
 --
--- Name: srv07_mapping_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: srv07_mapping_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.srv07_mapping_uid_seq
@@ -3817,17 +3817,17 @@ CREATE SEQUENCE public.srv07_mapping_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.srv07_mapping_uid_seq OWNER TO dz;
+ALTER TABLE public.srv07_mapping_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: srv07_mapping_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: srv07_mapping_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.srv07_mapping_uid_seq OWNED BY public.srv07_mapping.uid;
 
 
 --
--- Name: srv07_status; Type: TABLE; Schema: public; Owner: dz
+-- Name: srv07_status; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
 CREATE TABLE public.srv07_status (
@@ -3844,17 +3844,17 @@ CREATE TABLE public.srv07_status (
 );
 
 
-ALTER TABLE public.srv07_status OWNER TO dz;
+ALTER TABLE public.srv07_status OWNER TO vhf_owner;
 
 --
--- Name: COLUMN srv07_status.uid; Type: COMMENT; Schema: public; Owner: dz
+-- Name: COLUMN srv07_status.uid; Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
 COMMENT ON COLUMN public.srv07_status.uid IS 'UID';
 
 
 --
--- Name: srv07_status_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: srv07_status_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.srv07_status_uid_seq
@@ -3866,17 +3866,17 @@ CREATE SEQUENCE public.srv07_status_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.srv07_status_uid_seq OWNER TO dz;
+ALTER TABLE public.srv07_status_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: srv07_status_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: srv07_status_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.srv07_status_uid_seq OWNED BY public.srv07_status.uid;
 
 
 --
--- Name: station_uid_seq; Type: SEQUENCE; Schema: public; Owner: dz
+-- Name: station_uid_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
 CREATE SEQUENCE public.station_uid_seq
@@ -3888,17 +3888,17 @@ CREATE SEQUENCE public.station_uid_seq
     CACHE 1;
 
 
-ALTER TABLE public.station_uid_seq OWNER TO dz;
+ALTER TABLE public.station_uid_seq OWNER TO vhf_owner;
 
 --
--- Name: station_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: dz
+-- Name: station_uid_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 
 
 --
--- Name: trx_list_atv; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_atv; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_atv AS
@@ -3920,10 +3920,10 @@ CREATE VIEW public.trx_list_atv AS
   WHERE ((t.type_of_station)::text = 'atv'::text);
 
 
-ALTER TABLE public.trx_list_atv OWNER TO dz;
+ALTER TABLE public.trx_list_atv OWNER TO vhf_owner;
 
 --
--- Name: trx_list_beacon; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_beacon; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_beacon AS
@@ -3942,10 +3942,10 @@ CREATE VIEW public.trx_list_beacon AS
   WHERE ((t.type_of_station)::text = 'beacon'::text);
 
 
-ALTER TABLE public.trx_list_beacon OWNER TO dz;
+ALTER TABLE public.trx_list_beacon OWNER TO vhf_owner;
 
 --
--- Name: trx_list_c4fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_c4fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_c4fm AS
@@ -3979,10 +3979,10 @@ CREATE VIEW public.trx_list_c4fm AS
   WHERE (t.c4fm = true);
 
 
-ALTER TABLE public.trx_list_c4fm OWNER TO dz;
+ALTER TABLE public.trx_list_c4fm OWNER TO vhf_owner;
 
 --
--- Name: trx_list_digipeater; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_digipeater; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_digipeater AS
@@ -4003,10 +4003,10 @@ CREATE VIEW public.trx_list_digipeater AS
   WHERE ((t.type_of_station)::text = 'digipeater'::text);
 
 
-ALTER TABLE public.trx_list_digipeater OWNER TO dz;
+ALTER TABLE public.trx_list_digipeater OWNER TO vhf_owner;
 
 --
--- Name: trx_list_dmr; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_dmr; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_dmr AS
@@ -4049,10 +4049,10 @@ CREATE VIEW public.trx_list_dmr AS
   WHERE (t.dmr = true);
 
 
-ALTER TABLE public.trx_list_dmr OWNER TO dz;
+ALTER TABLE public.trx_list_dmr OWNER TO vhf_owner;
 
 --
--- Name: trx_list_dstar; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_dstar; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_dstar AS
@@ -4081,10 +4081,10 @@ CREATE VIEW public.trx_list_dstar AS
   WHERE (t.dstar = true);
 
 
-ALTER TABLE public.trx_list_dstar OWNER TO dz;
+ALTER TABLE public.trx_list_dstar OWNER TO vhf_owner;
 
 --
--- Name: trx_list_fm; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_fm; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_fm AS
@@ -4110,10 +4110,10 @@ CREATE VIEW public.trx_list_fm AS
   WHERE (t.fm = true);
 
 
-ALTER TABLE public.trx_list_fm OWNER TO dz;
+ALTER TABLE public.trx_list_fm OWNER TO vhf_owner;
 
 --
--- Name: trx_list_fm_oe_link; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_fm_oe_link; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_fm_oe_link AS
@@ -4136,10 +4136,10 @@ CREATE VIEW public.trx_list_fm_oe_link AS
   WHERE ((t.fm = true) AND ((t.comment)::text = 'OE-Link'::text));
 
 
-ALTER TABLE public.trx_list_fm_oe_link OWNER TO dz;
+ALTER TABLE public.trx_list_fm_oe_link OWNER TO vhf_owner;
 
 --
--- Name: trx_list_fm_qsp; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_fm_qsp; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_fm_qsp AS
@@ -4165,10 +4165,10 @@ CREATE VIEW public.trx_list_fm_qsp AS
   WHERE (t.fm = true);
 
 
-ALTER TABLE public.trx_list_fm_qsp OWNER TO dz;
+ALTER TABLE public.trx_list_fm_qsp OWNER TO vhf_owner;
 
 --
--- Name: trx_list_tetra; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_list_tetra; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_list_tetra AS
@@ -4189,10 +4189,10 @@ CREATE VIEW public.trx_list_tetra AS
   WHERE (t.tetra = true);
 
 
-ALTER TABLE public.trx_list_tetra OWNER TO dz;
+ALTER TABLE public.trx_list_tetra OWNER TO vhf_owner;
 
 --
--- Name: trx_verylong; Type: VIEW; Schema: public; Owner: dz
+-- Name: trx_verylong; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.trx_verylong AS
@@ -4256,10 +4256,10 @@ CREATE VIEW public.trx_verylong AS
      LEFT JOIN public.oesterreich_bev_vgd_lam o ON ((o.gid = s.bev_gid)));
 
 
-ALTER TABLE public.trx_verylong OWNER TO dz;
+ALTER TABLE public.trx_verylong OWNER TO vhf_owner;
 
 --
--- Name: yaesu_ft3; Type: VIEW; Schema: public; Owner: dz
+-- Name: yaesu_ft3; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.yaesu_ft3 AS
@@ -4469,10 +4469,10 @@ CREATE VIEW public.yaesu_ft3 AS
           ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
-ALTER TABLE public.yaesu_ft3 OWNER TO dz;
+ALTER TABLE public.yaesu_ft3 OWNER TO vhf_owner;
 
 --
--- Name: yaesu_ftm400; Type: VIEW; Schema: public; Owner: dz
+-- Name: yaesu_ftm400; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
 CREATE VIEW public.yaesu_ftm400 AS
@@ -4554,24 +4554,24 @@ CREATE VIEW public.yaesu_ftm400 AS
           ORDER BY (public.vhf_band_common(t.frequency_tx)), t.callsign, (public.vhf_band_name(t.frequency_tx)))) foobar;
 
 
-ALTER TABLE public.yaesu_ftm400 OWNER TO dz;
+ALTER TABLE public.yaesu_ftm400 OWNER TO vhf_owner;
 
 --
--- Name: bands uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: bands uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.bands ALTER COLUMN uid SET DEFAULT nextval('public.band_uid_seq'::regclass);
 
 
 --
--- Name: beacon_import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: beacon_import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.beacon_import ALTER COLUMN uid SET DEFAULT nextval('public.beacon_import_uid_seq'::regclass);
 
 
 --
--- Name: bl_kz_prefix uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: bl_kz_prefix uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.bl_kz_prefix ALTER COLUMN uid SET DEFAULT nextval('public.bl_kz_prefix_uid_seq'::regclass);
@@ -4585,49 +4585,49 @@ ALTER TABLE ONLY public.dhm ALTER COLUMN rid SET DEFAULT nextval('public.dhm_rid
 
 
 --
--- Name: digital_repeater_id_import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: digital_repeater_id_import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.digital_repeater_id_import ALTER COLUMN uid SET DEFAULT nextval('public.digital_repeater_id_import_uid_seq'::regclass);
 
 
 --
--- Name: dmr_groups uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: dmr_groups uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.dmr_groups ALTER COLUMN uid SET DEFAULT nextval('public."dmr-groups_uid_seq"'::regclass);
 
 
 --
--- Name: dstar-oevsv-import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: dstar-oevsv-import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public."dstar-oevsv-import" ALTER COLUMN uid SET DEFAULT nextval('public."dstar-oevsv-import_uid_seq"'::regclass);
 
 
 --
--- Name: dstar_at_import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: dstar_at_import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.dstar_at_import ALTER COLUMN uid SET DEFAULT nextval('public."dstar-import_uid_seq"'::regclass);
 
 
 --
--- Name: echolink-import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: echolink-import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public."echolink-import" ALTER COLUMN uid SET DEFAULT nextval('public.echolink_uid_seq'::regclass);
 
 
 --
--- Name: import_hamnet_site uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: import_hamnet_site uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.import_hamnet_site ALTER COLUMN uid SET DEFAULT nextval('public.import_hamnet_site_uid_seq'::regclass);
 
 
 --
--- Name: licenses uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: licenses uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.licenses ALTER COLUMN uid SET DEFAULT nextval('public.licenses_uid_seq'::regclass);
@@ -4641,70 +4641,70 @@ ALTER TABLE ONLY public.oesterreich_bev_vgd_lam ALTER COLUMN gid SET DEFAULT nex
 
 
 --
--- Name: packet_import uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: packet_import uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.packet_import ALTER COLUMN uid SET DEFAULT nextval('public.packet_import_uid_seq'::regclass);
 
 
 --
--- Name: scrap_c4fm_ycs232 id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_c4fm_ycs232 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_c4fm_ycs232 ALTER COLUMN id SET DEFAULT nextval('public.scrap_c4fm_ycs232_id_seq'::regclass);
 
 
 --
--- Name: scrap_dmr_ipsc2 id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dmr_ipsc2 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_ipsc2_id_seq'::regclass);
 
 
 --
--- Name: scrap_dmr_ipsc2_hotspot id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_hotspot id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dmr_ipsc2_hotspot ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_ipsc2_hotspot_id_seq'::regclass);
 
 
 --
--- Name: scrap_dstar_dcs009 id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dstar_dcs009 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_dcs009 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_dcs009_id_seq'::regclass);
 
 
 --
--- Name: scrap_dstar_ircddb id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dstar_ircddb id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_ircddb ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_ircddb_id_seq'::regclass);
 
 
 --
--- Name: scrap_dstar_ref id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dstar_ref id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_ref ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_ref_id_seq'::regclass);
 
 
 --
--- Name: scrap_dstar_xlx905 id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_dstar_xlx905 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_xlx905 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_xlx905_id_seq'::regclass);
 
 
 --
--- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_oelink ALTER COLUMN id SET DEFAULT nextval('public.scrap_oelink_id_seq'::regclass);
 
 
 --
--- Name: scrap_winlink_pactor id; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: scrap_winlink_pactor id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_winlink_pactor ALTER COLUMN id SET DEFAULT nextval('public.scrap_winlink_pactor_id_seq'::regclass);
@@ -4718,28 +4718,28 @@ ALTER TABLE ONLY public.setting_options ALTER COLUMN uid SET DEFAULT nextval('pu
 
 
 --
--- Name: site uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: site uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.site ALTER COLUMN uid SET DEFAULT nextval('public.station_uid_seq'::regclass);
 
 
 --
--- Name: srv07_mapping uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: srv07_mapping uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.srv07_mapping ALTER COLUMN uid SET DEFAULT nextval('public.srv07_mapping_uid_seq'::regclass);
 
 
 --
--- Name: srv07_status uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: srv07_status uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.srv07_status ALTER COLUMN uid SET DEFAULT nextval('public.srv07_status_uid_seq'::regclass);
 
 
 --
--- Name: trx uid; Type: DEFAULT; Schema: public; Owner: dz
+-- Name: trx uid; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.trx ALTER COLUMN uid SET DEFAULT nextval('public.repeater_uid_seq'::regclass);
@@ -4762,7 +4762,7 @@ ALTER TABLE ONLY public.oesterreich_bev_vgd_lam
 
 
 --
--- Name: import_hamnet_site pk_import_hamnet_site; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: import_hamnet_site pk_import_hamnet_site; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.import_hamnet_site
@@ -4770,7 +4770,7 @@ ALTER TABLE ONLY public.import_hamnet_site
 
 
 --
--- Name: site pk_site; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: site pk_site; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.site
@@ -4778,7 +4778,7 @@ ALTER TABLE ONLY public.site
 
 
 --
--- Name: scrap_c4fm_ycs232 scrap_c4fm_ycs232_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_c4fm_ycs232 scrap_c4fm_ycs232_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_c4fm_ycs232
@@ -4786,7 +4786,7 @@ ALTER TABLE ONLY public.scrap_c4fm_ycs232
 
 
 --
--- Name: scrap_dmr_ipsc2_hotspot scrap_dmr_ipsc2_hotspot_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2_hotspot scrap_dmr_ipsc2_hotspot_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dmr_ipsc2_hotspot
@@ -4794,7 +4794,7 @@ ALTER TABLE ONLY public.scrap_dmr_ipsc2_hotspot
 
 
 --
--- Name: scrap_dmr_ipsc2 scrap_dmr_ipsc2_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dmr_ipsc2 scrap_dmr_ipsc2_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dmr_ipsc2
@@ -4802,7 +4802,7 @@ ALTER TABLE ONLY public.scrap_dmr_ipsc2
 
 
 --
--- Name: scrap_dstar_dcs009 scrap_dstar_dcs009_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dstar_dcs009 scrap_dstar_dcs009_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_dcs009
@@ -4810,7 +4810,7 @@ ALTER TABLE ONLY public.scrap_dstar_dcs009
 
 
 --
--- Name: scrap_dstar_ircddb scrap_dstar_ircddb_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dstar_ircddb scrap_dstar_ircddb_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_ircddb
@@ -4818,7 +4818,7 @@ ALTER TABLE ONLY public.scrap_dstar_ircddb
 
 
 --
--- Name: scrap_dstar_ref scrap_dstar_ref_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dstar_ref scrap_dstar_ref_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_ref
@@ -4826,7 +4826,7 @@ ALTER TABLE ONLY public.scrap_dstar_ref
 
 
 --
--- Name: scrap_dstar_xlx905 scrap_dstar_xlx905_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_dstar_xlx905 scrap_dstar_xlx905_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_dstar_xlx905
@@ -4834,7 +4834,7 @@ ALTER TABLE ONLY public.scrap_dstar_xlx905
 
 
 --
--- Name: scrap_oelink scrap_oelink_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_oelink scrap_oelink_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_oelink
@@ -4842,7 +4842,7 @@ ALTER TABLE ONLY public.scrap_oelink
 
 
 --
--- Name: scrap_winlink_pactor scrap_winlink_pactor_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: scrap_winlink_pactor scrap_winlink_pactor_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_winlink_pactor
@@ -4850,7 +4850,7 @@ ALTER TABLE ONLY public.scrap_winlink_pactor
 
 
 --
--- Name: trx trx_pk; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: trx trx_pk; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.trx
@@ -4858,7 +4858,7 @@ ALTER TABLE ONLY public.trx
 
 
 --
--- Name: direct_channels trx_pk_1; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: direct_channels trx_pk_1; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.direct_channels
@@ -4866,7 +4866,7 @@ ALTER TABLE ONLY public.direct_channels
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: dz
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.users
@@ -4874,14 +4874,14 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: band_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: band_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX band_uid_idx ON public.bands USING btree (uid);
 
 
 --
--- Name: beacon_import_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: beacon_import_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX beacon_import_uid_idx ON public.beacon_import USING btree (uid);
@@ -4895,63 +4895,63 @@ CREATE INDEX dhm_st_convexhull_idx ON public.dhm USING gist (public.st_convexhul
 
 
 --
--- Name: digital_repeater_id_import_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: digital_repeater_id_import_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX digital_repeater_id_import_uid_idx ON public.digital_repeater_id_import USING btree (uid);
 
 
 --
--- Name: dmr_groups_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: dmr_groups_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX dmr_groups_uid_idx ON public.dmr_groups USING btree (uid);
 
 
 --
--- Name: dstar_import_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: dstar_import_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX dstar_import_uid_idx ON public.dstar_at_import USING btree (uid);
 
 
 --
--- Name: dstar_oevsv_import_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: dstar_oevsv_import_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX dstar_oevsv_import_uid_idx ON public."dstar-oevsv-import" USING btree (uid);
 
 
 --
--- Name: echolink_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: echolink_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX echolink_uid_idx ON public."echolink-import" USING btree (uid);
 
 
 --
--- Name: import_hamnet_site_geom_gix; Type: INDEX; Schema: public; Owner: dz
+-- Name: import_hamnet_site_geom_gix; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX import_hamnet_site_geom_gix ON public.import_hamnet_site USING gist (geom);
 
 
 --
--- Name: licenses_callsign_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: licenses_callsign_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX licenses_callsign_idx ON public.licenses USING btree (callsign);
 
 
 --
--- Name: licenses_suffix_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: licenses_suffix_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX licenses_suffix_idx ON public.licenses USING btree (suffix);
 
 
 --
--- Name: licenses_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: licenses_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX licenses_uid_idx ON public.licenses USING btree (uid);
@@ -4965,168 +4965,168 @@ CREATE INDEX oesterreich_bev_vgd_lam_geom_idx ON public.oesterreich_bev_vgd_lam 
 
 
 --
--- Name: site_geom_gix; Type: INDEX; Schema: public; Owner: dz
+-- Name: site_geom_gix; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX site_geom_gix ON public.site USING gist (geom);
 
 
 --
--- Name: site_name_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: site_name_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE UNIQUE INDEX site_name_idx ON public.site USING btree (site_name);
 
 
 --
--- Name: srv07_mapping_uid_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: srv07_mapping_uid_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX srv07_mapping_uid_idx ON public.srv07_mapping USING btree (uid);
 
 
 --
--- Name: trx_c4fm_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_c4fm_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_c4fm_idx ON public.trx USING btree (c4fm);
 
 
 --
--- Name: trx_c4fm_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_c4fm_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_c4fm_idx_1 ON public.direct_channels USING btree (c4fm);
 
 
 --
--- Name: trx_callsign_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_callsign_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_callsign_idx ON public.trx USING btree (callsign);
 
 
 --
--- Name: trx_callsign_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_callsign_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_callsign_idx_1 ON public.direct_channels USING btree (callsign);
 
 
 --
--- Name: trx_dmr_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_dmr_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_dmr_idx ON public.trx USING btree (dmr);
 
 
 --
--- Name: trx_dmr_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_dmr_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_dmr_idx_1 ON public.direct_channels USING btree (dmr);
 
 
 --
--- Name: trx_dstar_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_dstar_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_dstar_idx ON public.trx USING btree (dstar);
 
 
 --
--- Name: trx_dstar_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_dstar_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_dstar_idx_1 ON public.direct_channels USING btree (dstar);
 
 
 --
--- Name: trx_fm_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_fm_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_fm_idx ON public.trx USING btree (fm);
 
 
 --
--- Name: trx_fm_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_fm_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_fm_idx_1 ON public.direct_channels USING btree (fm);
 
 
 --
--- Name: trx_frequency_tx_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_frequency_tx_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_frequency_tx_idx ON public.trx USING btree (frequency_tx);
 
 
 --
--- Name: trx_frequency_tx_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_frequency_tx_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_frequency_tx_idx_1 ON public.direct_channels USING btree (frequency_tx);
 
 
 --
--- Name: trx_other_mode_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_other_mode_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_other_mode_idx ON public.trx USING btree (other_mode);
 
 
 --
--- Name: trx_other_mode_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_other_mode_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_other_mode_idx_1 ON public.direct_channels USING btree (other_mode);
 
 
 --
--- Name: trx_site_name_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_site_name_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_site_name_idx ON public.trx USING btree (site_name);
 
 
 --
--- Name: trx_site_name_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_site_name_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_site_name_idx_1 ON public.direct_channels USING btree (site_name);
 
 
 --
--- Name: trx_tetra_idx; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_tetra_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_tetra_idx ON public.trx USING btree (tetra);
 
 
 --
--- Name: trx_tetra_idx_1; Type: INDEX; Schema: public; Owner: dz
+-- Name: trx_tetra_idx_1; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
 CREATE INDEX trx_tetra_idx_1 ON public.direct_channels USING btree (tetra);
 
 
 --
--- Name: import_hamnet_site import_hamnet_site_trigger; Type: TRIGGER; Schema: public; Owner: dz
+-- Name: import_hamnet_site import_hamnet_site_trigger; Type: TRIGGER; Schema: public; Owner: vhf_owner
 --
 
 CREATE TRIGGER import_hamnet_site_trigger BEFORE INSERT OR UPDATE ON public.import_hamnet_site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_import_hamnet_site();
 
 
 --
--- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: dz
+-- Name: site site_trigger; Type: TRIGGER; Schema: public; Owner: vhf_owner
 --
 
 CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW EXECUTE FUNCTION public.vhf_trigger_site();
 
 
 --
--- Name: trx trx_site_fk; Type: FK CONSTRAINT; Schema: public; Owner: dz
+-- Name: trx trx_site_fk; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.trx
@@ -5140,6 +5140,7 @@ ALTER TABLE ONLY public.trx
 GRANT USAGE ON SCHEMA api TO web_anon;
 GRANT ALL ON SCHEMA api TO dz;
 GRANT USAGE ON SCHEMA api TO web_user;
+GRANT ALL ON SCHEMA api TO vhf_owner;
 
 
 --
@@ -5148,24 +5149,47 @@ GRANT USAGE ON SCHEMA api TO web_user;
 
 REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
+GRANT ALL ON SCHEMA public TO vhf_owner;
+GRANT USAGE ON SCHEMA public TO vhf_login_writer;
 
 
 --
--- Name: FUNCTION geo(x double precision, y double precision); Type: ACL; Schema: api; Owner: dz
+-- Name: FUNCTION geo(x double precision, y double precision); Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT ALL ON FUNCTION api.geo(x double precision, y double precision) TO web_anon;
 
 
 --
--- Name: FUNCTION point_info(x double precision, y double precision); Type: ACL; Schema: api; Owner: dz
+-- Name: FUNCTION point_info(x double precision, y double precision); Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT ALL ON FUNCTION api.point_info(x double precision, y double precision) TO web_anon;
 
 
 --
--- Name: FUNCTION user_login(); Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE users; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT SELECT,INSERT ON TABLE public.users TO vhf_login_writer;
+
+
+--
+-- Name: COLUMN users.callsign; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT UPDATE(callsign) ON TABLE public.users TO vhf_login_writer;
+
+
+--
+-- Name: COLUMN users.last_seen; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
+
+
+--
+-- Name: FUNCTION user_login(); Type: ACL; Schema: api; Owner: vhf_login_writer
 --
 
 REVOKE ALL ON FUNCTION api.user_login() FROM PUBLIC;
@@ -5188,28 +5212,28 @@ GRANT SELECT ON TABLE api.settings TO web_anon;
 
 
 --
--- Name: TABLE settings2; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE settings2; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.settings2 TO web_anon;
 
 
 --
--- Name: TABLE site; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE site; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.site TO web_anon;
 
 
 --
--- Name: TABLE site_type; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE site_type; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.site_type TO web_anon;
 
 
 --
--- Name: TABLE trx; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE trx; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.trx TO web_anon;
@@ -5223,21 +5247,21 @@ GRANT SELECT ON TABLE public.oesterreich_bev_vgd_lam TO dz;
 
 
 --
--- Name: TABLE trx_list; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE trx_list; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.trx_list TO web_anon;
 
 
 --
--- Name: TABLE trx_type; Type: ACL; Schema: api; Owner: dz
+-- Name: TABLE trx_type; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.trx_type TO web_anon;
 
 
 --
--- Name: TABLE bands; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE bands; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE public.bands TO web_anon;
@@ -5258,126 +5282,126 @@ GRANT ALL ON TABLE public.dhm TO dz;
 
 
 --
--- Name: TABLE scrap_c4fm_ycs232; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_c4fm_ycs232; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_c4fm_ycs232 TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_c4fm_ycs232_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_c4fm_ycs232_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_c4fm_ycs232_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dmr_ipsc2; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dmr_ipsc2; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dmr_ipsc2 TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dmr_ipsc2_hotspot; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dmr_ipsc2_hotspot; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dmr_ipsc2_hotspot TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dmr_ipsc2_hotspot_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dmr_ipsc2_hotspot_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dmr_ipsc2_hotspot_id_seq TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dmr_ipsc2_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dmr_ipsc2_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dmr_ipsc2_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dstar_dcs009; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dstar_dcs009; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_dcs009 TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dstar_dcs009_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dstar_dcs009_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dstar_dcs009_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dstar_ircddb; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dstar_ircddb; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_ircddb TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dstar_ircddb_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dstar_ircddb_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dstar_ircddb_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dstar_ref; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dstar_ref; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_ref TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dstar_ref_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dstar_ref_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dstar_ref_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_dstar_xlx905; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_dstar_xlx905; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_dstar_xlx905 TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_dstar_xlx905_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_dstar_xlx905_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_oelink; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_oelink; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_oelink TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_oelink_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_oelink_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_oelink_id_seq TO repeater_scrap;
 
 
 --
--- Name: TABLE scrap_winlink_pactor; Type: ACL; Schema: public; Owner: dz
+-- Name: TABLE scrap_winlink_pactor; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT INSERT ON TABLE public.scrap_winlink_pactor TO repeater_scrap;
 
 
 --
--- Name: SEQUENCE scrap_winlink_pactor_id_seq; Type: ACL; Schema: public; Owner: dz
+-- Name: SEQUENCE scrap_winlink_pactor_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_winlink_pactor_id_seq TO repeater_scrap;

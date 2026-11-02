@@ -50,6 +50,12 @@ Note: vhf_schema.sql was generated using "pg_dump -s".
 
 Changes to an existing database are in `postgres/migrations/` (dated, apply in order with
 `psql vhf -f <file>`); `vhf_schema.sql` already contains them.
+
+Owner of the schema objects is the role `vhf_owner` (no login); admins such as `dz` are
+members of it (`GRANT vhf_owner TO dz`). So that new objects belong to it too, a migration
+starts with `SET ROLE vhf_owner;` (after `BEGIN;`), unless it has to run as postgres
+(creating roles). `api.user_login()` has its own minimal owner `vhf_login_writer`, see
+`postgres/migrations/2026-11-02_owner_roles.sql`.
 ```
 # Import schema
 psql vhf < vhf_schema.sql

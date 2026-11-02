@@ -40,7 +40,7 @@ apt install python3-requests python3-bs4 python3-psycopg    # or: pip install -r
 sudo -u postgres psql vhf -f create_scrap_tables.sql         # DELETES data in existing scrap_* tables
 ```
 
-`create_scrap_tables.sql` creates the tables (owner `dz`) and the role `repeater_scrap`, which
+`create_scrap_tables.sql` creates the tables (owner `vhf_owner`) and the role `repeater_scrap`, which
 may only insert into them; run it as postgres, as it creates a role.
 
 Database connection: `db_config.ini` (libpq parameter names):

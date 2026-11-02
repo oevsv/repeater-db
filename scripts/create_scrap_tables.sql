@@ -8,7 +8,7 @@
 --
 -- Also creates the role repeater_scrap the scrapers connect as (systemd
 -- service repeater-scrap, peer authentication over the local socket), allowed
--- to INSERT into these tables only. The tables are owned by dz.
+-- to INSERT into these tables only. The tables are owned by vhf_owner.
 --
 -- Drops and recreates the tables: ALL SCRAPED DATA IS DELETED.
 -- Run as postgres (creates a role):  sudo -u postgres psql vhf -f create_scrap_tables.sql
@@ -165,7 +165,7 @@ CREATE TABLE scrap_winlink_pactor (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
--- Owner dz like the rest of the schema; the scrapers may only add rows.
+-- Owner vhf_owner like the rest of the schema; the scrapers may only add rows.
 DO $$
 DECLARE
     t text;
@@ -173,7 +173,7 @@ BEGIN
     FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot',
             'scrap_oelink', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb',
             'scrap_dstar_ref', 'scrap_winlink_pactor'] LOOP
-        EXECUTE format('ALTER TABLE %I OWNER TO dz', t);
+        EXECUTE format('ALTER TABLE %I OWNER TO vhf_owner', t);
         EXECUTE format('GRANT INSERT ON %I TO repeater_scrap', t);
         EXECUTE format('GRANT USAGE ON SEQUENCE %I TO repeater_scrap', t || '_id_seq');
     END LOOP;
