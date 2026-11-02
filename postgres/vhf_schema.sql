@@ -3161,6 +3161,37 @@ CREATE TABLE public.scrap_c4fm_ycs232 (
 ALTER TABLE public.scrap_c4fm_ycs232 OWNER TO vhf_owner;
 
 --
+-- Name: ycs232_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.ycs232_status AS
+ WITH latest AS (
+         SELECT DISTINCT ON (scrap_c4fm_ycs232.callsign) scrap_c4fm_ycs232.callsign,
+            scrap_c4fm_ycs232.repeater_id,
+            scrap_c4fm_ycs232.type,
+            scrap_c4fm_ycs232.scraped_timestamp
+           FROM public.scrap_c4fm_ycs232
+          WHERE (COALESCE(scrap_c4fm_ycs232.callsign, ''::text) <> ''::text)
+          ORDER BY scrap_c4fm_ycs232.callsign, scrap_c4fm_ycs232.scraped_timestamp DESC
+        )
+ SELECT callsign,
+    'YCS232'::text AS network,
+    concat_ws(' '::text, NULLIF(repeater_id, ''::text), NULLIF(type, ''::text)) AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.ycs232_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW ycs232_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.ycs232_status IS 'Live status of the C4FM repeaters on YCS232 (active = listed within 120 minutes)';
+
+
+--
 -- Name: scrap_c4fm_ycs232_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -3543,7 +3574,15 @@ UNION ALL
     ipsc2_status.text,
     ipsc2_status.active,
     ipsc2_status.last_active
-   FROM api.ipsc2_status;
+   FROM api.ipsc2_status
+UNION ALL
+ SELECT ycs232_status.callsign,
+    ycs232_status.network,
+    'c4fm'::text AS technology,
+    ycs232_status.text,
+    ycs232_status.active,
+    ycs232_status.last_active
+   FROM api.ycs232_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -3552,7 +3591,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR, YCS232: C4FM)';
 
 
 --
@@ -5058,6 +5097,13 @@ CREATE INDEX oesterreich_bev_vgd_lam_geom_idx ON public.oesterreich_bev_vgd_lam 
 
 
 --
+-- Name: scrap_c4fm_ycs232_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_c4fm_ycs232_callsign_ts_idx ON public.scrap_c4fm_ycs232 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
 -- Name: scrap_dmr_ipsc2_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -5393,6 +5439,13 @@ GRANT ALL ON TABLE public.dhm TO dz;
 --
 
 GRANT INSERT ON TABLE public.scrap_c4fm_ycs232 TO repeater_scrap;
+
+
+--
+-- Name: TABLE ycs232_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.ycs232_status TO web_anon;
 
 
 --

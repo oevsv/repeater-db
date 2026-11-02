@@ -46,6 +46,9 @@ CREATE TABLE scrap_c4fm_ycs232 (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- api.ycs232_status reads the latest row per callsign (migration 2026-11-02_05_ycs232_status.sql).
+CREATE INDEX scrap_c4fm_ycs232_callsign_ts_idx ON scrap_c4fm_ycs232 (callsign, scraped_timestamp DESC);
+
 -- DMR, all three with the same columns; callsign also holds network names (OE-MLINK).
 -- https://ipsc2.oevsv.at/_status.html
 CREATE TABLE scrap_dmr_ipsc2 (
