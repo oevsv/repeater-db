@@ -88,8 +88,7 @@ def callsign(text):
 def base_callsign(text):
     """The callsign without a suffix, upper case: "OE9XGV-B" -> "OE9XGV",
     "HB9DR-2" -> "HB9DR", "FCS22820  -335555" -> "FCS22820". Everything from
-    the first "-" or blank on is the suffix. Same rule as the migration
-    postgres/migrations/2026-11-02_scrap_callsigns.sql."""
+    the first "-" or blank on is the suffix."""
     match = re.match(r"[^-\s]+", (text or "").strip())
     return match.group(0).upper() if match else ""
 

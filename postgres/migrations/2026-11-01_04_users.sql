@@ -20,7 +20,7 @@
 -- login service). It is created here if missing and granted to the PostgREST
 -- login role authenticator, if that exists. Like web_anon it can't log in.
 --
--- Apply:  psql vhf -f 2026-11-01_users.sql   (as postgres: creates a role)
+-- Apply:  psql vhf -f 2026-11-01_04_users.sql   (as postgres: creates a role)
 
 BEGIN;
 

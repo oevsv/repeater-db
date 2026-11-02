@@ -14,7 +14,7 @@
 -- the rights of web_anon, web_user, authenticator and repeater_scrap.
 --
 -- Apply as postgres (creates roles, changes owners):
---   sudo -u postgres psql vhf -f 2026-11-02_owner_roles.sql
+--   sudo -u postgres psql vhf -f 2026-11-02_02_owner_roles.sql
 -- Can be run again; it only moves objects still owned by dz.
 
 BEGIN;

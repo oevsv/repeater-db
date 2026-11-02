@@ -13,7 +13,7 @@
 -- what makes a repeater inactive. If the scraper stops, all of them turn
 -- inactive after 120 minutes.
 --
--- Apply as dz (member of vhf_owner) or postgres:  psql vhf -f 2026-11-02_oelink_status.sql
+-- Apply as dz (member of vhf_owner) or postgres:  psql vhf -f 2026-11-02_03_oelink_status.sql
 
 BEGIN;
 SET LOCAL ROLE vhf_owner;

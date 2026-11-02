@@ -9,7 +9,7 @@
 -- The key referenced is site.site_name (unique index site_name_idx); site.uid
 -- stays the primary key.
 --
--- Apply:  psql vhf -f 2026-11-02_trx_site_fk.sql
+-- Apply:  psql vhf -f 2026-11-02_01_trx_site_fk.sql
 -- Fails with a list of the offending transmitters if some have no site or an
 -- unknown one; fix those first.
 

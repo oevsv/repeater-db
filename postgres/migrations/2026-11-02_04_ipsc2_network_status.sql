@@ -14,7 +14,7 @@
 -- only counts for transmitters of that technology. New networks are added here.
 --
 -- Apply as dz (member of vhf_owner) or postgres:
---   psql vhf -f 2026-11-02_ipsc2_network_status.sql
+--   psql vhf -f 2026-11-02_04_ipsc2_network_status.sql
 
 BEGIN;
 SET LOCAL ROLE vhf_owner;

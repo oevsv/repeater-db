@@ -13,7 +13,7 @@
 --    sites without any active radio were listed too.
 -- The first two columns are unchanged, so existing callers keep working.
 --
--- Apply:  psql vhf -f 2026-11-01_geo_nearby_sites.sql
+-- Apply:  psql vhf -f 2026-11-01_01_geo_nearby_sites.sql
 -- A function's result columns can't be changed with CREATE OR REPLACE, hence
 -- DROP + CREATE, in one transaction so the API never misses the function.
 

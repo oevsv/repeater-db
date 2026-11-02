@@ -7,7 +7,7 @@
 --  * locator_6:  Maidenhead locator with 6 characters (e.g. JN87JT);
 --  * locator_10: Maidenhead locator with 10 characters (e.g. JN87JT12EA).
 --
--- Apply:  psql vhf -f 2026-11-01_point_info.sql
+-- Apply:  psql vhf -f 2026-11-01_02_point_info.sql
 
 BEGIN;
 

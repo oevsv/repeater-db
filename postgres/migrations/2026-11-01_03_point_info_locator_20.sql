@@ -5,7 +5,7 @@
 -- locator_10 stays so the web page version deployed before this change keeps
 -- working; it can be dropped once the new web page is live.
 --
--- Apply after 2026-11-01_point_info.sql:  psql vhf -f 2026-11-01_point_info_locator_20.sql
+-- Apply after 2026-11-01_02_point_info.sql:  psql vhf -f 2026-11-01_03_point_info_locator_20.sql
 -- New result column: CREATE OR REPLACE can't do that, hence DROP + CREATE in
 -- one transaction.
 

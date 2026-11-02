@@ -48,14 +48,17 @@ quit
 ### Import schema
 Note: vhf_schema.sql was generated using "pg_dump -s".
 
-Changes to an existing database are in `postgres/migrations/` (dated, apply in order with
-`psql vhf -f <file>`); `vhf_schema.sql` already contains them.
+Changes to an existing database are in `postgres/migrations/`; `vhf_schema.sql` already
+contains them. They are named `<date>_<nn>_<what>.sql` (e.g. `2026-11-02_03_oelink_status.sql`):
+the date they were written and a two-digit number counting up within that day (01-99), so
+sorting the file names gives the order to apply them in (`psql vhf -f <file>`, one after the
+other). A new migration gets today's date and the next free number of that day.
 
 Owner of the schema objects is the role `vhf_owner` (no login); admins such as `dz` are
 members of it (`GRANT vhf_owner TO dz`). So that new objects belong to it too, a migration
 starts with `SET ROLE vhf_owner;` (after `BEGIN;`), unless it has to run as postgres
 (creating roles). `api.user_login()` has its own minimal owner `vhf_login_writer`, see
-`postgres/migrations/2026-11-02_owner_roles.sql`.
+`postgres/migrations/2026-11-02_02_owner_roles.sql`.
 ```
 # Import schema
 psql vhf < vhf_schema.sql
@@ -163,7 +166,7 @@ systemctl restart postgrest repeater-auth
 ```
 
 The roles used by the tokens are created by the migrations (`web_user`, granted to
-`authenticator`, in `postgres/migrations/2026-11-01_users.sql`).
+`authenticator`, in `postgres/migrations/2026-11-01_04_users.sql`).
 
 Check:
 ```
@@ -183,7 +186,7 @@ If logins work but no row appears, look at the login service's log
 | `user_login: OE1ABC <id>, first seen ...` | recorded |
 | `user_login skipped: PGRST_JWT_SECRET is not set ...` | the secret doesn't reach the service (env file, restart) |
 | `user_login: HTTP 401 ... No suitable key ...` | the two secrets differ |
-| `user_login: HTTP 404 ...` | migration `2026-11-01_users.sql` not applied |
+| `user_login: HTTP 404 ...` | migration `2026-11-01_04_users.sql` not applied |
 | `user_login failed: fetch failed` / `... timeout` | PostgREST not reachable at `PGRST_UPSTREAM` |
 | nothing at all | the service runs an older `server.js` (redeploy, restart) |
 
