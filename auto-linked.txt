@@ -1,0 +1,159 @@
+psql vhf -1 -f  trx_networks_autofill.sql  -v apply=1
+Pager usage is off.
+Linking (apply=1):
+ network_id |   node   | trx_uid |          site_name          | callsign | frequency_tx |    rule
+------------+----------+---------+-----------------------------+----------+--------------+------------
+ dcs009     | OE5XOL   |    2124 | Breitenstein                | OE5XOL   |      438.525 | callsign
+ dcs009     | OE2XZR   |    2055 | Gaisberg                    | OE2XZR   |          439 | callsign
+ dcs009     | OE7XET   |    2330 | Grubigstein                 | OE7XET   |       433.95 | callsign
+ dcs009     | OE5XGL   |    2112 | Grünberg                    | OE5XGL   |     438.2625 | callsign
+ dcs009     | OE7XLI   |    2321 | Hochstein                   | OE7XLI   |      145.725 | callsign
+ dcs009     | OE3XWU   |    2094 | Hochwechsel                 | OE3XWU   |      439.075 | callsign
+ dcs009     | OE7XKH   |    2167 | Krahberg                    | OE7XKH   |        438.5 | callsign
+ dcs009     | OE5XKL   |    2118 | Krippenstein                | OE5XKL   |        438.5 | callsign
+ dcs009     | OE7XXR   |    2189 | Rofan Roßkogel              | OE7XXR   |        438.2 | callsign
+ dcs009     | OE4XSB   |    2099 | Sonnenberg im Leithagebirge | OE4XSB   |     438.3625 | callsign
+ dcs009     | OE5XIM   |    2116 | Sternstein                  | OE5XIM   |     439.0625 | callsign
+ dcs009     | OE1XQU   |    2036 | Wienerberg                  | OE1XQU   |      438.825 | callsign
+ ipsc2      | 232100   |    2021 | Bisamberg                   | OE1XAR   |        438.5 | digital_id
+ ipsc2      | 232104   |    2083 | Exelberg                    | OE3XQA   |      438.675 | digital_id
+ ipsc2      | 232085   |    2445 | FH Wr Neustadt              | OE3XVJ   |      438.225 | callsign
+ ipsc2      | 232222   |    2444 | Gaisberg                    | OE2XZR   |        438.6 | digital_id
+ ipsc2      | 232705   |    2165 | Gefrorene Wand              | OE7XGR   |      438.925 | digital_id
+ ipsc2      | 232502   |    2111 | Grünberg                    | OE5XGL   |        438.8 | digital_id
+ ipsc2      | 232710   |    2173 | Hochstein                   | OE7XLI   |      438.875 | digital_id
+ ipsc2      | 232103   |    2094 | Hochwechsel                 | OE3XWU   |      439.075 | digital_id
+ ipsc2      | 232301   |    2092 | Jauerling                   | OE3XWJ   |      438.425 | digital_id
+ ipsc2      | 232358   |    2057 | Kleinhardersdorf Ort        | OE3XAV   |      438.725 | digital_id
+ ipsc2      | 232714   |    2167 | Krahberg                    | OE7XKH   |        438.5 | digital_id
+ ipsc2      | 232504   |    2118 | Krippenstein                | OE5XKL   |        438.5 | digital_id
+ ipsc2      | 232105   |    2039 | Laaerberg Schule            | OE1XUR   |       438.45 | digital_id
+ ipsc2      | 232501   |    2120 | Lichtenberg                 | OE5XLL   |      438.475 | digital_id
+ ipsc2      | 232803   |    2208 | Magdalensberg               | OE8XMK   |       438.85 | callsign
+ ipsc2      | 232622   |    2383 | Mugl                        | OE6XLR   |       438.25 | digital_id
+ ipsc2      | 232305   |    2301 | Nebelstein                  | OE3XNR   |     438.6125 | digital_id
+ ipsc2      | 232703   |    2182 | Penkenjoch                  | OE7XTT   |       438.35 | digital_id
+ ipsc2      | 232108   |    2201 | Pyramidenkogel              | OE8XKK   |        438.6 | digital_id
+ ipsc2      | 232702   |    2158 | Rangger Köpfl               | OE7XBI   |      439.075 | digital_id
+ ipsc2      | 232602   |    2134 | Rennfeld                    | OE6XBG   |      438.925 | digital_id
+ ipsc2      | 232601   |    2128 | Schöckl                     | OE6XAG   |        438.6 | digital_id
+ ipsc2      | 232402   |    2099 | Sonnenberg im Leithagebirge | OE4XSB   |     438.3625 | digital_id
+ ipsc2      | 232302   |    2084 | Sonntagberg                 | OE3XRB   |       438.55 | digital_id
+ ipsc2      | 232706   |    2160 | Stadt/Brixner Straße        | OE7XCJ   |        438.4 | digital_id
+ ipsc2      | 232518   |    2114 | Sternstein                  | OE5XIM   |       438.25 | digital_id
+ ipsc2      | 232604   |    2131 | Stradner Kogel              | OE6XBF   |     438.9125 | digital_id
+ ircddb     | OE5XOL   |    2124 | Breitenstein                | OE5XOL   |      438.525 | callsign
+ ircddb     | OE6XDF   |    2140 | Dobl                        | OE6XDF   |     145.6375 | callsign
+ ircddb     | OE3XVJ   |    2445 | FH Wr Neustadt              | OE3XVJ   |      438.225 | callsign
+ ircddb     | OE5XGL   |    2112 | Grünberg                    | OE5XGL   |     438.2625 | callsign
+ ircddb     | OE7XLI   |    2321 | Hochstein                   | OE7XLI   |      145.725 | callsign
+ ircddb     | OE3XWU   |    2094 | Hochwechsel                 | OE3XWU   |      439.075 | callsign
+ ircddb     | OE5XKL   |    2118 | Krippenstein                | OE5XKL   |        438.5 | callsign
+ ircddb     | OE7XOT   |    2326 | Obtarrenz                   | OE7XOT   |        439.1 | callsign
+ ircddb     | OE5XDN   |    2107 | Senftenbach/Wolfau          | OE5XDN   |      438.425 | callsign
+ ircddb     | OE4XSB   |    2099 | Sonnenberg im Leithagebirge | OE4XSB   |     438.3625 | callsign
+ ircddb     | OE8XVK   |    2216 | Stadt/LKH                   | OE8XVK   |       438.55 | callsign
+ ircddb     | OE5XIM   |    2116 | Sternstein                  | OE5XIM   |     439.0625 | callsign
+ ircddb     | OE9XVI   |    2228 | Vorderälpele                | OE9XVI   |        438.2 | callsign
+ ircddb     | OE1XQU   |    2036 | Wienerberg                  | OE1XQU   |      438.825 | callsign
+ oelink     | 932872   |    2193 | Ahorn                       | OE7XZT   |      438.975 | digital_id
+ oelink     | 932841   |    2449 | Brentenriegel               | OE4XUB   |       438.55 | digital_id
+ oelink     | 932891   |    2438 | Dornbirn Erlosenstraße      | OE9XXD   |     438.5875 | digital_id
+ oelink     | 932851   |    2429 | Feuerkogel                  | OE5XFK   |       438.15 | digital_id
+ oelink     | 932882   |    2199 | Finkenstein/Neumüllern      | OE8XGK   |       438.45 | callsign
+ oelink     | 932821   |    2334 | Gaisberg                    | OE2XZR   |        438.4 | digital_id
+ oelink     | 932181   |    2022 | Hermannskogel               | OE1XAT   |      438.475 | digital_id
+ oelink     | 932831   |    2093 | Jauerling                   | OE3XWJ   |        438.6 | digital_id
+ oelink     | 932862   |    2141 | Lachtal                     | OE6XDG   |      438.675 | digital_id
+ oelink     | 932881   |    2305 | Magdalensberg               | OE8XMK   |      438.575 | digital_id
+ oelink     | 932832   |    2076 | Nebelstein                  | OE3XNR   |      438.875 | digital_id
+ oelink     | 932871   |    2410 | Patscherkofel               | OE7XTI   |          439 | digital_id
+ oelink     | 932861   |    2129 | Schöckl                     | OE6XAG   |      438.875 | digital_id
+ xlx905     | OE9XVI-B |    2228 | Vorderälpele                | OE9XVI   |        438.2 | callsign
+ ycs232     | OE1XAR   |    2319 | Bisamberg                   | OE1XAR   |      438.425 | callsign
+ ycs232     | OE5XOL   |    2122 | Breitenstein                | OE5XOL   |     438.2875 | callsign
+ ycs232     | OE3XVJ   |    2445 | FH Wr Neustadt              | OE3XVJ   |      438.225 | callsign
+ ycs232     | OE2XZR   |    2444 | Gaisberg                    | OE2XZR   |        438.6 | callsign
+ ycs232     | OE5XGL   |    2110 | Grünberg                    | OE5XGL   |       145.75 | callsign
+ ycs232     | OE8XMK   |    2207 | Magdalensberg               | OE8XMK   |      438.225 | callsign
+ ycs232     | OE8XPK   |    2215 | Petzen                      | OE8XPK   |     439.0875 | callsign
+ ycs232     | OE8XKK   |    2202 | Pyramidenkogel              | OE8XKK   |      439.075 | callsign
+ ycs232     | OE6XAG   |    2316 | Schöckl                     | OE6XAG   |      437.975 | callsign
+ ycs232     | OE4XSB   |    2099 | Sonnenberg im Leithagebirge | OE4XSB   |     438.3625 | callsign
+(77 rows)
+
+Links per network now:
+     id      |    label    | linked | listed_now
+-------------+-------------+--------+------------
+ oelink      | OE-LINK     |     13 |         14
+ svx_oe9     | SVXLink OE9 |      0 |          0
+ ipsc2       | IPSC2       |     27 |         31
+ ycs232      | YCS232      |     10 |         72
+ dcs009      | DCS009      |     12 |         59
+ xlx905      | XLX905      |      1 |         12
+ ircddb      | ircDDB      |     14 |         23
+ tetra_oevsv | Tetra ÖVSV  |      0 |          0
+(8 rows)
+
+Left for manual linking (api.network_unlinked):
+ network_id |  node  | callsign | last_listed |                                                                                 candidates
+------------+--------+----------+-------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ dcs009     | OE1XDS | OE1XDS   | 2026-11-03  | 2027 Stadt/AKH 145.575; 2026 Stadt/AKH 438.525; 2024 Stadt/AKH 1298.65
+ dcs009     | OE3XDA | OE3XDA   | 2026-11-03  | 2350 Hochkogel 145.575; 2351 Hochkogel 438.4; 2059 Hochkogel 438.85 (mode not carried)
+ dcs009     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ dcs009     | OE6XAG | OE6XAG   | 2026-11-03  | 2127 Schöckl 145.6 (mode not carried); 2316 Schöckl 437.975 (mode not carried); 2128 Schöckl 438.6 (mode not carried); 2129 Schöckl 438.875 (mode not carried)
+ ipsc2      | 232307 | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ ipsc2      | 232802 | OE8XPK   | 2026-11-03  | 2212 Petzen 145.7375; 2213 Petzen 438.5; 2214 Petzen 438.7 (mode not carried); 2215 Petzen 439.0875 (mode not carried)
+ ircddb     | OE1XDS | OE1XDS   | 2026-11-03  | 2027 Stadt/AKH 145.575; 2026 Stadt/AKH 438.525; 2024 Stadt/AKH 1298.65
+ ircddb     | OE3XDA | OE3XDA   | 2026-11-03  | 2350 Hochkogel 145.575; 2351 Hochkogel 438.4; 2059 Hochkogel 438.85 (mode not carried)
+ ircddb     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ ircddb     | OE4XBJ | OE4XBJ   | 2026-11-03  | 2341 Allhau 430.4125 (mode not carried)
+ ircddb     | OE5XTP | OE5XTP   | 2026-11-03  | 2337 Poschenhof 144.825; 2428 Poschenhof 438.35
+ ircddb     | OE6XAG | OE6XAG   | 2026-11-03  | 2127 Schöckl 145.6 (mode not carried); 2316 Schöckl 437.975 (mode not carried); 2128 Schöckl 438.6 (mode not carried); 2129 Schöckl 438.875 (mode not carried)
+ ircddb     | OE7XLH | OE7XLH   | 2026-11-03  | 2328 Iselsberg-Stronach 144.85; 2170 Iselsberg-Stronach 438.625
+ oelink     | 932873 | OE7XLI   | 2026-11-03  | 2171 Hochstein 145.7; 2321 Hochstein 145.725 (mode not carried); 2427 Hochstein 438.3; 2173 Hochstein 438.875 (mode not carried); 2174 Hochstein 439.075 (mode not carried)
+ ycs232     | OE3XAV | OE3XAV   | 2026-11-03  | 2057 Kleinhardersdorf Ort 438.725 (mode not carried)
+ ycs232     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+(16 rows)
+
+psql vhf -1 -f  trx_networks_autofill.sql
+Pager usage is off.
+Dry run - nothing is changed. Run with -v apply=1 to link:
+ network_id | node | trx_uid | site_name | callsign | frequency_tx | rule
+------------+------+---------+-----------+----------+--------------+------
+(0 rows)
+
+Links per network now:
+     id      |    label    | linked | listed_now
+-------------+-------------+--------+------------
+ oelink      | OE-LINK     |     13 |         14
+ svx_oe9     | SVXLink OE9 |      0 |          0
+ ipsc2       | IPSC2       |     27 |         31
+ ycs232      | YCS232      |     10 |         72
+ dcs009      | DCS009      |     12 |         59
+ xlx905      | XLX905      |      1 |         12
+ ircddb      | ircDDB      |     14 |         23
+ tetra_oevsv | Tetra ÖVSV  |      0 |          0
+(8 rows)
+
+Left for manual linking (api.network_unlinked):
+ network_id |  node  | callsign | last_listed |                                                                                 candidates
+------------+--------+----------+-------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ dcs009     | OE1XDS | OE1XDS   | 2026-11-03  | 2027 Stadt/AKH 145.575; 2026 Stadt/AKH 438.525; 2024 Stadt/AKH 1298.65
+ dcs009     | OE3XDA | OE3XDA   | 2026-11-03  | 2350 Hochkogel 145.575; 2351 Hochkogel 438.4; 2059 Hochkogel 438.85 (mode not carried)
+ dcs009     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ dcs009     | OE6XAG | OE6XAG   | 2026-11-03  | 2127 Schöckl 145.6 (mode not carried); 2316 Schöckl 437.975 (mode not carried); 2128 Schöckl 438.6 (mode not carried); 2129 Schöckl 438.875 (mode not carried)
+ ipsc2      | 232307 | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ ipsc2      | 232802 | OE8XPK   | 2026-11-03  | 2212 Petzen 145.7375; 2213 Petzen 438.5; 2214 Petzen 438.7 (mode not carried); 2215 Petzen 439.0875 (mode not carried)
+ ircddb     | OE1XDS | OE1XDS   | 2026-11-03  | 2027 Stadt/AKH 145.575; 2026 Stadt/AKH 438.525; 2024 Stadt/AKH 1298.65
+ ircddb     | OE3XDA | OE3XDA   | 2026-11-03  | 2350 Hochkogel 145.575; 2351 Hochkogel 438.4; 2059 Hochkogel 438.85 (mode not carried)
+ ircddb     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+ ircddb     | OE4XBJ | OE4XBJ   | 2026-11-03  | 2341 Allhau 430.4125 (mode not carried)
+ ircddb     | OE5XTP | OE5XTP   | 2026-11-03  | 2337 Poschenhof 144.825; 2428 Poschenhof 438.35
+ ircddb     | OE6XAG | OE6XAG   | 2026-11-03  | 2127 Schöckl 145.6 (mode not carried); 2316 Schöckl 437.975 (mode not carried); 2128 Schöckl 438.6 (mode not carried); 2129 Schöckl 438.875 (mode not carried)
+ ircddb     | OE7XLH | OE7XLH   | 2026-11-03  | 2328 Iselsberg-Stronach 144.85; 2170 Iselsberg-Stronach 438.625
+ oelink     | 932873 | OE7XLI   | 2026-11-03  | 2171 Hochstein 145.7; 2321 Hochstein 145.725 (mode not carried); 2427 Hochstein 438.3; 2173 Hochstein 438.875 (mode not carried); 2174 Hochstein 439.075 (mode not carried)
+ ycs232     | OE3XAV | OE3XAV   | 2026-11-03  | 2057 Kleinhardersdorf Ort 438.725 (mode not carried)
+ ycs232     | OE3XWW | OE3XWW   | 2026-11-03  | 2097 Mönichkirchen Schwaig 145.7625; 2096 Mönichkirchen Schwaig 438.575
+(16 rows)
+
