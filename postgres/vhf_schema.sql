@@ -170,6 +170,64 @@ COMMENT ON COLUMN public.users.callsign IS 'Callsign from the latest login (pref
 
 
 --
+-- Name: application/xml; Type: DOMAIN; Schema: api; Owner: vhf_owner
+--
+
+CREATE DOMAIN api."application/xml" AS xml;
+
+
+ALTER DOMAIN api."application/xml" OWNER TO vhf_owner;
+
+--
+-- Name: sitemap(); Type: FUNCTION; Schema: api; Owner: vhf_owner
+--
+
+CREATE FUNCTION api.sitemap() RETURNS api."application/xml"
+    LANGUAGE sql STABLE
+    AS $$
+  WITH base(url) AS (
+         VALUES ('https://repeater.oevsv.at'::text)
+       ), paths(path) AS (
+         SELECT COALESCE(lower(t.value ->> 'type'), 'all') || '/map'
+           FROM api.settings s, jsonb_array_elements(s.filter::jsonb -> 'types') t
+         UNION
+         SELECT 'list'
+         UNION
+         SELECT 'list/' || n.technology FROM (SELECT DISTINCT technology FROM api.network_status) n
+         UNION
+         SELECT 'site/' || sc.canonical_callsign
+           FROM api.site_canonical sc
+           JOIN api.site_type st USING (site_name)
+       ), langs(lang) AS (
+         VALUES ('de'), ('en')
+       )
+  SELECT XMLROOT(
+           XMLELEMENT(NAME urlset,
+             XMLATTRIBUTES('http://www.sitemaps.org/schemas/sitemap/0.9' AS xmlns,
+                           'http://www.w3.org/1999/xhtml' AS "xmlns:xhtml"),
+             XMLAGG(
+               XMLELEMENT(NAME url,
+                 XMLELEMENT(NAME loc, b.url || '/' || l.lang || '/' || p.path),
+                 XMLELEMENT(NAME "xhtml:link", XMLATTRIBUTES('alternate' AS rel, 'de' AS hreflang,
+                                                             b.url || '/de/' || p.path AS href)),
+                 XMLELEMENT(NAME "xhtml:link", XMLATTRIBUTES('alternate' AS rel, 'en' AS hreflang,
+                                                             b.url || '/en/' || p.path AS href)))
+               ORDER BY p.path, l.lang)),
+           VERSION '1.0', STANDALONE YES)::api."application/xml"
+    FROM base b, paths p, langs l
+$$;
+
+
+ALTER FUNCTION api.sitemap() OWNER TO vhf_owner;
+
+--
+-- Name: FUNCTION sitemap(); Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON FUNCTION api.sitemap() IS 'Sitemap (sitemaps.org XML) of all pages of the website, served as /sitemap.xml';
+
+
+--
 -- Name: user_login(); Type: FUNCTION; Schema: api; Owner: vhf_login_writer
 --
 
@@ -3712,6 +3770,31 @@ COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monit
 
 
 --
+-- Name: site_canonical; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.site_canonical AS
+ WITH c AS (
+         SELECT DISTINCT trx.site_name,
+            upper((trx.callsign)::text) AS callsign
+           FROM public.trx
+          WHERE (((trx.status)::text = 'active'::text) AND ((COALESCE(trx.callsign, ''::character varying))::text <> ''::text))
+        ), unique_calls AS (
+         SELECT c_1.callsign
+           FROM c c_1
+          GROUP BY c_1.callsign
+         HAVING (count(*) = 1)
+        )
+ SELECT site_name,
+    COALESCE(min(callsign) FILTER (WHERE (callsign IN ( SELECT unique_calls.callsign
+           FROM unique_calls))), min(callsign)) AS canonical_callsign
+   FROM c
+  GROUP BY site_name;
+
+
+ALTER VIEW api.site_canonical OWNER TO vhf_owner;
+
+--
 -- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -5480,6 +5563,13 @@ GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
 
 
 --
+-- Name: FUNCTION sitemap(); Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT ALL ON FUNCTION api.sitemap() TO web_anon;
+
+
+--
 -- Name: FUNCTION user_login(); Type: ACL; Schema: api; Owner: vhf_login_writer
 --
 
@@ -5727,6 +5817,13 @@ GRANT SELECT ON TABLE api.network_status TO web_anon;
 
 
 --
+-- Name: TABLE site_canonical; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.site_canonical TO web_anon;
+
+
+--
 -- Name: SEQUENCE scrap_oelink_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -5751,5 +5848,4 @@ GRANT USAGE ON SEQUENCE public.scrap_winlink_pactor_id_seq TO repeater_scrap;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Fz5p5ifHVpvgiiZdameBgeYqEaI3vWE706OKTkho1dzBocTuqd36UV4egrYbWSl
 

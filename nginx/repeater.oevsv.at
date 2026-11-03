@@ -40,6 +40,22 @@ server {
 		# root block
 	}
 
+	# Search engines: robots.txt points to the sitemap, which PostgREST builds
+	# from the live data (api.sitemap(), migration 2026-11-03_01_sitemap.sql).
+	# The /api/ requests must stay allowed: crawlers load them to render the pages.
+	location = /robots.txt {
+		default_type text/plain;
+		return 200 "User-agent: *\nAllow: /\n\nSitemap: https://repeater.oevsv.at/sitemap.xml\n";
+	}
+
+	location = /sitemap.xml {
+		proxy_pass http://127.0.0.1:3000/rpc/sitemap;
+		# PostgREST answers with the raw XML only when asked for this media type
+		proxy_set_header Accept application/xml;
+		proxy_set_header X-Real-IP $remote_addr;
+		expires 1h;
+	}
+
 	location /api/ {
 		# postgrest
 		proxy_pass http://127.0.0.1:3000/;
