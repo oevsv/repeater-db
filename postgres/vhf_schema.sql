@@ -193,6 +193,8 @@ CREATE FUNCTION api.sitemap() RETURNS api."application/xml"
          UNION
          SELECT 'list'
          UNION
+         SELECT 'networks'
+         UNION
          SELECT 'list/' || n.technology FROM (SELECT DISTINCT technology FROM api.network_status) n
          UNION
          SELECT 'site/' || sc.canonical_callsign
@@ -1067,7 +1069,9 @@ CREATE TABLE public.trx (
     comment character varying(1000),
     internal character varying(3000),
     created_at timestamp with time zone DEFAULT now(),
-    cc integer
+    cc integer,
+    networks jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT trx_networks_object CHECK ((jsonb_typeof(networks) = 'object'::text))
 );
 
 
@@ -1323,6 +1327,183 @@ COMMENT ON COLUMN public.trx.created_at IS 'Timestamp of insert';
 --
 
 COMMENT ON COLUMN public.trx.cc IS 'Color Code (default DMR code is 1)';
+
+
+--
+-- Name: COLUMN trx.networks; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.trx.networks IS 'Nodes of this transmitter in the monitored networks: {network id: node}; null = explicitly not in that network (automatic fill skips it)';
+
+
+--
+-- Name: trx_technologies(public.trx); Type: FUNCTION; Schema: public; Owner: vhf_owner
+--
+
+CREATE FUNCTION public.trx_technologies(t public.trx) RETURNS text[]
+    LANGUAGE sql IMMUTABLE
+    AS $$
+  SELECT array_remove(ARRAY[CASE WHEN t.fm THEN 'fm' END, CASE WHEN t.dmr THEN 'dmr' END,
+                            CASE WHEN t.c4fm THEN 'c4fm' END, CASE WHEN t.dstar THEN 'dstar' END,
+                            CASE WHEN t.tetra THEN 'tetra' END], NULL)
+$$;
+
+
+ALTER FUNCTION public.trx_technologies(t public.trx) OWNER TO vhf_owner;
+
+--
+-- Name: trx_networks_check(); Type: FUNCTION; Schema: public; Owner: vhf_owner
+--
+
+CREATE FUNCTION public.trx_networks_check() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    k text;
+    v jsonb;
+    other bigint;
+BEGIN
+    FOR k, v IN SELECT key, value FROM jsonb_each(NEW.networks) LOOP
+        IF NOT EXISTS (SELECT 1 FROM public.network WHERE id = k) THEN
+            RAISE EXCEPTION 'trx %: unknown network "%" in networks (known: table network)', NEW.uid, k;
+        END IF;
+        CONTINUE WHEN jsonb_typeof(v) = 'null';
+        IF jsonb_typeof(v) <> 'string' OR btrim(v #>> '{}') = '' THEN
+            RAISE EXCEPTION 'trx %: networks.% must be the node as text, or null - not %', NEW.uid, k, v;
+        END IF;
+        SELECT t.uid INTO other FROM public.trx t
+         WHERE t.uid <> NEW.uid AND t.networks @> jsonb_build_object(k, v) LIMIT 1;
+        IF FOUND THEN
+            RAISE EXCEPTION 'trx %: node % of network % is already linked to trx %', NEW.uid, v, k, other;
+        END IF;
+    END LOOP;
+    RETURN NEW;
+END
+$$;
+
+
+ALTER FUNCTION public.trx_networks_check() OWNER TO vhf_owner;
+
+--
+-- Name: FUNCTION trx_networks_check(); Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON FUNCTION public.trx_networks_check() IS 'trx.networks: known networks only, node as text or null, each node linked to one transmitter';
+
+
+--
+-- Name: trx_networks_autofill(boolean, interval); Type: FUNCTION; Schema: public; Owner: vhf_owner
+--
+
+CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_age interval DEFAULT '30 days'::interval) RETURNS TABLE(network_id text, node text, trx_uid bigint, site_name text, callsign text, frequency_tx double precision, rule text)
+    LANGUAGE sql
+    AS $$
+  WITH nodes AS (
+         SELECT nn.network_id, nn.node, nn.callsign, nn.last_listed, nn.frequency, n.technologies
+           FROM api.network_node nn
+           JOIN public.network n ON n.id = nn.network_id
+          WHERE nn.last_listed >= now() - max_age
+            AND NOT EXISTS (SELECT 1 FROM public.trx t WHERE t.networks @> jsonb_build_object(nn.network_id, nn.node))
+       ), free AS (  -- active transmitters, with their modes
+         SELECT t.uid, t.site_name, upper(t.callsign::text) AS callsign, t.frequency_tx, t.digital_id, t.networks,
+                public.trx_technologies(t) AS technologies
+           FROM public.trx t
+          WHERE t.status::text = 'active'
+       ), by_id AS (
+         SELECT x.network_id, x.node, x.uid, x.last_listed
+           FROM (SELECT nodes.network_id, nodes.node, nodes.last_listed, f.uid,
+                        count(*) OVER (PARTITION BY nodes.network_id, nodes.node) AS trx_per_node,
+                        count(*) OVER (PARTITION BY nodes.network_id, f.uid) AS nodes_per_trx
+                   FROM nodes
+                   JOIN free f ON f.digital_id::text = nodes.node
+                              AND f.technologies && nodes.technologies
+                              AND NOT f.networks ? nodes.network_id) x
+          WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
+       ), by_freq AS (
+         SELECT x.network_id, x.node, x.uid
+           FROM (SELECT nodes.network_id, nodes.node, f.uid,
+                        count(*) OVER (PARTITION BY nodes.network_id, nodes.node) AS trx_per_node,
+                        count(*) OVER (PARTITION BY nodes.network_id, f.uid) AS nodes_per_trx
+                   FROM nodes
+                   JOIN free f ON f.callsign = nodes.callsign
+                              AND abs(f.frequency_tx::numeric - nodes.frequency) < 0.0005
+                              AND f.technologies && nodes.technologies
+                  WHERE NOT f.networks ? nodes.network_id
+                    AND NOT EXISTS (SELECT 1 FROM by_id b
+                                     WHERE b.network_id = nodes.network_id
+                                       AND (b.node = nodes.node OR b.uid = f.uid))) x
+          WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
+       ), taken AS (
+         SELECT network_id, node, uid FROM by_id
+         UNION ALL
+         SELECT network_id, node, uid FROM by_freq
+       ), by_call AS (
+         SELECT y.network_id, y.node, y.uid
+           FROM (SELECT x.*, row_number() OVER (PARTITION BY x.network_id, x.uid
+                                                ORDER BY x.last_listed DESC, x.node) AS pick
+                   FROM (SELECT nodes.network_id, nodes.node, nodes.last_listed, f.uid,
+                                count(*) OVER (PARTITION BY nodes.network_id, nodes.node) AS trx_per_node
+                           FROM nodes
+                           JOIN free f ON f.callsign = nodes.callsign
+                                      AND f.technologies && nodes.technologies
+                          WHERE NOT f.networks ? nodes.network_id
+                            AND cardinality(nodes.technologies) = 1
+                            AND NOT EXISTS (SELECT 1 FROM taken b
+                                             WHERE b.network_id = nodes.network_id
+                                               AND (b.node = nodes.node OR b.uid = f.uid))) x
+                  WHERE x.trx_per_node = 1) y
+          WHERE y.pick = 1
+       ), links AS (
+         SELECT network_id, node, uid, 'digital_id' AS rule FROM by_id
+         UNION ALL
+         SELECT network_id, node, uid, 'frequency' FROM by_freq
+         UNION ALL
+         SELECT network_id, node, uid, 'callsign' FROM by_call
+       ), applied AS (
+         UPDATE public.trx t
+            SET networks = t.networks || a.add
+           FROM (SELECT uid, jsonb_object_agg(network_id, node) AS add FROM links GROUP BY uid) a
+          WHERE NOT dry_run AND t.uid = a.uid
+         RETURNING t.uid
+       )
+  SELECT l.network_id, l.node, l.uid, f.site_name::text, f.callsign, f.frequency_tx, l.rule
+    FROM links l
+    JOIN free f ON f.uid = l.uid
+   ORDER BY l.network_id, f.site_name, l.node
+$$;
+
+
+ALTER FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) OWNER TO vhf_owner;
+
+--
+-- Name: FUNCTION trx_networks_autofill(dry_run boolean, max_age interval); Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) IS 'Fills trx.networks from the scraped nodes (rules digital_id, callsign); never changes existing keys. dry_run (default) only lists.';
+
+
+--
+-- Name: network; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.network (
+    id text NOT NULL,
+    label text NOT NULL,
+    url text,
+    technologies text[] NOT NULL,
+    sort smallint DEFAULT 0 NOT NULL,
+    CONSTRAINT network_id_check CHECK ((id ~ '^[a-z0-9_]+$'::text)),
+    CONSTRAINT network_technologies_check CHECK (((technologies <@ ARRAY['fm'::text, 'dmr'::text, 'c4fm'::text, 'dstar'::text, 'tetra'::text]) AND (technologies <> '{}'::text[])))
+);
+
+
+ALTER TABLE public.network OWNER TO vhf_owner;
+
+--
+-- Name: TABLE network; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON TABLE public.network IS 'Networks / repeater systems whose nodes are scraped; trx.networks links transmitters to their nodes';
 
 
 --
@@ -3698,6 +3879,24 @@ CREATE TABLE public.scrap_fm_svx_oe9 (
 ALTER TABLE public.scrap_fm_svx_oe9 OWNER TO vhf_owner;
 
 --
+-- Name: scrap_tetra_oevsv; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_tetra_oevsv (
+    id integer NOT NULL,
+    callsign text,
+    node text,
+    comment text,
+    connected_since text,
+    tg text,
+    monitored_tgs text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_tetra_oevsv OWNER TO vhf_owner;
+
+--
 -- Name: oelink_status; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -3755,6 +3954,35 @@ ALTER VIEW api.svx_oe9_status OWNER TO vhf_owner;
 --
 
 COMMENT ON VIEW api.svx_oe9_status IS 'Live status of the FM nodes on the SVXLink reflector OE9 (active = listed within 120 minutes)';
+
+
+--
+-- Name: tetra_oevsv_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.tetra_oevsv_status AS
+ WITH latest AS (
+         SELECT scrap_tetra_oevsv.callsign,
+            max(scrap_tetra_oevsv.scraped_timestamp) AS scraped_timestamp
+           FROM public.scrap_tetra_oevsv
+          WHERE (COALESCE(scrap_tetra_oevsv.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_tetra_oevsv.callsign
+        )
+ SELECT callsign,
+    'Tetra ÖVSV'::text AS network,
+    ''::text AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.tetra_oevsv_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW tetra_oevsv_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.tetra_oevsv_status IS 'Live status of the TETRA gateways on the reflector TETRA OE-MASTER (active = listed within 120 minutes)';
 
 
 --
@@ -3816,7 +4044,15 @@ UNION ALL
     svx_oe9_status.text,
     svx_oe9_status.active,
     svx_oe9_status.last_active
-   FROM api.svx_oe9_status;
+   FROM api.svx_oe9_status
+UNION ALL
+ SELECT tetra_oevsv_status.callsign,
+    tetra_oevsv_status.network,
+    'tetra'::text AS technology,
+    tetra_oevsv_status.text,
+    tetra_oevsv_status.active,
+    tetra_oevsv_status.last_active
+   FROM api.tetra_oevsv_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -3825,7 +4061,183 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
+
+
+--
+-- Name: network_node; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.network_node AS
+ SELECT network_id,
+    node,
+    callsign,
+    (max(scraped_timestamp) AT TIME ZONE 'UTC'::text) AS last_listed,
+    (array_agg(frequency ORDER BY scraped_timestamp DESC))[1] AS frequency
+   FROM ( SELECT 'oelink'::text AS network_id,
+            scrap_oelink.repeater_id AS node,
+            scrap_oelink.callsign,
+            scrap_oelink.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_oelink
+        UNION ALL
+         SELECT 'svx_oe9'::text AS network_id,
+            scrap_fm_svx_oe9.node,
+            scrap_fm_svx_oe9.callsign,
+            scrap_fm_svx_oe9.scraped_timestamp,
+                CASE
+                    WHEN (scrap_fm_svx_oe9.tx_freq ~ '^\d+(\.\d+)?$'::text) THEN (scrap_fm_svx_oe9.tx_freq)::numeric
+                    ELSE NULL::numeric
+                END AS frequency
+           FROM public.scrap_fm_svx_oe9
+        UNION ALL
+         SELECT 'ipsc2'::text AS network_id,
+            scrap_dmr_ipsc2.repeater_id AS node,
+            scrap_dmr_ipsc2.callsign,
+            scrap_dmr_ipsc2.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dmr_ipsc2
+        UNION ALL
+         SELECT 'ycs232'::text AS network_id,
+            scrap_c4fm_ycs232.station AS node,
+            scrap_c4fm_ycs232.callsign,
+            scrap_c4fm_ycs232.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_c4fm_ycs232
+        UNION ALL
+         SELECT 'dcs009'::text AS network_id,
+            scrap_dstar_dcs009.callsign AS node,
+            scrap_dstar_dcs009.callsign,
+            scrap_dstar_dcs009.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dstar_dcs009
+        UNION ALL
+         SELECT 'xlx905'::text AS network_id,
+            scrap_dstar_xlx905.dv_station AS node,
+            scrap_dstar_xlx905.callsign,
+            scrap_dstar_xlx905.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dstar_xlx905
+        UNION ALL
+         SELECT 'ircddb'::text AS network_id,
+            scrap_dstar_ircddb.callsign AS node,
+            scrap_dstar_ircddb.callsign,
+            scrap_dstar_ircddb.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dstar_ircddb
+        UNION ALL
+         SELECT 'tetra_oevsv'::text AS network_id,
+            scrap_tetra_oevsv.node,
+            scrap_tetra_oevsv.callsign,
+            scrap_tetra_oevsv.scraped_timestamp,
+            ("substring"(scrap_tetra_oevsv.comment, '/(\d+(?:\.\d+)?)\s*$'::text))::numeric AS frequency
+           FROM public.scrap_tetra_oevsv) n
+  WHERE (COALESCE(node, ''::text) <> ''::text)
+  GROUP BY network_id, node, callsign;
+
+
+ALTER VIEW api.network_node OWNER TO vhf_owner;
+
+--
+-- Name: VIEW network_node; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.network_node IS 'Nodes listed by the monitored networks, with the last listing and the reported TX frequency';
+
+
+--
+-- Name: network_unlinked; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.network_unlinked AS
+ SELECT nn.network_id,
+    n.label AS network,
+    n.url AS network_url,
+    nn.node,
+    nn.callsign,
+    nn.frequency AS node_frequency,
+    nn.last_listed,
+    c.candidates
+   FROM ((api.network_node nn
+     JOIN public.network n ON ((n.id = nn.network_id)))
+     CROSS JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('trx_uid', t.uid, 'site_name', t.site_name, 'frequency_tx', t.frequency_tx, 'technologies', public.trx_technologies(t.*), 'fits', (public.trx_technologies(t.*) && n.technologies), 'excluded', ((t.networks ? n.id) AND ((t.networks -> n.id) = 'null'::jsonb)), 'linked_node', (t.networks ->> n.id)) ORDER BY t.site_name, t.frequency_tx) AS candidates
+           FROM public.trx t
+          WHERE (((t.status)::text = 'active'::text) AND (upper((t.callsign)::text) = nn.callsign))) c)
+  WHERE ((nn.last_listed >= (now() - '30 days'::interval)) AND (c.candidates IS NOT NULL) AND (NOT (EXISTS ( SELECT 1
+           FROM public.trx t
+          WHERE (t.networks @> jsonb_build_object(nn.network_id, nn.node))))));
+
+
+ALTER VIEW api.network_unlinked OWNER TO vhf_owner;
+
+--
+-- Name: VIEW network_unlinked; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.network_unlinked IS 'Nodes listed within 30 days, not linked to a transmitter, whose callsign is in trx (with candidates)';
+
+
+--
+-- Name: trx_network; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.trx_network AS
+ SELECT t.uid AS trx_uid,
+    l.key AS network_id,
+    n.label AS network,
+    n.url AS network_url,
+    l.value AS node,
+    t.site_name,
+    upper((t.callsign)::text) AS callsign,
+    t.frequency_tx,
+    t.type_of_station,
+    t.status AS trx_status,
+    public.trx_technologies(t.*) AS technologies,
+    nn.frequency AS node_frequency,
+    nn.last_listed,
+    COALESCE((nn.last_listed >= (now() - '02:00:00'::interval)), false) AS listed_now
+   FROM (((public.trx t
+     CROSS JOIN LATERAL jsonb_each_text(t.networks) l(key, value))
+     JOIN public.network n ON ((n.id = l.key)))
+     LEFT JOIN api.network_node nn ON (((nn.network_id = l.key) AND (nn.node = l.value))))
+  WHERE (l.value IS NOT NULL);
+
+
+ALTER VIEW api.trx_network OWNER TO vhf_owner;
+
+--
+-- Name: VIEW trx_network; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.trx_network IS 'Transmitter <-> network node links (trx.networks), with the node''s last listing';
+
+
+--
+-- Name: networks; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.networks AS
+ SELECT id,
+    label,
+    url,
+    technologies,
+    sort,
+    ( SELECT count(*) AS count
+           FROM api.trx_network tn
+          WHERE (tn.network_id = n.id)) AS linked,
+    ( SELECT count(*) AS count
+           FROM api.network_node nn
+          WHERE ((nn.network_id = n.id) AND (nn.last_listed >= (now() - '02:00:00'::interval)))) AS listed_now
+   FROM public.network n;
+
+
+ALTER VIEW api.networks OWNER TO vhf_owner;
+
+--
+-- Name: VIEW networks; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.networks IS 'Monitored networks with the number of linked transmitters and of nodes listed now';
 
 
 --
@@ -3895,6 +4307,28 @@ ALTER TABLE public.scrap_oelink_id_seq OWNER TO vhf_owner;
 --
 
 ALTER SEQUENCE public.scrap_oelink_id_seq OWNED BY public.scrap_oelink.id;
+
+
+--
+-- Name: scrap_tetra_oevsv_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_tetra_oevsv_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_tetra_oevsv_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_tetra_oevsv_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_tetra_oevsv_id_seq OWNED BY public.scrap_tetra_oevsv.id;
 
 
 --
@@ -5124,6 +5558,13 @@ ALTER TABLE ONLY public.scrap_oelink ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: scrap_tetra_oevsv id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_tetra_oevsv ALTER COLUMN id SET DEFAULT nextval('public.scrap_tetra_oevsv_id_seq'::regclass);
+
+
+--
 -- Name: scrap_winlink_pactor id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -5262,11 +5703,27 @@ ALTER TABLE ONLY public.scrap_fm_svx_oe9
 
 
 --
+-- Name: network network_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.network
+    ADD CONSTRAINT network_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: scrap_oelink scrap_oelink_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
 ALTER TABLE ONLY public.scrap_oelink
     ADD CONSTRAINT scrap_oelink_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_tetra_oevsv scrap_tetra_oevsv_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_tetra_oevsv
+    ADD CONSTRAINT scrap_tetra_oevsv_pkey PRIMARY KEY (id);
 
 
 --
@@ -5442,6 +5899,20 @@ CREATE INDEX scrap_oelink_callsign_ts_idx ON public.scrap_oelink USING btree (ca
 
 
 --
+-- Name: trx_networks_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX trx_networks_idx ON public.trx USING gin (networks jsonb_path_ops);
+
+
+--
+-- Name: scrap_tetra_oevsv_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_tetra_oevsv_callsign_ts_idx ON public.scrap_tetra_oevsv USING btree (callsign, scraped_timestamp DESC);
+
+
+--
 -- Name: site_geom_gix; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -5603,6 +6074,13 @@ CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW 
 
 
 --
+-- Name: trx trx_networks_check; Type: TRIGGER; Schema: public; Owner: vhf_owner
+--
+
+CREATE TRIGGER trx_networks_check BEFORE INSERT OR UPDATE OF networks ON public.trx FOR EACH ROW EXECUTE FUNCTION public.trx_networks_check();
+
+
+--
 -- Name: trx trx_site_fk; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
@@ -5670,6 +6148,13 @@ GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
 --
 
 GRANT ALL ON FUNCTION api.sitemap() TO web_anon;
+
+
+--
+-- Name: FUNCTION trx_networks_autofill(dry_run boolean, max_age interval); Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+REVOKE ALL ON FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) FROM PUBLIC;
 
 
 --
@@ -5913,6 +6398,13 @@ GRANT INSERT ON TABLE public.scrap_fm_svx_oe9 TO repeater_scrap;
 
 
 --
+-- Name: TABLE scrap_tetra_oevsv; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_tetra_oevsv TO repeater_scrap;
+
+
+--
 -- Name: TABLE oelink_status; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
@@ -5927,10 +6419,52 @@ GRANT SELECT ON TABLE api.svx_oe9_status TO web_anon;
 
 
 --
+-- Name: TABLE tetra_oevsv_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.tetra_oevsv_status TO web_anon;
+
+
+--
 -- Name: TABLE network_status; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.network_status TO web_anon;
+
+
+--
+-- Name: TABLE network_node; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.network_node TO web_anon;
+
+
+--
+-- Name: TABLE network; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE public.network TO web_anon;
+
+
+--
+-- Name: TABLE network_unlinked; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.network_unlinked TO web_anon;
+
+
+--
+-- Name: TABLE trx_network; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.trx_network TO web_anon;
+
+
+--
+-- Name: TABLE networks; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.networks TO web_anon;
 
 
 --
@@ -5952,6 +6486,13 @@ GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_oelink_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_tetra_oevsv_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_tetra_oevsv_id_seq TO repeater_scrap;
 
 
 --

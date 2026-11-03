@@ -26,7 +26,7 @@ $$;
 
 DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_hotspot, scrap_oelink,
     scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref,
-    scrap_winlink_pactor;
+    scrap_tetra_oevsv, scrap_winlink_pactor;
 
 -- C4FM: https://ycs232.oevsv.at/_status.html
 CREATE TABLE scrap_c4fm_ycs232 (
@@ -191,6 +191,22 @@ CREATE TABLE scrap_dstar_ref (
     scraped_timestamp TIMESTAMP NOT NULL
 );
 
+-- TETRA: SVXReflector "TETRA OE-MASTER", http://tetra-reflector.dyndns.org/
+-- (table of create_html.php); only gateways with monitored talkgroups.
+CREATE TABLE scrap_tetra_oevsv (
+    id SERIAL PRIMARY KEY,
+    callsign TEXT,         -- gateway without suffix: OE1XCS
+    node TEXT,             -- as listed: OE1XCS-T, OE6XAG-R
+    comment TEXT,          -- e.g. "Tetra-Laaerberg/430.3375"
+    connected_since TEXT,  -- as shown: "03.11.2026 15:25:45"
+    tg TEXT,               -- current talkgroup: "IDLE", "#232"
+    monitored_tgs TEXT,    -- blank separated: "9 20 232"
+    scraped_timestamp TIMESTAMP NOT NULL
+);
+
+-- api.tetra_oevsv_status reads the latest row per callsign (migration 2026-11-03_03_tetra_oevsv_status.sql).
+CREATE INDEX scrap_tetra_oevsv_callsign_ts_idx ON scrap_tetra_oevsv (callsign, scraped_timestamp DESC);
+
 -- Winlink Pactor gateways (OE only): https://cms.winlink.org:444/GatewayChannels.aspx
 CREATE TABLE scrap_winlink_pactor (
     id SERIAL PRIMARY KEY,
@@ -211,7 +227,7 @@ DECLARE
 BEGIN
     FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot',
             'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb',
-            'scrap_dstar_ref', 'scrap_winlink_pactor'] LOOP
+            'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_winlink_pactor'] LOOP
         EXECUTE format('ALTER TABLE %I OWNER TO vhf_owner', t);
         EXECUTE format('GRANT INSERT ON %I TO repeater_scrap', t);
         EXECUTE format('GRANT USAGE ON SEQUENCE %I TO repeater_scrap', t || '_id_seq');

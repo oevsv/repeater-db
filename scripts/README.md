@@ -1,7 +1,7 @@
 # Scrapers
 
-Collect the Austrian stations listed on other web pages (FM, DMR, D-STAR, C4FM, Winlink
-servers) into `scrap_*` tables of the vhf database. Every run appends a snapshot: all
+Collect the Austrian stations listed on other web pages (FM, DMR, D-STAR, C4FM, TETRA,
+Winlink servers) into `scrap_*` tables of the vhf database. Every run appends a snapshot: all
 rows of one run share the same `scraped_timestamp` (UTC).
 
 | Scraper / table | Source |
@@ -15,12 +15,13 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_dstar_xlx905` | http://xlx905.oevsv.at:8888/index.php?show=repeaters |
 | `scrap_dstar_ircddb` | https://status.ircddb.net/cgi-bin/ircddb-gw?AUT |
 | `scrap_dstar_ref` | https://dstarusers.org/repeaters.php (country Austria) |
+| `scrap_tetra_oevsv` | http://tetra-reflector.dyndns.org/ (SVXReflector TETRA OE-MASTER; its table `create_html.php`, only gateways with monitored talkgroups) |
 | `scrap_winlink_pactor` | https://cms.winlink.org:444/GatewayChannels.aspx (Pactor, OE only) |
 
 Every table has a column `callsign`, upper case. Where a page lists a callsign only with
 a suffix, the original is kept too and `callsign` has it without the suffix:
 `scrap_dstar_xlx905.dv_station` `OE9XGV-B` → `OE9XGV`, `scrap_c4fm_ycs232.station`
-`HB9DR-2` → `HB9DR`, `scrap_fm_svx_oe9.node` `OE9XVV-R` → `OE9XVV`. Some entries are not callsigns (networks like `OE-MLINK`, C4FM rooms
+`HB9DR-2` → `HB9DR`, `scrap_fm_svx_oe9.node` `OE9XVV-R` → `OE9XVV`, `scrap_tetra_oevsv.node` `OE1XCS-T` → `OE1XCS`. Some entries are not callsigns (networks like `OE-MLINK`, C4FM rooms
 like `FCS22820`). The `scrap_*` tables are not part of the API.
 
 ## Files

@@ -177,6 +177,41 @@ def scrap_dstar_ref():
     return save("scrap_dstar_ref", rows, to_record)
 
 
+# --- TETRA -----------------------------------------------------------------
+
+def scrap_tetra_oevsv():
+    """Gateways of the SVXReflector "TETRA OE-MASTER" (dashboard
+    http://tetra-reflector.dyndns.org/, which loads create_html.php). Its one
+    table holds the connected gateways, then a last-heard log and position
+    reports; only the gateways have monitored talkgroups ("[ 9 20 232 ]"), and
+    only those are stored. Gateways are listed with suffix ("OE1XCS-T",
+    "OE6XAG-R"); "callsign" has it without. The network address is not stored."""
+    url = "http://tetra-reflector.dyndns.org/create_html.php"
+    soup = get_soup(url)
+    header = soup.find("th", string=lambda t: t and t.strip() == "Monitor TG")
+    if not header:
+        raise ScrapError(f"{url}: no gateway table (column 'Monitor TG') found")
+    seen = set()
+
+    def to_record(row):
+        # 9 cells: Gateway, Comment, Connected since, Network address, state,
+        #          TG, TX on, TX off, Monitor TG
+        cells = [td.get_text(" ", strip=True) for td in row.find_all("td", recursive=False)]
+        if len(cells) < 9:
+            return None
+        gateway, comment, connected_since, _address, _state, tg, _tx_on, _tx_off, monitor = cells[:9]
+        # Some gateway cells carry a tooltip with the comment: "OE4KMU Tetra-OE4KMU".
+        gateway = gateway.split(" ")[0]
+        tgs = re.fullmatch(r"\[\s*([\d\s]*\d)\s*\]", monitor)
+        if not tgs or gateway in seen:
+            return None  # log / position row, or listed twice
+        seen.add(gateway)
+        return {"callsign": base_callsign(gateway), "node": gateway, "comment": comment,
+                "connected_since": connected_since, "tg": tg, "monitored_tgs": " ".join(tgs.group(1).split())}
+
+    return save("scrap_tetra_oevsv", header.find_parent("table").find_all("tr"), to_record)
+
+
 # --- Winlink ---------------------------------------------------------------
 
 def scrap_winlink_pactor():
@@ -224,5 +259,6 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_dstar_xlx905,
     scrap_dstar_ircddb,
     scrap_dstar_ref,
+    scrap_tetra_oevsv,
     scrap_winlink_pactor,
 ]}

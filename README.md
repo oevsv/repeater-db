@@ -200,3 +200,63 @@ tr '\0' '\n' < /proc/$pid/environ | sed -n 's/^PGRST_JWT_SECRET=//p' | tr -d '\n
 
 To change the secret, write a new one to `/etc/postgrest/jwt-secret` and
 `/etc/repeater-auth.env` and restart both services; old tokens live only 30 seconds.
+
+## Network links (transmitter ↔ network node)
+
+Each transmitter names the nodes it appears as in the monitored networks, in
+`trx.networks` (migration `2026-11-03_04_trx_networks.sql`):
+
+```json
+{"oelink": "932832", "ipsc2": "232305", "svx_oe9": "OE9XVV-R", "tetra_oevsv": null}
+```
+
+The key is a network from table `network`, the value is the node exactly as
+that network lists it (`api.network_node`): repeater ID for OE-LINK and IPSC2,
+node with suffix for SVXLink OE9 and Tetra ÖVSV (`OE1XCS-T`), station for
+YCS232, station with module for XLX905 (`OE9XGV-B`), callsign for DCS009 and
+ircDDB. `null` means "this transmitter is not in that network". A trigger
+rejects unknown networks and a node linked to two transmitters.
+
+Views: `api.trx_network` (one row per link), `api.networks` (per network),
+`api.network_unlinked` (work list: listed nodes without a link, with the
+candidate transmitters). The website shows them on `/networks`.
+
+### Automatic fill
+
+```
+psql vhf -f postgres/scripts/trx_networks_autofill.sql              # dry run
+psql vhf -v apply=1 -f postgres/scripts/trx_networks_autofill.sql   # link
+```
+
+Rules, in this order: same `digital_id` (OE-LINK, IPSC2); same callsign and
+the frequency the node reports (SVXLink OE9, Tetra ÖVSV); for networks of one
+mode only, the callsign alone if it has exactly one active transmitter of that
+mode. Mixed networks (FM + TETRA) never link by callsign alone. Anything
+ambiguous is left for manual linking. Running it again is safe: it only adds
+links for nodes and transmitters without one and never changes a key that is
+already set (also not a `null`), so manual corrections survive.
+
+### Manual corrections
+
+```sql
+-- what is left, with candidates
+SELECT network_id, node, callsign, node_frequency, candidates FROM api.network_unlinked ORDER BY 1, 2;
+
+-- link a node to a transmitter (uid from the candidates)
+UPDATE trx SET networks = networks || '{"svx_oe9": "OE7XLH-R"}' WHERE uid = 2170;
+
+-- move a wrong link: remove it from one transmitter, add it to the other
+UPDATE trx SET networks = networks - 'tetra_oevsv' WHERE uid = 2406;
+UPDATE trx SET networks = networks || '{"tetra_oevsv": "OE1XCS-R"}' WHERE uid = 2423;
+
+-- this transmitter is not in that network: the automatic fill leaves it alone
+UPDATE trx SET networks = networks || '{"svx_oe9": null}' WHERE uid = 2180;
+
+-- remove a link (the automatic fill may add it again; use null to prevent that)
+UPDATE trx SET networks = networks - 'svx_oe9' WHERE uid = 2180;
+```
+
+New network: add a row to `network`, a scraper, and its nodes to the view
+`api.network_node`.
+
+See `errors.md` for the data errors found so far (to fix by hand).
