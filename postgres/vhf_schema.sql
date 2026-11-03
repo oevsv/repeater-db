@@ -3676,6 +3676,28 @@ CREATE TABLE public.scrap_oelink (
 ALTER TABLE public.scrap_oelink OWNER TO vhf_owner;
 
 --
+-- Name: scrap_fm_svx_oe9; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_fm_svx_oe9 (
+    id integer NOT NULL,
+    callsign text,
+    node text,
+    monitored_tgs text,
+    node_location text,
+    sysop text,
+    tx_freq text,
+    tx_name text,
+    tx_pwr text,
+    lat text,
+    long text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_fm_svx_oe9 OWNER TO vhf_owner;
+
+--
 -- Name: oelink_status; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -3704,6 +3726,35 @@ ALTER VIEW api.oelink_status OWNER TO vhf_owner;
 --
 
 COMMENT ON VIEW api.oelink_status IS 'Live status of the FM repeaters on OE-Link (active = listed within 120 minutes)';
+
+
+--
+-- Name: svx_oe9_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.svx_oe9_status AS
+ WITH latest AS (
+         SELECT scrap_fm_svx_oe9.callsign,
+            max(scrap_fm_svx_oe9.scraped_timestamp) AS scraped_timestamp
+           FROM public.scrap_fm_svx_oe9
+          WHERE (COALESCE(scrap_fm_svx_oe9.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_fm_svx_oe9.callsign
+        )
+ SELECT callsign,
+    'SVXLink OE9'::text AS network,
+    ''::text AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.svx_oe9_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW svx_oe9_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.svx_oe9_status IS 'Live status of the FM nodes on the SVXLink reflector OE9 (active = listed within 120 minutes)';
 
 
 --
@@ -3757,7 +3808,15 @@ UNION ALL
     ircddb_status.text,
     ircddb_status.active,
     ircddb_status.last_active
-   FROM api.ircddb_status;
+   FROM api.ircddb_status
+UNION ALL
+ SELECT svx_oe9_status.callsign,
+    svx_oe9_status.network,
+    'fm'::text AS technology,
+    svx_oe9_status.text,
+    svx_oe9_status.active,
+    svx_oe9_status.last_active
+   FROM api.svx_oe9_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -3766,7 +3825,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR)';
 
 
 --
@@ -3793,6 +3852,28 @@ CREATE VIEW api.site_canonical AS
 
 
 ALTER VIEW api.site_canonical OWNER TO vhf_owner;
+
+--
+-- Name: scrap_fm_svx_oe9_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_fm_svx_oe9_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_fm_svx_oe9_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNED BY public.scrap_fm_svx_oe9.id;
+
 
 --
 -- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
@@ -5029,6 +5110,13 @@ ALTER TABLE ONLY public.scrap_dstar_xlx905 ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: scrap_fm_svx_oe9 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_fm_svx_oe9 ALTER COLUMN id SET DEFAULT nextval('public.scrap_fm_svx_oe9_id_seq'::regclass);
+
+
+--
 -- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -5163,6 +5251,14 @@ ALTER TABLE ONLY public.scrap_dstar_ref
 
 ALTER TABLE ONLY public.scrap_dstar_xlx905
     ADD CONSTRAINT scrap_dstar_xlx905_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_fm_svx_oe9 scrap_fm_svx_oe9_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_fm_svx_oe9
+    ADD CONSTRAINT scrap_fm_svx_oe9_pkey PRIMARY KEY (id);
 
 
 --
@@ -5329,6 +5425,13 @@ CREATE INDEX scrap_dstar_ircddb_callsign_ts_idx ON public.scrap_dstar_ircddb USI
 --
 
 CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON public.scrap_dstar_xlx905 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_fm_svx_oe9_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_fm_svx_oe9_callsign_ts_idx ON public.scrap_fm_svx_oe9 USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -5803,10 +5906,24 @@ GRANT INSERT ON TABLE public.scrap_oelink TO repeater_scrap;
 
 
 --
+-- Name: TABLE scrap_fm_svx_oe9; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_fm_svx_oe9 TO repeater_scrap;
+
+
+--
 -- Name: TABLE oelink_status; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
 GRANT SELECT ON TABLE api.oelink_status TO web_anon;
+
+
+--
+-- Name: TABLE svx_oe9_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.svx_oe9_status TO web_anon;
 
 
 --
@@ -5821,6 +5938,13 @@ GRANT SELECT ON TABLE api.network_status TO web_anon;
 --
 
 GRANT SELECT ON TABLE api.site_canonical TO web_anon;
+
+
+--
+-- Name: SEQUENCE scrap_fm_svx_oe9_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
 
 
 --

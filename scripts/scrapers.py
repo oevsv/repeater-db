@@ -10,7 +10,7 @@ import re
 
 import requests
 
-from scrap_common import (ScrapError, base_callsign, callsign, find_all, get_soup, row_cells,
+from scrap_common import (ScrapError, base_callsign, callsign, fetch, find_all, get_soup, row_cells,
                           save, scrap_dmr_status_page, scrap_status_page)
 
 
@@ -24,8 +24,50 @@ def scrap_dmr_ipsc2_hotspot():
     return scrap_dmr_status_page("https://dmo.oevsv.at/_status.html", "scrap_dmr_ipsc2_hotspot")
 
 
+# --- FM --------------------------------------------------------------------
+
 def scrap_oelink():
     return scrap_dmr_status_page("https://oe-link.oevsv.at/_status.html", "scrap_oelink")
+
+
+def scrap_fm_svx_oe9():
+    """Nodes of the SVXLink reflector OE9 (dashboard https://svx.oe9hamnet.at/,
+    which loads this JSON). Only nodes with monitored talkgroups; others are
+    bridges / links without own traffic. Nodes are keyed by callsign with suffix
+    ("OE9XVV-R", "OE9KHJ-HS"); "callsign" has it without. Most nodes describe
+    one QTH with one transmitter (module "K"), many with default / dummy values;
+    the first of each is stored. The keys vary in case between node versions."""
+    url = "https://svx.oe9hamnet.at/reflector_proxy/"
+    try:
+        nodes = fetch(url).json()["nodes"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise ScrapError(f"{url}: no JSON with 'nodes' ({e})") from e
+
+    def first(mapping, *keys):
+        """The value of the first of keys present in mapping, as text ("" if none)."""
+        for key in keys:
+            value = (mapping or {}).get(key)
+            if value not in (None, ""):
+                return str(value).strip()
+        return ""
+
+    def to_record(item):
+        node, info = item
+        if not isinstance(info, dict) or not info.get("monitoredTGs"):
+            return None
+        qth = (info.get("qth") or [{}])[0] or {}
+        pos = qth.get("pos") or {}
+        tx = next(iter((qth.get("tx") or {}).values()), {}) or {}
+        return {"callsign": base_callsign(node), "node": node.strip(),
+                "monitored_tgs": " ".join(str(tg) for tg in info["monitoredTGs"]),
+                "node_location": first(info, "nodeLocation", "NodeLocation", "Location") or first(qth, "name"),
+                "sysop": first(info, "sysop", "Sysop", "SysOp"),
+                "tx_freq": first(tx, "freq"), "tx_name": first(tx, "name"), "tx_pwr": first(tx, "pwr"),
+                "lat": first(pos, "lat") or first(info, "LAT"), "long": first(pos, "long") or first(info, "LONG")}
+
+    if not isinstance(nodes, dict):
+        raise ScrapError(f"{url}: 'nodes' is not an object")
+    return save("scrap_fm_svx_oe9", nodes.items(), to_record)
 
 
 # --- C4FM ------------------------------------------------------------------
@@ -177,6 +219,7 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_dmr_ipsc2,
     scrap_dmr_ipsc2_hotspot,
     scrap_oelink,
+    scrap_fm_svx_oe9,
     scrap_dstar_dcs009,
     scrap_dstar_xlx905,
     scrap_dstar_ircddb,
