@@ -3833,6 +3833,32 @@ ALTER SEQUENCE public.scrap_dstar_xlx905_id_seq OWNED BY public.scrap_dstar_xlx9
 
 
 --
+-- Name: scrap_dmr_brandmeister; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_dmr_brandmeister (
+    id integer NOT NULL,
+    callsign text,
+    device_id text,
+    device_callsign text,
+    status text,
+    last_seen timestamp without time zone,
+    tx text,
+    rx text,
+    colorcode text,
+    hardware text,
+    firmware text,
+    city text,
+    lat text,
+    lng text,
+    master text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dmr_brandmeister OWNER TO vhf_owner;
+
+--
 -- Name: scrap_oelink; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -3986,6 +4012,44 @@ COMMENT ON VIEW api.tetra_oevsv_status IS 'Live status of the TETRA gateways on 
 
 
 --
+-- Name: brandmeister_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.brandmeister_status AS
+ WITH device AS (
+         SELECT DISTINCT ON (scrap_dmr_brandmeister.device_id) scrap_dmr_brandmeister.callsign,
+            scrap_dmr_brandmeister.device_id,
+            scrap_dmr_brandmeister.hardware,
+            scrap_dmr_brandmeister.last_seen
+           FROM public.scrap_dmr_brandmeister
+          WHERE ((COALESCE(scrap_dmr_brandmeister.callsign, ''::text) <> ''::text) AND (scrap_dmr_brandmeister.last_seen IS NOT NULL))
+          ORDER BY scrap_dmr_brandmeister.device_id, scrap_dmr_brandmeister.scraped_timestamp DESC
+        ), latest AS (
+         SELECT DISTINCT ON (device.callsign) device.callsign,
+            device.device_id,
+            device.hardware,
+            device.last_seen
+           FROM device
+          ORDER BY device.callsign, device.last_seen DESC
+        )
+ SELECT callsign,
+    'Brandmeister'::text AS network,
+    concat_ws(' '::text, NULLIF(device_id, ''::text), NULLIF(hardware, ''::text)) AS text,
+    ((last_seen AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (last_seen AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.brandmeister_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW brandmeister_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.brandmeister_status IS 'Live status of the Austrian DMR devices on Brandmeister (active = seen by Brandmeister within 120 minutes)';
+
+
+--
 -- Name: network_status; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -4052,7 +4116,15 @@ UNION ALL
     tetra_oevsv_status.text,
     tetra_oevsv_status.active,
     tetra_oevsv_status.last_active
-   FROM api.tetra_oevsv_status;
+   FROM api.tetra_oevsv_status
+UNION ALL
+ SELECT brandmeister_status.callsign,
+    brandmeister_status.network,
+    'dmr'::text AS technology,
+    brandmeister_status.text,
+    brandmeister_status.active,
+    brandmeister_status.last_active
+   FROM api.brandmeister_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -4061,7 +4133,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
 
 
 --
@@ -4125,6 +4197,16 @@ CREATE VIEW api.network_node AS
             scrap_dstar_ircddb.scraped_timestamp,
             NULL::numeric AS frequency
            FROM public.scrap_dstar_ircddb
+        UNION ALL
+         SELECT 'brandmeister'::text AS network_id,
+            scrap_dmr_brandmeister.device_id AS node,
+            scrap_dmr_brandmeister.callsign,
+            scrap_dmr_brandmeister.last_seen AS scraped_timestamp,
+                CASE
+                    WHEN ((scrap_dmr_brandmeister.tx ~ '^\d+(\.\d+)?$'::text) AND ((scrap_dmr_brandmeister.tx)::numeric > (0)::numeric)) THEN (scrap_dmr_brandmeister.tx)::numeric
+                    ELSE NULL::numeric
+                END AS frequency
+           FROM public.scrap_dmr_brandmeister
         UNION ALL
          SELECT 'tetra_oevsv'::text AS network_id,
             scrap_tetra_oevsv.node,
@@ -4285,6 +4367,28 @@ ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNER TO vhf_owner;
 --
 
 ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNED BY public.scrap_fm_svx_oe9.id;
+
+
+--
+-- Name: scrap_dmr_brandmeister_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_dmr_brandmeister_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_dmr_brandmeister_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_dmr_brandmeister_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_dmr_brandmeister_id_seq OWNED BY public.scrap_dmr_brandmeister.id;
 
 
 --
@@ -5551,6 +5655,13 @@ ALTER TABLE ONLY public.scrap_fm_svx_oe9 ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: scrap_dmr_brandmeister id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dmr_brandmeister ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_brandmeister_id_seq'::regclass);
+
+
+--
 -- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -5708,6 +5819,14 @@ ALTER TABLE ONLY public.scrap_fm_svx_oe9
 
 ALTER TABLE ONLY public.network
     ADD CONSTRAINT network_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dmr_brandmeister scrap_dmr_brandmeister_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dmr_brandmeister
+    ADD CONSTRAINT scrap_dmr_brandmeister_pkey PRIMARY KEY (id);
 
 
 --
@@ -5889,6 +6008,13 @@ CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON public.scrap_dstar_xlx905 USI
 --
 
 CREATE INDEX scrap_fm_svx_oe9_callsign_ts_idx ON public.scrap_fm_svx_oe9 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_dmr_brandmeister_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dmr_brandmeister_callsign_ts_idx ON public.scrap_dmr_brandmeister USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -6384,6 +6510,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
 
 
 --
+-- Name: TABLE scrap_dmr_brandmeister; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_dmr_brandmeister TO repeater_scrap;
+
+
+--
 -- Name: TABLE scrap_oelink; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -6423,6 +6556,13 @@ GRANT SELECT ON TABLE api.svx_oe9_status TO web_anon;
 --
 
 GRANT SELECT ON TABLE api.tetra_oevsv_status TO web_anon;
+
+
+--
+-- Name: TABLE brandmeister_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.brandmeister_status TO web_anon;
 
 
 --
@@ -6479,6 +6619,13 @@ GRANT SELECT ON TABLE api.site_canonical TO web_anon;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dmr_brandmeister_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dmr_brandmeister_id_seq TO repeater_scrap;
 
 
 --

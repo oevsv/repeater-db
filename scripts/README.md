@@ -9,6 +9,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_c4fm_ycs232` | https://ycs232.oevsv.at/_status.html |
 | `scrap_dmr_ipsc2` | https://ipsc2.oevsv.at/_status.html |
 | `scrap_dmr_ipsc2_hotspot` | https://dmo.oevsv.at/_status.html |
+| `scrap_dmr_brandmeister` | https://api.brandmeister.network/v2/device/byMaster/2322 (Brandmeister API; dashboard https://brandmeister.network/#/devices is WebSocket only; Austrian master, OE callsigns only) |
 | `scrap_oelink` | https://oe-link.oevsv.at/_status.html |
 | `scrap_fm_svx_oe9` | https://svx.oe9hamnet.at/ (SVXLink reflector OE9; its JSON `/reflector_proxy/`, only nodes with monitored talkgroups) |
 | `scrap_dstar_dcs009` | https://xlx232.oevsv.at/_status.html |
@@ -21,7 +22,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 Every table has a column `callsign`, upper case. Where a page lists a callsign only with
 a suffix, the original is kept too and `callsign` has it without the suffix:
 `scrap_dstar_xlx905.dv_station` `OE9XGV-B` → `OE9XGV`, `scrap_c4fm_ycs232.station`
-`HB9DR-2` → `HB9DR`, `scrap_fm_svx_oe9.node` `OE9XVV-R` → `OE9XVV`, `scrap_tetra_oevsv.node` `OE1XCS-T` → `OE1XCS`. Some entries are not callsigns (networks like `OE-MLINK`, C4FM rooms
+`HB9DR-2` → `HB9DR`, `scrap_fm_svx_oe9.node` `OE9XVV-R` → `OE9XVV`, `scrap_tetra_oevsv.node` `OE1XCS-T` → `OE1XCS`, `scrap_dmr_brandmeister.device_callsign` `OE9XKV Dornbirn` → `OE9XKV`. Some entries are not callsigns (networks like `OE-MLINK`, C4FM rooms
 like `FCS22820`). The `scrap_*` tables are not part of the API.
 
 ## Files

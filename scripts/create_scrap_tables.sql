@@ -24,7 +24,7 @@ BEGIN
 END
 $$;
 
-DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_hotspot, scrap_oelink,
+DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_hotspot, scrap_dmr_brandmeister, scrap_oelink,
     scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref,
     scrap_tetra_oevsv, scrap_winlink_pactor;
 
@@ -88,6 +88,30 @@ CREATE TABLE scrap_dmr_ipsc2_hotspot (
     hardware TEXT,
     scraped_timestamp TIMESTAMP NOT NULL
 );
+
+-- DMR: Brandmeister master 2322 (API https://api.brandmeister.network/v2/device/byMaster/2322),
+-- OE callsigns only. last_seen (UTC) = when Brandmeister last saw the device.
+CREATE TABLE scrap_dmr_brandmeister (
+    id SERIAL PRIMARY KEY,
+    callsign TEXT,         -- without a place: OE9XKV
+    device_id TEXT,        -- Brandmeister / DMR ID: 232078 (repeater), 2320001 (hotspot)
+    device_callsign TEXT,  -- as listed: "OE9XKV Dornbirn"
+    status TEXT,           -- Brandmeister device status code (2, 3, 4; not documented)
+    last_seen TIMESTAMP,   -- UTC, when Brandmeister last saw the device
+    tx TEXT,
+    rx TEXT,
+    colorcode TEXT,
+    hardware TEXT,
+    firmware TEXT,
+    city TEXT,
+    lat TEXT,
+    lng TEXT,
+    master TEXT,           -- lastKnownMaster
+    scraped_timestamp TIMESTAMP NOT NULL
+);
+
+-- api.brandmeister_status reads the latest row per device (migration 2026-11-03_05_brandmeister.sql).
+CREATE INDEX scrap_dmr_brandmeister_callsign_ts_idx ON scrap_dmr_brandmeister (callsign, scraped_timestamp DESC);
 
 -- https://oe-link.oevsv.at/_status.html
 CREATE TABLE scrap_oelink (
@@ -225,7 +249,7 @@ DO $$
 DECLARE
     t text;
 BEGIN
-    FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot',
+    FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot', 'scrap_dmr_brandmeister',
             'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb',
             'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_winlink_pactor'] LOOP
         EXECUTE format('ALTER TABLE %I OWNER TO vhf_owner', t);

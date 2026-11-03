@@ -24,6 +24,39 @@ def scrap_dmr_ipsc2_hotspot():
     return scrap_dmr_status_page("https://dmo.oevsv.at/_status.html", "scrap_dmr_ipsc2_hotspot")
 
 
+def scrap_dmr_brandmeister():
+    """DMR devices (repeaters and hotspots) on the Austrian Brandmeister master
+    2322, from the Brandmeister API (the dashboard https://brandmeister.network/
+    itself uses a WebSocket). Only Austrian callsigns (OE...) are stored; the
+    master also serves neighbouring countries. The list contains devices last
+    seen up to about a month ago - "last_seen" (UTC) tells whether one is on
+    the air, not the listing. Some callsigns carry a place ("OE9XKV Dornbirn");
+    "callsign" has it without."""
+    url = "https://api.brandmeister.network/v2/device/byMaster/2322"
+    try:
+        devices = fetch(url).json()
+    except ValueError as e:
+        raise ScrapError(f"{url}: no JSON ({e})") from e
+    if not isinstance(devices, list):
+        raise ScrapError(f"{url}: expected a list of devices")
+
+    def to_record(device):
+        if not isinstance(device, dict) or not callsign(device.get("callsign")).startswith("OE"):
+            return None
+
+        def text(key):
+            value = device.get(key)
+            return "" if value is None else str(value).strip()
+
+        return {"callsign": base_callsign(device["callsign"]), "device_id": text("id"),
+                "device_callsign": text("callsign"), "status": text("status"),
+                "last_seen": device.get("last_seen") or None, "tx": text("tx"), "rx": text("rx"),
+                "colorcode": text("colorcode"), "hardware": text("hardware"), "firmware": text("firmware"),
+                "city": text("city"), "lat": text("lat"), "lng": text("lng"), "master": text("lastKnownMaster")}
+
+    return save("scrap_dmr_brandmeister", devices, to_record)
+
+
 # --- FM --------------------------------------------------------------------
 
 def scrap_oelink():
@@ -253,6 +286,7 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_c4fm_ycs232,
     scrap_dmr_ipsc2,
     scrap_dmr_ipsc2_hotspot,
+    scrap_dmr_brandmeister,
     scrap_oelink,
     scrap_fm_svx_oe9,
     scrap_dstar_dcs009,

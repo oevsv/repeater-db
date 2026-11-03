@@ -28,7 +28,7 @@ Repeater callsigns (OE*X*) listed by a network but not in `trx` at all.
 
 | Callsign | Listed by | Note from the network |
 |---|---|---|
-| OE4XSM | IPSC2 (ID 232003), SVXLink OE9 (`OE4XSM-R`) | "Neusiedlersee", 439.1 MHz, GM340, 15 W |
+| OE4XSM | IPSC2 (ID 232003), Brandmeister (232003), SVXLink OE9 (`OE4XSM-R`) | "Neusiedlersee" / "Breitenbrunn, JN87iw", 439.1 MHz, GM340, 15 W |
 | OE9XDW | SVXLink OE9 (`OE9XDW-R`, `OE9XDW-SR`) | "Dornbirn JN47UJ", 438.3875 MHz |
 | OE9XGV | SVXLink OE9 (`OE9XGV-HS`), XLX905 (`OE9XGV-B`) | "Clubstation Rankweil", D-STAR module B |
 | OE7XHJ | SVXLink OE9 (`OE7XHJ-SR`) | "HF Link zu Rep OE7XTR", 145.1625 MHz – probably a link, not a repeater |
@@ -46,6 +46,9 @@ network carries.
 |---|---|---|---|
 | OE8XGK | Finkenstein/Neumüllern | OE-LINK (ID 932882) | FM transmitter (site has DMR only) |
 | OE3XAV | Kleinhardersdorf Ort | YCS232 | C4FM transmitter |
+| OE3XPA | Kaiserkogel | Brandmeister (232393, TX 438.45) | DMR: the transmitter on 438.45 (uid 2080) is marked C4FM + D-STAR only |
+| OE4XBJ | Allhau | Brandmeister (232403, TX 438.325) | DMR transmitter (site has TETRA 430.4125 only) |
+| OE9XFV | Gebhartsberg | Brandmeister (232002, "MMDVM_HBlink", Quantar bridge, TX 438.525) | DMR: 438.525 (uid 2224) is FM only – bridge or DMR repeater? |
 | OE6XAG | Schöckl | Tetra ÖVSV (`OE6XAG-R`, "Tetra-Schoeckl/430.4125") | TETRA transmitter |
 | OE6XBF | Stradner Kogel | Tetra ÖVSV (`OE6XBF-R`, "Tetra-Stradnerkogel/430.3125") | TETRA transmitter |
 | OE3XWW | Mönichkirchen Schwaig | Tetra ÖVSV (`OE3XWW-R`, "Tetra-Mönichkirchen/430.2375") | TETRA transmitter |
@@ -77,7 +80,7 @@ transmitter (`trx.networks`).
 
 ## 5. Nodes the automatic fill could not link
 
-After `trx_networks_autofill.sql` (84 links), these mixed-network nodes need a
+After `trx_networks_autofill.sql` (104 links incl. Brandmeister), these mixed-network nodes need a
 person (see `api.network_unlinked` for all, with candidate transmitters):
 
 | Node | Reports | Candidates / reason |
@@ -89,6 +92,7 @@ person (see `api.network_unlinked` for all, with candidate transmitters):
 | Tetra `OE1XCS-T` | 430.3375 | TETRA 430.7125 (uid 2423), see 4. |
 | Tetra `OE3XWW-R`, `OE6XAG-R`, `OE6XBF-R` | 430.2375, 430.4125, 430.3125 | TETRA transmitter missing, see 3. |
 | Tetra `OE4XUB-R` | no frequency ("Tetra-88-LINK") | link of the FM repeater? FM 145.775 / 438.55 |
+| Brandmeister `232072` (OE8XGK) | 438.45, last seen 2026-10-22 | old second registration; 232836 is linked – set `{"brandmeister": ...}` only if it is a separate device |
 
 ## 6. Several transmitters of one mode under one callsign
 
