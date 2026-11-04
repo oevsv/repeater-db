@@ -48,6 +48,8 @@ network carries.
 | OE3XAV | Kleinhardersdorf Ort | YCS232 | C4FM transmitter |
 | OE3XPA | Kaiserkogel | Brandmeister (232393, TX 438.45) | DMR: the transmitter on 438.45 (uid 2080) is marked C4FM + D-STAR only |
 | OE4XBJ | Allhau | Brandmeister (232403, TX 438.325) | DMR transmitter (site has TETRA 430.4125 only) |
+| OE7XLI | Hochstein | REF096 (`OE7XLI-B`: module B linked) | D-STAR module B (70 cm): the only D-STAR transmitter is module C, 145.725 (uid 2321) |
+| OE6XDF | Dobl | REF096 (`OE6XDF-B`: module B linked) | D-STAR module B (70 cm): only module C, 145.6375 (uid 2140) |
 | OE9XFV | Gebhartsberg | Brandmeister (232002, "MMDVM_HBlink", Quantar bridge, TX 438.525) | DMR: 438.525 (uid 2224) is FM only – bridge or DMR repeater? |
 | OE6XAG | Schöckl | Tetra ÖVSV (`OE6XAG-R`, "Tetra-Schoeckl/430.4125") | TETRA transmitter |
 | OE6XBF | Stradner Kogel | Tetra ÖVSV (`OE6XBF-R`, "Tetra-Stradnerkogel/430.3125") | TETRA transmitter |

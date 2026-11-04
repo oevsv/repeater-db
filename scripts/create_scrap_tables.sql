@@ -25,7 +25,7 @@ END
 $$;
 
 DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_hotspot, scrap_dmr_brandmeister, scrap_oelink,
-    scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref,
+    scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref096, scrap_dstar_ref,
     scrap_tetra_oevsv, scrap_winlink_pactor;
 
 -- C4FM: https://ycs232.oevsv.at/_status.html
@@ -202,6 +202,20 @@ CREATE TABLE scrap_dstar_ircddb (
 -- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
 CREATE INDEX scrap_dstar_ircddb_callsign_ts_idx ON scrap_dstar_ircddb (callsign, scraped_timestamp DESC);
 
+-- D-STAR: gateways linked to the reflector REF096, http://ref096.dstargateway.org/
+-- (DREFD dashboard, table "Linked Gateways"; live, not a registry).
+CREATE TABLE scrap_dstar_ref096 (
+    id SERIAL PRIMARY KEY,
+    callsign TEXT,          -- gateway: OE6XDF
+    node TEXT,              -- gateway with module: OE6XDF-B
+    gateway_module TEXT,    -- B
+    reflector_module TEXT,  -- A (REF096 A)
+    scraped_timestamp TIMESTAMP NOT NULL
+);
+
+-- api.ref096_status reads the latest rows per callsign (migration 2026-11-04_02_ref096.sql).
+CREATE INDEX scrap_dstar_ref096_callsign_ts_idx ON scrap_dstar_ref096 (callsign, scraped_timestamp DESC);
+
 -- D-STAR REF: https://dstarusers.org/repeaters.php (country Austria)
 CREATE TABLE scrap_dstar_ref (
     id SERIAL PRIMARY KEY,
@@ -250,7 +264,7 @@ DECLARE
     t text;
 BEGIN
     FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot', 'scrap_dmr_brandmeister',
-            'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb',
+            'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb', 'scrap_dstar_ref096',
             'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_winlink_pactor'] LOOP
         EXECUTE format('ALTER TABLE %I OWNER TO vhf_owner', t);
         EXECUTE format('GRANT INSERT ON %I TO repeater_scrap', t);

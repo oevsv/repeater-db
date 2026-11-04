@@ -1397,7 +1397,7 @@ COMMENT ON FUNCTION public.trx_networks_check() IS 'trx.networks: known networks
 
 CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_age interval DEFAULT '30 days'::interval) RETURNS TABLE(network_id text, node text, trx_uid bigint, site_name text, callsign text, frequency_tx double precision, rule text)
     LANGUAGE sql
-    AS $$
+    AS $_$
   WITH nodes AS (
          SELECT nn.network_id, nn.node, nn.callsign, nn.last_listed, nn.frequency, n.technologies
            FROM api.network_node nn
@@ -1406,7 +1406,7 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
             AND NOT EXISTS (SELECT 1 FROM public.trx t WHERE t.networks @> jsonb_build_object(nn.network_id, nn.node))
        ), free AS (  -- active transmitters, with their modes
          SELECT t.uid, t.site_name, upper(t.callsign::text) AS callsign, t.frequency_tx, t.digital_id, t.networks,
-                public.trx_technologies(t) AS technologies
+                public.trx_technologies(t) AS technologies, nullif(upper(t.dstar_rpt1::text), '') AS dstar_module
            FROM public.trx t
           WHERE t.status::text = 'active'
        ), by_id AS (
@@ -1418,6 +1418,22 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
                    JOIN free f ON f.digital_id::text = nodes.node
                               AND f.technologies && nodes.technologies
                               AND NOT f.networks ? nodes.network_id) x
+          WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
+       ), by_module AS (  -- D-STAR node "OE6XDF-B": same callsign, module B = trx.dstar_rpt1
+         SELECT x.network_id, x.node, x.uid
+           FROM (SELECT nodes.network_id, nodes.node, f.uid,
+                        count(*) OVER (PARTITION BY nodes.network_id, nodes.node) AS trx_per_node,
+                        count(*) OVER (PARTITION BY nodes.network_id, f.uid) AS nodes_per_trx
+                   FROM nodes
+                   JOIN free f ON f.callsign = nodes.callsign
+                              AND nodes.node ~ '-[A-Z]$'
+                              AND f.dstar_module = right(nodes.node, 1)
+                              AND 'dstar' = ANY (f.technologies)
+                              AND nodes.technologies = '{dstar}'
+                  WHERE NOT f.networks ? nodes.network_id
+                    AND NOT EXISTS (SELECT 1 FROM by_id b
+                                     WHERE b.network_id = nodes.network_id
+                                       AND (b.node = nodes.node OR b.uid = f.uid))) x
           WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
        ), by_freq AS (
          SELECT x.network_id, x.node, x.uid
@@ -1431,10 +1447,15 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
                   WHERE NOT f.networks ? nodes.network_id
                     AND NOT EXISTS (SELECT 1 FROM by_id b
                                      WHERE b.network_id = nodes.network_id
+                                       AND (b.node = nodes.node OR b.uid = f.uid))
+                    AND NOT EXISTS (SELECT 1 FROM by_module b
+                                     WHERE b.network_id = nodes.network_id
                                        AND (b.node = nodes.node OR b.uid = f.uid))) x
           WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
        ), taken AS (
          SELECT network_id, node, uid FROM by_id
+         UNION ALL
+         SELECT network_id, node, uid FROM by_module
          UNION ALL
          SELECT network_id, node, uid FROM by_freq
        ), by_call AS (
@@ -1448,6 +1469,9 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
                                       AND f.technologies && nodes.technologies
                           WHERE NOT f.networks ? nodes.network_id
                             AND cardinality(nodes.technologies) = 1
+                            -- a D-STAR module node never goes to a transmitter of another module
+                            AND NOT (nodes.technologies = '{dstar}' AND nodes.node ~ '-[A-Z]$'
+                                     AND f.dstar_module IS NOT NULL AND f.dstar_module <> right(nodes.node, 1))
                             AND NOT EXISTS (SELECT 1 FROM taken b
                                              WHERE b.network_id = nodes.network_id
                                                AND (b.node = nodes.node OR b.uid = f.uid))) x
@@ -1455,6 +1479,8 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
           WHERE y.pick = 1
        ), links AS (
          SELECT network_id, node, uid, 'digital_id' AS rule FROM by_id
+         UNION ALL
+         SELECT network_id, node, uid, 'module' FROM by_module
          UNION ALL
          SELECT network_id, node, uid, 'frequency' FROM by_freq
          UNION ALL
@@ -1470,7 +1496,7 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
     FROM links l
     JOIN free f ON f.uid = l.uid
    ORDER BY l.network_id, f.site_name, l.node
-$$;
+$_$;
 
 
 ALTER FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) OWNER TO vhf_owner;
@@ -3859,6 +3885,22 @@ CREATE TABLE public.scrap_dmr_brandmeister (
 ALTER TABLE public.scrap_dmr_brandmeister OWNER TO vhf_owner;
 
 --
+-- Name: scrap_dstar_ref096; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_dstar_ref096 (
+    id integer NOT NULL,
+    callsign text,
+    node text,
+    gateway_module text,
+    reflector_module text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dstar_ref096 OWNER TO vhf_owner;
+
+--
 -- Name: scrap_oelink; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -4050,6 +4092,37 @@ COMMENT ON VIEW api.brandmeister_status IS 'Live status of the Austrian DMR devi
 
 
 --
+-- Name: ref096_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.ref096_status AS
+ WITH latest AS (
+         SELECT scrap_dstar_ref096.callsign,
+            max(scrap_dstar_ref096.scraped_timestamp) AS scraped_timestamp
+           FROM public.scrap_dstar_ref096
+          WHERE (COALESCE(scrap_dstar_ref096.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_dstar_ref096.callsign
+        )
+ SELECT callsign,
+    'REF096'::text AS network,
+    ( SELECT string_agg(DISTINCT concat_ws('>'::text, NULLIF(r.gateway_module, ''::text), r.reflector_module), ', '::text) AS string_agg
+           FROM public.scrap_dstar_ref096 r
+          WHERE ((r.callsign = l.callsign) AND (r.scraped_timestamp = l.scraped_timestamp))) AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest l;
+
+
+ALTER VIEW api.ref096_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW ref096_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.ref096_status IS 'Live status of the D-STAR gateways linked to the reflector REF096 (active = linked within 120 minutes)';
+
+
+--
 -- Name: network_status; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -4124,7 +4197,15 @@ UNION ALL
     brandmeister_status.text,
     brandmeister_status.active,
     brandmeister_status.last_active
-   FROM api.brandmeister_status;
+   FROM api.brandmeister_status
+UNION ALL
+ SELECT ref096_status.callsign,
+    ref096_status.network,
+    'dstar'::text AS technology,
+    ref096_status.text,
+    ref096_status.active,
+    ref096_status.last_active
+   FROM api.ref096_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -4133,7 +4214,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
 
 
 --
@@ -4206,6 +4287,13 @@ CREATE VIEW api.network_node AS
             NULL::numeric AS frequency
            FROM public.scrap_dstar_ircddb
           WHERE (scrap_dstar_ircddb.status = 'Online'::text)
+        UNION ALL
+         SELECT 'ref096'::text AS network_id,
+            scrap_dstar_ref096.node,
+            scrap_dstar_ref096.callsign,
+            scrap_dstar_ref096.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dstar_ref096
         UNION ALL
          SELECT 'brandmeister'::text AS network_id,
             scrap_dmr_brandmeister.device_id AS node,
@@ -4400,6 +4488,28 @@ ALTER SEQUENCE public.scrap_dmr_brandmeister_id_seq OWNER TO vhf_owner;
 --
 
 ALTER SEQUENCE public.scrap_dmr_brandmeister_id_seq OWNED BY public.scrap_dmr_brandmeister.id;
+
+
+--
+-- Name: scrap_dstar_ref096_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_dstar_ref096_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_dstar_ref096_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_dstar_ref096_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_dstar_ref096_id_seq OWNED BY public.scrap_dstar_ref096.id;
 
 
 --
@@ -5673,6 +5783,13 @@ ALTER TABLE ONLY public.scrap_dmr_brandmeister ALTER COLUMN id SET DEFAULT nextv
 
 
 --
+-- Name: scrap_dstar_ref096 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ref096 ALTER COLUMN id SET DEFAULT nextval('public.scrap_dstar_ref096_id_seq'::regclass);
+
+
+--
 -- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -5838,6 +5955,14 @@ ALTER TABLE ONLY public.network
 
 ALTER TABLE ONLY public.scrap_dmr_brandmeister
     ADD CONSTRAINT scrap_dmr_brandmeister_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dstar_ref096 scrap_dstar_ref096_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dstar_ref096
+    ADD CONSTRAINT scrap_dstar_ref096_pkey PRIMARY KEY (id);
 
 
 --
@@ -6026,6 +6151,13 @@ CREATE INDEX scrap_fm_svx_oe9_callsign_ts_idx ON public.scrap_fm_svx_oe9 USING b
 --
 
 CREATE INDEX scrap_dmr_brandmeister_callsign_ts_idx ON public.scrap_dmr_brandmeister USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_dstar_ref096_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dstar_ref096_callsign_ts_idx ON public.scrap_dstar_ref096 USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -6528,6 +6660,13 @@ GRANT INSERT ON TABLE public.scrap_dmr_brandmeister TO repeater_scrap;
 
 
 --
+-- Name: TABLE scrap_dstar_ref096; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_dstar_ref096 TO repeater_scrap;
+
+
+--
 -- Name: TABLE scrap_oelink; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -6574,6 +6713,13 @@ GRANT SELECT ON TABLE api.tetra_oevsv_status TO web_anon;
 --
 
 GRANT SELECT ON TABLE api.brandmeister_status TO web_anon;
+
+
+--
+-- Name: TABLE ref096_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.ref096_status TO web_anon;
 
 
 --
@@ -6637,6 +6783,13 @@ GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dmr_brandmeister_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dstar_ref096_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dstar_ref096_id_seq TO repeater_scrap;
 
 
 --

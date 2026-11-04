@@ -192,6 +192,38 @@ def scrap_dstar_ircddb():
     return save("scrap_dstar_ircddb", cells, to_record)
 
 
+def scrap_dstar_ref096():
+    """Gateways linked to the D-Plus reflector REF096 (DREFD dashboard
+    http://ref096.dstargateway.org/): a live view of the reflector's links, not
+    a registry. The table "Linked Gateways" has one column per reflector module
+    (A-E); each cell is a gateway with its own module, "OE6XDF B" = module B of
+    gateway OE6XDF linked to REF096 A. Stored as node "OE6XDF-B" (as on XLX905),
+    so it matches trx.dstar_rpt1. Remote users (hotspots, with names) and the
+    last-heard list are not stored."""
+    url = "http://ref096.dstargateway.org/"
+    soup = get_soup(url)
+    header = soup.find("th", string=lambda t: t and t.strip() == "Module A")
+    if not header:
+        raise ScrapError(f"{url}: no table 'Linked Gateways' (header 'Module A') found")
+    table = header.find_parent("table")
+    modules = [th.get_text(strip=True).replace("Module", "").strip() for th in header.find_parent("tr").find_all("th")]
+    cells = [(module, td.get_text(" ", strip=True))
+             for tr in table.find_all("tr")[1:]
+             for module, td in zip(modules, tr.find_all("td", recursive=False))]
+
+    def to_record(cell):
+        reflector_module, text = cell
+        parts = text.split()
+        if not parts:
+            return None  # empty cell
+        gateway_module = parts[1].upper() if len(parts) > 1 else ""
+        call = callsign(parts[0])
+        return {"callsign": call, "node": f"{call}-{gateway_module}" if gateway_module else call,
+                "gateway_module": gateway_module, "reflector_module": reflector_module}
+
+    return save("scrap_dstar_ref096", cells, to_record)
+
+
 def scrap_dstar_ref():
     """Repeater list of dstarusers.org for country 10 (Austria)."""
     url = "https://dstarusers.org/repeaters.php"
@@ -292,6 +324,7 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_dstar_dcs009,
     scrap_dstar_xlx905,
     scrap_dstar_ircddb,
+    scrap_dstar_ref096,
     scrap_dstar_ref,
     scrap_tetra_oevsv,
     scrap_winlink_pactor,
