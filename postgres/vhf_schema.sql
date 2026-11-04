@@ -1796,46 +1796,47 @@ ALTER TABLE api.trx_list OWNER TO vhf_owner;
 --
 
 CREATE VIEW api.trx_type AS
- SELECT trx.site_name,
-    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.fm IS TRUE)) AS fm,
-    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.dmr IS TRUE)) AS dmr,
-    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.c4fm IS TRUE)) AS c4fm,
-    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.dstar IS TRUE)) AS dstar,
-    (((trx.type_of_station)::text = 'repeater_voice'::text) AND (trx.tetra IS TRUE)) AS tetra,
-    ((trx.type_of_station)::text = 'beacon'::text) AS beacon,
-    ((trx.type_of_station)::text = 'digipeater'::text) AS digipeater,
-    ((trx.type_of_station)::text = 'atv'::text) AS atv,
-    COALESCE(public.vhf_band_name(trx.frequency_tx), public.vhf_band_name(trx.frequency_rx)) AS band,
-    trx.frequency_tx,
-    trx.frequency_rx,
-    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 0) AS ch,
-    public.vhf_channel_name(trx.frequency_tx, trx.frequency_rx, 1) AS ch_new,
-    trx.callsign,
-    trx.antenna_heigth,
-    trx.sysop,
-    trx.url,
-    trx.hardware,
-    trx.mmdvm,
-    trx.solar_power,
-    trx.battery_power,
-    trx.fm_wakeup,
-    trx.ctcss_tx,
-    trx.ctcss_rx,
-    trx.echolink,
-    trx.echolink_id,
-    trx.digital_id,
-    trx.cc,
-    trx.ipsc2,
-    trx.brandmeister,
-    trx.c4fm_groups,
-    trx.dstar_rpt1,
-    trx.other_mode_name,
-    trx.comment
+ SELECT site_name,
+    (((type_of_station)::text = 'repeater_voice'::text) AND (fm IS TRUE)) AS fm,
+    (((type_of_station)::text = 'repeater_voice'::text) AND (dmr IS TRUE)) AS dmr,
+    (((type_of_station)::text = 'repeater_voice'::text) AND (c4fm IS TRUE)) AS c4fm,
+    (((type_of_station)::text = 'repeater_voice'::text) AND (dstar IS TRUE)) AS dstar,
+    (((type_of_station)::text = 'repeater_voice'::text) AND (tetra IS TRUE)) AS tetra,
+    ((type_of_station)::text = 'beacon'::text) AS beacon,
+    ((type_of_station)::text = 'digipeater'::text) AS digipeater,
+    ((type_of_station)::text = 'atv'::text) AS atv,
+    COALESCE(public.vhf_band_name(frequency_tx), public.vhf_band_name(frequency_rx)) AS band,
+    frequency_tx,
+    frequency_rx,
+    public.vhf_channel_name(frequency_tx, frequency_rx, 0) AS ch,
+    public.vhf_channel_name(frequency_tx, frequency_rx, 1) AS ch_new,
+    callsign,
+    antenna_heigth,
+    sysop,
+    url,
+    hardware,
+    mmdvm,
+    solar_power,
+    battery_power,
+    fm_wakeup,
+    ctcss_tx,
+    ctcss_rx,
+    echolink,
+    echolink_id,
+    digital_id,
+    cc,
+    ipsc2,
+    brandmeister,
+    c4fm_groups,
+    dstar_rpt1,
+    other_mode_name,
+    comment,
+    uid AS trx_uid
    FROM public.trx
-  WHERE ((trx.status)::text = 'active'::text);
+  WHERE ((status)::text = 'active'::text);
 
 
-ALTER TABLE api.trx_type OWNER TO vhf_owner;
+ALTER VIEW api.trx_type OWNER TO vhf_owner;
 
 --
 -- Name: bands; Type: TABLE; Schema: public; Owner: vhf_owner
@@ -4461,6 +4462,52 @@ COMMENT ON VIEW api.trx_network IS 'Transmitter <-> network node links (trx.netw
 
 
 --
+-- Name: trx_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.trx_status AS
+ SELECT tn.trx_uid,
+    tn.site_name,
+    tn.callsign,
+    tn.network_id,
+    tn.network,
+    tn.node,
+    COALESCE(NULLIF(ARRAY( SELECT x.x
+           FROM unnest(tn.technologies) x(x)
+          WHERE (x.x = ANY (n.technologies))), '{}'::text[]), n.technologies) AS technologies,
+        CASE tn.network_id
+            WHEN 'xlx905'::text THEN ( SELECT x.band
+               FROM public.scrap_dstar_xlx905 x
+              WHERE (x.dv_station = tn.node)
+              ORDER BY x.scraped_timestamp DESC
+             LIMIT 1)
+            WHEN 'ref096'::text THEN ( SELECT concat_ws('>'::text, NULLIF(r.gateway_module, ''::text), r.reflector_module) AS concat_ws
+               FROM public.scrap_dstar_ref096 r
+              WHERE (r.node = tn.node)
+              ORDER BY r.scraped_timestamp DESC
+             LIMIT 1)
+            ELSE ns.text
+        END AS text,
+    tn.listed_now AS active,
+    tn.last_listed AS last_active,
+    tn.offline
+   FROM ((api.trx_network tn
+     JOIN public.network n ON ((n.id = tn.network_id)))
+     LEFT JOIN api.network_status ns ON (((ns.callsign = tn.callsign) AND (ns.network = tn.network))))
+  WHERE (((tn.trx_status)::text = 'active'::text) AND (tn.last_listed IS NOT NULL));
+
+
+ALTER VIEW api.trx_status OWNER TO vhf_owner;
+
+
+--
+-- Name: VIEW trx_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.trx_status IS 'Network status per transmitter: one row per link in trx.networks of an active transmitter (active = the node is listed now)';
+
+
+--
 -- Name: networks; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -6881,6 +6928,13 @@ GRANT SELECT ON TABLE api.network_unlinked TO web_anon;
 --
 
 GRANT SELECT ON TABLE api.trx_network TO web_anon;
+
+
+--
+-- Name: TABLE trx_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.trx_status TO web_anon;
 
 
 --

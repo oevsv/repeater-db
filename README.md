@@ -219,7 +219,9 @@ node with suffix for SVXLink OE9, Tetra ÖVSV (`OE1XCS-T`) and Tetra-DE
 
 Views: `api.trx_network` (one row per link), `api.networks` (per network),
 `api.network_unlinked` (work list: listed nodes without a link, with the
-candidate transmitters). The website shows them on `/networks`.
+candidate transmitters), `api.trx_status` (live status per linked
+transmitter; the map shows it below each transmitter). The website shows the
+links on `/networks`.
 
 ### Automatic fill
 
