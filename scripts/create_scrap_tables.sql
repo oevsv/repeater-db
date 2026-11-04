@@ -112,6 +112,9 @@ CREATE TABLE scrap_dmr_brandmeister (
 
 -- api.brandmeister_status reads the latest row per device (migration 2026-11-03_05_brandmeister.sql).
 CREATE INDEX scrap_dmr_brandmeister_callsign_ts_idx ON scrap_dmr_brandmeister (callsign, scraped_timestamp DESC);
+-- Its latest row per device, read from the index alone (migration 2026-11-04_05_brandmeister_device_idx.sql).
+CREATE INDEX scrap_dmr_brandmeister_device_ts_idx ON scrap_dmr_brandmeister (device_id, scraped_timestamp DESC)
+    INCLUDE (callsign, hardware, last_seen);
 
 -- https://oe-link.oevsv.at/_status.html
 CREATE TABLE scrap_oelink (

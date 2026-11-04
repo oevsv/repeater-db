@@ -6306,6 +6306,13 @@ CREATE INDEX scrap_dmr_brandmeister_callsign_ts_idx ON public.scrap_dmr_brandmei
 
 
 --
+-- Name: scrap_dmr_brandmeister_device_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dmr_brandmeister_device_ts_idx ON public.scrap_dmr_brandmeister USING btree (device_id, scraped_timestamp DESC) INCLUDE (callsign, hardware, last_seen);
+
+
+--
 -- Name: scrap_dstar_ref096_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
