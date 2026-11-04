@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ebKRkAFTyp9uCEbJplADysOX9GCYbyFK29In3OF3giBOu8zQAlhxKIF4wtMnf7w
+\restrict d27YIqCKCh6ysNSFjHc7eyvJdadFS3rRKvXfFyA43D5e9a7pniso5eIpkc2wcZo
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: dz
+-- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: vhf_owner
 --
 
 SET SESSION AUTHORIZATION DEFAULT;
@@ -202,21 +202,22 @@ COPY public.site (uid, site_name, city, longitude, latitude, sea_level, locator_
 115	Stilluppklamm	Mayrhofen	11.84865	47.15829	644	JN57WD	JN57WD17UX17CM80TX10	OE7	6024	0101000020110F0000102441AF49203441AB54455A13C45641	\N
 180	Favoriten Wasserturm	Wien	16.35335795581341	48.16908989377349	241	JN88EE	JN88EE20JN69RN08EQ55	OE1	4176	0101000020110F00000394FB7A1FC73B412ABA16E73D675741	Update 20.03.26
 182	Mönichkirchen Schwaig	Mönichkirchen	16.001	47.51561111	1313	JN87AM	JN87AM03CR89TE17XX96	OE3	5507	0101000020110F00003E32142CE72D3B41AB85553365FD5641	Update 17.04.26
+183	Breitenbrunn	Neusiedl am See	16.73289064118431	47.9459840929814	146	JN87IW	JN87IW77WA78GQ04CC64	OE4	7717	0101000020110F000017F49CDD286C3C4189D3994DF4425741	\N
 \.
 
 
 ALTER TABLE public.site ENABLE TRIGGER ALL;
 
 --
--- Name: station_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
+-- Name: station_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: vhf_owner
 --
 
-SELECT pg_catalog.setval('public.station_uid_seq', 182, true);
+SELECT pg_catalog.setval('public.station_uid_seq', 183, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ebKRkAFTyp9uCEbJplADysOX9GCYbyFK29In3OF3giBOu8zQAlhxKIF4wtMnf7w
+\unrestrict d27YIqCKCh6ysNSFjHc7eyvJdadFS3rRKvXfFyA43D5e9a7pniso5eIpkc2wcZo
 

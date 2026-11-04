@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict vY2ey9mwuNxpY67xYq6Gjyv45KTggJu24rHbCzaUOVyHrTrWb54FGSxpgm2WGG2
+\restrict oIp3Rgl3ARAqJtRdNw33VjMoLObp988erMsPjOyKcKwpoXK24BsbcmlKmWsJ2Zo
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: direct_channels; Type: TABLE DATA; Schema: public; Owner: dz
+-- Data for Name: direct_channels; Type: TABLE DATA; Schema: public; Owner: vhf_owner
 --
 
 SET SESSION AUTHORIZATION DEFAULT;
@@ -51,5 +51,5 @@ ALTER TABLE public.direct_channels ENABLE TRIGGER ALL;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vY2ey9mwuNxpY67xYq6Gjyv45KTggJu24rHbCzaUOVyHrTrWb54FGSxpgm2WGG2
+\unrestrict oIp3Rgl3ARAqJtRdNw33VjMoLObp988erMsPjOyKcKwpoXK24BsbcmlKmWsJ2Zo
 

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5D4ZlPperzvDEjW5b9d61TKlbtJib6XgDgrqeAE40BnM590w2NyQPogMv7FUisf
+\restrict d58qe9rUwM2wAHcV3VzfzDV8Cs8xfMeLTB1SS8isgwWBVSe8HN4sBpdybKTY0rV
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: bands; Type: TABLE DATA; Schema: public; Owner: dz
+-- Data for Name: bands; Type: TABLE DATA; Schema: public; Owner: vhf_owner
 --
 
 SET SESSION AUTHORIZATION DEFAULT;
@@ -61,7 +61,7 @@ COPY public.bands (uid, band_name, frequency_from, frequency_to, common_band) FR
 ALTER TABLE public.bands ENABLE TRIGGER ALL;
 
 --
--- Name: band_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
+-- Name: band_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: vhf_owner
 --
 
 SELECT pg_catalog.setval('public.band_uid_seq', 28, true);
@@ -71,5 +71,5 @@ SELECT pg_catalog.setval('public.band_uid_seq', 28, true);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5D4ZlPperzvDEjW5b9d61TKlbtJib6XgDgrqeAE40BnM590w2NyQPogMv7FUisf
+\unrestrict d58qe9rUwM2wAHcV3VzfzDV8Cs8xfMeLTB1SS8isgwWBVSe8HN4sBpdybKTY0rV
 

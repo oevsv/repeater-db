@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict G4tW91lfkQJLEfkBKVdUaXJ5GaCReUqQPvwwNVspHit9bcplq4XzcE6tk5S4hP8
+\restrict gHZJqlidX0BHfc22nz53GCiIT4kOmbvFhdcaxxp8rVxWPPIHCDgPTT3Zk3O8Eci
 
 -- Dumped from database version 15.19 (Debian 15.19-1.pgdg13+2)
 -- Dumped by pg_dump version 15.19 (Debian 15.19-1.pgdg13+2)
@@ -19,7 +19,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Data for Name: bl_kz_prefix; Type: TABLE DATA; Schema: public; Owner: dz
+-- Data for Name: bl_kz_prefix; Type: TABLE DATA; Schema: public; Owner: vhf_owner
 --
 
 SET SESSION AUTHORIZATION DEFAULT;
@@ -42,7 +42,7 @@ COPY public.bl_kz_prefix (uid, bl_kz, prefix, manager) FROM stdin;
 ALTER TABLE public.bl_kz_prefix ENABLE TRIGGER ALL;
 
 --
--- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: dz
+-- Name: bl_kz_prefix_uid_seq; Type: SEQUENCE SET; Schema: public; Owner: vhf_owner
 --
 
 SELECT pg_catalog.setval('public.bl_kz_prefix_uid_seq', 9, true);
@@ -52,5 +52,5 @@ SELECT pg_catalog.setval('public.bl_kz_prefix_uid_seq', 9, true);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict G4tW91lfkQJLEfkBKVdUaXJ5GaCReUqQPvwwNVspHit9bcplq4XzcE6tk5S4hP8
+\unrestrict gHZJqlidX0BHfc22nz53GCiIT4kOmbvFhdcaxxp8rVxWPPIHCDgPTT3Zk3O8Eci
 
