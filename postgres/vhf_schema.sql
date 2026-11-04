@@ -4145,7 +4145,15 @@ CREATE VIEW api.network_node AS
     node,
     callsign,
     (max(scraped_timestamp) AT TIME ZONE 'UTC'::text) AS last_listed,
-    (array_agg(frequency ORDER BY scraped_timestamp DESC))[1] AS frequency
+    (array_agg(frequency ORDER BY scraped_timestamp DESC))[1] AS frequency,
+        CASE
+            WHEN (network_id = 'ircddb'::text) THEN COALESCE((( SELECT s.status
+               FROM public.scrap_dstar_ircddb s
+              WHERE (s.callsign = n.node)
+              ORDER BY s.scraped_timestamp DESC
+             LIMIT 1) = 'Offline'::text), false)
+            ELSE false
+        END AS offline
    FROM ( SELECT 'oelink'::text AS network_id,
             scrap_oelink.repeater_id AS node,
             scrap_oelink.callsign,
@@ -4197,6 +4205,7 @@ CREATE VIEW api.network_node AS
             scrap_dstar_ircddb.scraped_timestamp,
             NULL::numeric AS frequency
            FROM public.scrap_dstar_ircddb
+          WHERE (scrap_dstar_ircddb.status = 'Online'::text)
         UNION ALL
          SELECT 'brandmeister'::text AS network_id,
             scrap_dmr_brandmeister.device_id AS node,
@@ -4224,7 +4233,7 @@ ALTER VIEW api.network_node OWNER TO vhf_owner;
 -- Name: VIEW network_node; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_node IS 'Nodes listed by the monitored networks, with the last listing and the reported TX frequency';
+COMMENT ON VIEW api.network_node IS 'Nodes listed by the monitored networks, with the last listing (ircDDB: Online), the reported TX frequency and whether it is offline now';
 
 
 --
@@ -4239,7 +4248,8 @@ CREATE VIEW api.network_unlinked AS
     nn.callsign,
     nn.frequency AS node_frequency,
     nn.last_listed,
-    c.candidates
+    c.candidates,
+    nn.offline
    FROM ((api.network_node nn
      JOIN public.network n ON ((n.id = nn.network_id)))
      CROSS JOIN LATERAL ( SELECT jsonb_agg(jsonb_build_object('trx_uid', t.uid, 'site_name', t.site_name, 'frequency_tx', t.frequency_tx, 'technologies', public.trx_technologies(t.*), 'fits', (public.trx_technologies(t.*) && n.technologies), 'excluded', ((t.networks ? n.id) AND ((t.networks -> n.id) = 'null'::jsonb)), 'linked_node', (t.networks ->> n.id)) ORDER BY t.site_name, t.frequency_tx) AS candidates
@@ -4277,7 +4287,8 @@ CREATE VIEW api.trx_network AS
     public.trx_technologies(t.*) AS technologies,
     nn.frequency AS node_frequency,
     nn.last_listed,
-    COALESCE((nn.last_listed >= (now() - '02:00:00'::interval)), false) AS listed_now
+    COALESCE(((nn.last_listed >= (now() - '02:00:00'::interval)) AND (NOT nn.offline)), false) AS listed_now,
+    COALESCE(nn.offline, false) AS offline
    FROM (((public.trx t
      CROSS JOIN LATERAL jsonb_each_text(t.networks) l(key, value))
      JOIN public.network n ON ((n.id = l.key)))
@@ -4309,7 +4320,7 @@ CREATE VIEW api.networks AS
           WHERE (tn.network_id = n.id)) AS linked,
     ( SELECT count(*) AS count
            FROM api.network_node nn
-          WHERE ((nn.network_id = n.id) AND (nn.last_listed >= (now() - '02:00:00'::interval)))) AS listed_now
+          WHERE ((nn.network_id = n.id) AND (nn.last_listed >= (now() - '02:00:00'::interval)) AND (NOT nn.offline))) AS listed_now
    FROM public.network n;
 
 

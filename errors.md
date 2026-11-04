@@ -112,6 +112,7 @@ appear in `api.network_unlinked` with all candidate transmitters.
 |---|---|---|
 | SVXLink OE9 | `OE7HCG-HS` | location sent with invalid characters ("M򴺠/ Tirol", probably "Mötz") |
 | SVXLink OE9 | many hotspots | placeholder values ("50.xxxx", "OE0XXX Name JNnnXX") |
+| ircDDB | OE4XBJ, OE1XIK | listed, but always Offline – probably historic registrations. OE4XBJ (Allhau) has no D-STAR transmitter in `trx` (TETRA only), OE1XIK is not in `trx`. Ignored since migration `2026-11-04_01_ircddb_offline.sql` (only Online counts). |
 
 **To do:** tell the reflector operators if it matters; nothing to fix here.
 
