@@ -212,10 +212,10 @@ Each transmitter names the nodes it appears as in the monitored networks, in
 
 The key is a network from table `network`, the value is the node exactly as
 that network lists it (`api.network_node`): repeater ID for OE-LINK and IPSC2,
-node with suffix for SVXLink OE9 and Tetra ÖVSV (`OE1XCS-T`), station for
-YCS232, station with module for XLX905 (`OE9XGV-B`), callsign for DCS009 and
-ircDDB. `null` means "this transmitter is not in that network". A trigger
-rejects unknown networks and a node linked to two transmitters.
+node with suffix for SVXLink OE9, Tetra ÖVSV (`OE1XCS-T`) and Tetra-DE
+(`OE9XFV-R`), station for YCS232, station with module for XLX905 and REF096
+(`OE9XGV-B`), device ID for Brandmeister, callsign for DCS009 and ircDDB.
+`null` means "this transmitter is not in that network". A trigger rejects unknown networks and a node linked to two transmitters.
 
 Views: `api.trx_network` (one row per link), `api.networks` (per network),
 `api.network_unlinked` (work list: listed nodes without a link, with the
@@ -228,10 +228,11 @@ psql vhf -f postgres/scripts/trx_networks_autofill.sql              # dry run
 psql vhf -v apply=1 -f postgres/scripts/trx_networks_autofill.sql   # link
 ```
 
-Rules, in this order: same `digital_id` (OE-LINK, IPSC2); same callsign and
-the frequency the node reports (SVXLink OE9, Tetra ÖVSV); for networks of one
-mode only, the callsign alone if it has exactly one active transmitter of that
-mode. Mixed networks (FM + TETRA) never link by callsign alone. Anything
+Rules, in this order: same `digital_id` (OE-LINK, IPSC2, Brandmeister); for
+D-STAR module nodes (`OE6XDF-B`) the transmitter with that `dstar_rpt1`; same
+callsign and the frequency the node reports (SVXLink OE9, Tetra ÖVSV,
+Tetra-DE, Brandmeister); for networks of one mode only, the callsign alone
+if it has exactly one active transmitter of that mode. Mixed networks (FM + TETRA) never link by callsign alone. Anything
 ambiguous is left for manual linking. Running it again is safe: it only adds
 links for nodes and transmitters without one and never changes a key that is
 already set (also not a `null`), so manual corrections survive.

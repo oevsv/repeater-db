@@ -3965,6 +3965,25 @@ CREATE TABLE public.scrap_tetra_oevsv (
 ALTER TABLE public.scrap_tetra_oevsv OWNER TO vhf_owner;
 
 --
+-- Name: scrap_tetra_de; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_tetra_de (
+    id integer NOT NULL,
+    callsign text,
+    node text,
+    monitored_tgs text,
+    source_tag text,
+    node_location text,
+    tx_freq text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_tetra_de OWNER TO vhf_owner;
+
+
+--
 -- Name: oelink_status; Type: VIEW; Schema: api; Owner: vhf_owner
 --
 
@@ -4047,10 +4066,40 @@ CREATE VIEW api.tetra_oevsv_status AS
 ALTER VIEW api.tetra_oevsv_status OWNER TO vhf_owner;
 
 --
+-- Name: tetra_de_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.tetra_de_status AS
+ WITH latest AS (
+         SELECT scrap_tetra_de.callsign,
+            max(scrap_tetra_de.scraped_timestamp) AS scraped_timestamp
+           FROM public.scrap_tetra_de
+          WHERE (COALESCE(scrap_tetra_de.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_tetra_de.callsign
+        )
+ SELECT callsign,
+    'Tetra-DE'::text AS network,
+    ''::text AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.tetra_de_status OWNER TO vhf_owner;
+
+
+--
 -- Name: VIEW tetra_oevsv_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
 COMMENT ON VIEW api.tetra_oevsv_status IS 'Live status of the TETRA gateways on the reflector TETRA OE-MASTER (active = listed within 120 minutes)';
+
+
+--
+-- Name: VIEW tetra_de_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.tetra_de_status IS 'Live status of the Austrian TETRA nodes on the reflectors of the Tetra Dashboard leipzig2000 (active = listed within 120 minutes)';
 
 
 --
@@ -4205,7 +4254,15 @@ UNION ALL
     ref096_status.text,
     ref096_status.active,
     ref096_status.last_active
-   FROM api.ref096_status;
+   FROM api.ref096_status
+UNION ALL
+ SELECT tetra_de_status.callsign,
+    tetra_de_status.network,
+    'tetra'::text AS technology,
+    tetra_de_status.text,
+    tetra_de_status.active,
+    tetra_de_status.last_active
+   FROM api.tetra_de_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -4214,7 +4271,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV: TETRA)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA)';
 
 
 --
@@ -4310,7 +4367,17 @@ CREATE VIEW api.network_node AS
             scrap_tetra_oevsv.callsign,
             scrap_tetra_oevsv.scraped_timestamp,
             ("substring"(scrap_tetra_oevsv.comment, '/(\d+(?:\.\d+)?)\s*$'::text))::numeric AS frequency
-           FROM public.scrap_tetra_oevsv) n
+           FROM public.scrap_tetra_oevsv
+        UNION ALL
+         SELECT 'tetra_de'::text AS network_id,
+            scrap_tetra_de.node,
+            scrap_tetra_de.callsign,
+            scrap_tetra_de.scraped_timestamp,
+                CASE
+                    WHEN (scrap_tetra_de.tx_freq ~ '^\d+(\.\d+)?$'::text) THEN (scrap_tetra_de.tx_freq)::numeric
+                    ELSE NULL::numeric
+                END AS frequency
+           FROM public.scrap_tetra_de) n
   WHERE (COALESCE(node, ''::text) <> ''::text)
   GROUP BY network_id, node, callsign;
 
@@ -4550,10 +4617,33 @@ CREATE SEQUENCE public.scrap_tetra_oevsv_id_seq
 ALTER SEQUENCE public.scrap_tetra_oevsv_id_seq OWNER TO vhf_owner;
 
 --
+-- Name: scrap_tetra_de_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_tetra_de_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_tetra_de_id_seq OWNER TO vhf_owner;
+
+
+--
 -- Name: scrap_tetra_oevsv_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
 --
 
 ALTER SEQUENCE public.scrap_tetra_oevsv_id_seq OWNED BY public.scrap_tetra_oevsv.id;
+
+
+--
+-- Name: scrap_tetra_de_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_tetra_de_id_seq OWNED BY public.scrap_tetra_de.id;
 
 
 --
@@ -5804,6 +5894,13 @@ ALTER TABLE ONLY public.scrap_tetra_oevsv ALTER COLUMN id SET DEFAULT nextval('p
 
 
 --
+-- Name: scrap_tetra_de id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_tetra_de ALTER COLUMN id SET DEFAULT nextval('public.scrap_tetra_de_id_seq'::regclass);
+
+
+--
 -- Name: scrap_winlink_pactor id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -5979,6 +6076,14 @@ ALTER TABLE ONLY public.scrap_oelink
 
 ALTER TABLE ONLY public.scrap_tetra_oevsv
     ADD CONSTRAINT scrap_tetra_oevsv_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_tetra_de scrap_tetra_de_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_tetra_de
+    ADD CONSTRAINT scrap_tetra_de_pkey PRIMARY KEY (id);
 
 
 --
@@ -6179,6 +6284,13 @@ CREATE INDEX trx_networks_idx ON public.trx USING gin (networks jsonb_path_ops);
 --
 
 CREATE INDEX scrap_tetra_oevsv_callsign_ts_idx ON public.scrap_tetra_oevsv USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_tetra_de_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_tetra_de_callsign_ts_idx ON public.scrap_tetra_de USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -6688,6 +6800,13 @@ GRANT INSERT ON TABLE public.scrap_tetra_oevsv TO repeater_scrap;
 
 
 --
+-- Name: TABLE scrap_tetra_de; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_tetra_de TO repeater_scrap;
+
+
+--
 -- Name: TABLE oelink_status; Type: ACL; Schema: api; Owner: vhf_owner
 --
 
@@ -6706,6 +6825,13 @@ GRANT SELECT ON TABLE api.svx_oe9_status TO web_anon;
 --
 
 GRANT SELECT ON TABLE api.tetra_oevsv_status TO web_anon;
+
+
+--
+-- Name: TABLE tetra_de_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.tetra_de_status TO web_anon;
 
 
 --
@@ -6804,6 +6930,13 @@ GRANT USAGE ON SEQUENCE public.scrap_oelink_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_tetra_oevsv_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_tetra_de_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_tetra_de_id_seq TO repeater_scrap;
 
 
 --

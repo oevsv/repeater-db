@@ -18,6 +18,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_dstar_ref096` | http://ref096.dstargateway.org/ (D-Plus reflector REF096: gateways linked right now, per module) |
 | `scrap_dstar_ref` | https://dstarusers.org/repeaters.php (country Austria) |
 | `scrap_tetra_oevsv` | http://tetra-reflector.dyndns.org/ (SVXReflector TETRA OE-MASTER; its table `create_html.php`, only gateways with monitored talkgroups) |
+| `scrap_tetra_de` | http://leipzig2000.dyndns.org:4047/ (Tetra Dashboard of the DL/EA/CT TETRA SVXReflectors; its JSON `/api/status`, only OE nodes with monitored talkgroups) |
 | `scrap_winlink_pactor` | https://cms.winlink.org:444/GatewayChannels.aspx (Pactor, OE only) |
 
 Every table has a column `callsign`, upper case. Where a page lists a callsign only with

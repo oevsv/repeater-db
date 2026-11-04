@@ -277,6 +277,42 @@ def scrap_tetra_oevsv():
     return save("scrap_tetra_oevsv", header.find_parent("table").find_all("tr"), to_record)
 
 
+def scrap_tetra_de():
+    """Austrian nodes on the TETRA SVXReflectors shown by the "Tetra Dashboard"
+    http://leipzig2000.dyndns.org:4047/ (a React page that loads the JSON
+    /api/status). It merges several reflectors (DL, EA, CT - "sourceTag"),
+    most nodes are not Austrian: only nodes with an OE callsign and monitored
+    talkgroups are stored, the rest is dropped before storing. Nodes are keyed
+    by callsign with suffix ("OE9XFV-R"); "callsign" has it without. Many nodes
+    send the SVXLink default QTH (433.45 MHz, "My QTH Name", 60.12345/17.12345):
+    only the transmitter frequency is stored, and not the default. Registered
+    terminals, SDS positions and QSO members (personal data) are not stored."""
+    url = "http://leipzig2000.dyndns.org:4047/api/status"
+    try:
+        nodes = fetch(url).json()["nodes"]
+    except (ValueError, KeyError, TypeError) as e:
+        raise ScrapError(f"{url}: no JSON with 'nodes' ({e})") from e
+    if not isinstance(nodes, dict):
+        raise ScrapError(f"{url}: 'nodes' is not an object")
+
+    def to_record(item):
+        node, info = item
+        node = str(node).strip().upper()
+        if not re.match(r"OE\d[A-Z]", node) or not isinstance(info, dict) or not info.get("monitoredTGs"):
+            return None
+        qth = (info.get("qth") or [{}])[0] or {}
+        tx = next(iter((qth.get("tx") or {}).values()), {}) or {}
+        tx_freq = str(tx.get("freq") or "").strip()
+        location = str(info.get("nodeLocation") or "").strip()
+        return {"callsign": base_callsign(node), "node": node,
+                "monitored_tgs": " ".join(str(tg) for tg in info["monitoredTGs"]),
+                "source_tag": str(info.get("sourceTag") or ""),
+                "node_location": "" if location == "MyTownOrArea" else location,
+                "tx_freq": "" if tx_freq == "433.45" else tx_freq}
+
+    return save("scrap_tetra_de", nodes.items(), to_record)
+
+
 # --- Winlink ---------------------------------------------------------------
 
 def scrap_winlink_pactor():
@@ -327,5 +363,6 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_dstar_ref096,
     scrap_dstar_ref,
     scrap_tetra_oevsv,
+    scrap_tetra_de,
     scrap_winlink_pactor,
 ]}

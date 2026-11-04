@@ -90,7 +90,7 @@ person (see `api.network_unlinked` for all, with candidate transmitters):
 | SVXLink `OE7XLH-R` | no frequency | probably FM 438.625 (uid 2170) |
 | SVXLink `OE7XTR-R` | 431.0 (default value) | probably FM 145.7625 (uid 2180) |
 | SVXLink `OE2XHL-R` | 146.05 | FM 145.65 (uid 2044), see 4. |
-| Tetra `OE4XBJ-T` | no frequency ("Tetra-88-LINK") | TETRA 430.4125 (uid 2341) |
+| Tetra `OE4XBJ-T` | no frequency ("Tetra-88-LINK") | TETRA 430.4125 (uid 2341); Tetra-DE lists `OE4XBJ-R` with 430.4125 and links it there |
 | Tetra `OE1XCS-T` | 430.3375 | TETRA 430.7125 (uid 2423), see 4. |
 | Tetra `OE3XWW-R`, `OE6XAG-R`, `OE6XBF-R` | 430.2375, 430.4125, 430.3125 | TETRA transmitter missing, see 3. |
 | Tetra `OE4XUB-R` | no frequency ("Tetra-88-LINK") | link of the FM repeater? FM 145.775 / 438.55 |
