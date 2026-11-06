@@ -37,6 +37,7 @@ like `FCS22820`). The `scrap_*` tables are not part of the API.
 | `create_scrap_tables.sql` | Creates the tables (drops existing ones and their data) |
 | `load_db_config.py` | Reads `db_config.ini` |
 | `systemd/repeater-scrap.service`, `.timer` | Runs the scrapers hourly, see [Service](#service-systemd) |
+| `ticket_mail.py`, `systemd/repeater-ticket-mail.service` | E-mail notifications for tickets, see [Ticket e-mails](#ticket-e-mails) (not a scraper) |
 
 ## Setup
 
@@ -172,3 +173,41 @@ pass them to `save(table, rows, to_record)`, where `to_record(row)` returns a di
 `{column: value}` (or `None` to skip the row). Use `callsign()` / `base_callsign()` for the
 callsign. Register the function in `SCRAPERS` and add its table to
 `create_scrap_tables.sql`.
+
+## Ticket e-mails
+
+`ticket_mail.py` sends one mail per ticket message (website `/ticket`: the first text and
+every reply) to the ticket's author (e-mail from the SSO login) with `ukw@oevsv.at` in Cc,
+through the local mail server (SMTP on localhost:25). Reply-To is `ukw@oevsv.at`, and all
+mails of one ticket are in one thread. The database announces new messages
+(`NOTIFY ticket_mail`), so a mail goes out within seconds. The service also checks every
+5 minutes, so a failed send (mail server down) is retried; the journal shows it.
+
+```
+# 0. Database: migration 2026-11-06_03_ticket_mail.sql (creates the role repeater_mail)
+# 1. System user (same name as the role: peer login over the local socket, no password)
+useradd --system --no-create-home --shell /usr/sbin/nologin repeater_mail
+sudo -u repeater_mail psql -h /var/run/postgresql vhf -c 'SELECT count(*) FROM ticket'   # test the login
+#    Fails with "Peer authentication failed": pg_hba.conf needs
+#    local  vhf  repeater_mail  peer       (before other "local" lines), then reload postgresql
+# 2. Script (in the scrapers' directory)
+cp ticket_mail.py /opt/repeater-scrap/
+# 3. Check what would be sent (nothing should be pending after the migration)
+sudo -u repeater_mail env PGHOST=/var/run/postgresql PGDATABASE=vhf python3 /opt/repeater-scrap/ticket_mail.py --dry-run
+# 4. Unit
+cp systemd/repeater-ticket-mail.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now repeater-ticket-mail.service
+```
+
+Check: `journalctl -u repeater-ticket-mail.service -n 30 --no-pager -o cat` ("sent message
+... to ..., cc ukw@oevsv.at"). "FAILED ..., retried later": temporary (mail server down
+or busy), sent at the next check. "GAVE UP ...": rejected permanently (SMTP 5xx) or the
+mail could not be built; the message is skipped (marked as mailed) so that it never
+blocks the following ones; it stays readable on the web page. Unsent messages:
+`psql vhf -c "SELECT created, ticket_id FROM ticket_message WHERE mailed IS NULL"`.
+
+Sender: `ÖVSV Repeater <noreply@repeater.oevsv.at>`. Change it with
+`Environment="TICKET_MAIL_FROM=..."` in the unit if the mail server needs another address.
+The admin address is fixed in `ticket_mail.py` (`ADMIN`). Update: copy the script again,
+then `systemctl restart repeater-ticket-mail`.

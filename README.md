@@ -215,9 +215,14 @@ it creates the role `vhf_ticket_writer`, the owner of the ticket functions).
 - Status: `open` (waiting for staff), `answered` (staff replied), `closed`. A reply sets
   it (author: open, staff: answered); the author can close and reopen a ticket, and staff
   can set any status.
-- No e-mail. The login button on every page shows a counter (`api.ticket_whoami()`,
+- The login button on every page shows a counter (`api.ticket_whoami()`,
   `attention`, migration `2026-11-06_01_ticket_attention.sql`, apply as postgres): own
   tickets staff answered, and for staff also all open tickets.
+- E-mail for every message (first text and replies) to the ticket's author (address from
+  the SSO login, stored in `users.email`) with `ukw@oevsv.at` in Cc. Migration
+  `2026-11-06_03_ticket_mail.sql` (apply as postgres); sent by the service
+  `repeater-ticket-mail` (`scripts/ticket_mail.py`), see
+  [scripts/README.md](scripts/README.md#ticket-e-mails).
 
 Staff only (for testing): while `ticket_config.staff_only` is true, only staff can use
 tickets. Everyone else gets 404 from the `api.ticket_*` functions, the web page hides

@@ -1,0 +1,58 @@
+# Sends the e-mail notifications for tickets (website /ticket): ticket_mail.py,
+# runs all the time (waits for NOTIFY ticket_mail from the database).
+# Install: see /opt/repeater-scrap/README.md, section "Ticket e-mails".
+#
+# The script is in /opt/repeater-scrap (a copy of repeater-db/scripts). The
+# service runs as the system user "repeater_mail" (create it once: useradd
+# --system --no-create-home --shell /usr/sbin/nologin repeater_mail) and logs
+# into PostgreSQL as the role repeater_mail over the local socket (peer
+# authentication: no password, no secret file). Migration
+# 2026-11-06_03_ticket_mail.sql creates the role. Mails go to the local mail
+# server (SMTP, localhost:25).
+
+[Unit]
+Description=Send e-mail notifications for repeater tickets
+Documentation=file:/opt/repeater-scrap/README.md
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/repeater-scrap/ticket_mail.py
+WorkingDirectory=/opt/repeater-scrap
+# Database lost or restarted: start again (unsent mails stay pending).
+Restart=always
+RestartSec=30
+
+User=repeater_mail
+Group=repeater_mail
+Environment=PGHOST=/var/run/postgresql PGDATABASE=vhf
+# Optional, see ticket_mail.py: TICKET_SITE_URL, TICKET_MAIL_FROM, TICKET_SMTP_HOST, TICKET_SMTP_PORT
+# Environment="TICKET_MAIL_FROM=ÖVSV Repeater <noreply@repeater.oevsv.at>"
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+# Hardening: only network + local sockets, nothing writable.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+RemoveIPC=yes
+RestrictSUIDSGID=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

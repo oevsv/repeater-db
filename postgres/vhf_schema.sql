@@ -382,7 +382,8 @@ CREATE TABLE public.users (
     callsign character varying(20),
     first_seen timestamp with time zone DEFAULT now() NOT NULL,
     last_seen timestamp with time zone DEFAULT now() NOT NULL,
-    staff4 boolean DEFAULT false NOT NULL
+    staff4 boolean DEFAULT false NOT NULL,
+    email character varying(254)
 );
 
 
@@ -414,6 +415,13 @@ COMMENT ON COLUMN public.users.callsign IS 'Callsign from the latest login (pref
 --
 
 COMMENT ON COLUMN public.users.staff4 IS 'Staff: sees and answers all tickets (set by hand)';
+
+
+--
+-- Name: COLUMN users.email; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.users.email IS 'E-mail from the login (SSO), for ticket notifications; stored by ticket_current_user()';
 
 
 --
@@ -460,6 +468,7 @@ CREATE FUNCTION public.ticket_current_user() RETURNS public.users
 DECLARE
     claims json := nullif(current_setting('request.jwt.claims', true), '')::json;
     user_id uuid := (claims ->> 'sub')::uuid;
+    new_email character varying := left(nullif(btrim(claims ->> 'email'), ''), 254);
     result public.users;
 BEGIN
     IF user_id IS NULL THEN
@@ -467,10 +476,13 @@ BEGIN
     END IF;
     SELECT * INTO result FROM public.users u WHERE u.id = user_id;
     IF NOT FOUND THEN
-        INSERT INTO public.users (id, callsign)
-        VALUES (user_id, nullif(upper(btrim(claims ->> 'callsign')), ''))
+        INSERT INTO public.users (id, callsign, email)
+        VALUES (user_id, nullif(upper(btrim(claims ->> 'callsign')), ''), new_email)
         ON CONFLICT (id) DO NOTHING;
         SELECT * INTO result FROM public.users u WHERE u.id = user_id;
+    ELSIF new_email IS NOT NULL AND new_email IS DISTINCT FROM result.email THEN
+        UPDATE public.users u SET email = new_email WHERE u.id = user_id
+        RETURNING * INTO result;
     END IF;
     IF NOT result.staff4 AND coalesce((SELECT c.staff_only FROM public.ticket_config c), true) THEN
         RAISE EXCEPTION 'tickets are restricted to staff' USING ERRCODE = 'PT404';
@@ -481,6 +493,23 @@ $$;
 
 
 ALTER FUNCTION public.ticket_current_user() OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_message_mail(); Type: FUNCTION; Schema: public; Owner: vhf_owner
+--
+
+CREATE FUNCTION public.ticket_message_mail() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+    PERFORM pg_notify('ticket_mail', NEW.id::text);
+    RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION public.ticket_message_mail() OWNER TO vhf_owner;
 
 --
 -- Name: ticket; Type: TABLE; Schema: public; Owner: vhf_owner
@@ -5433,6 +5462,7 @@ CREATE TABLE public.ticket_message (
     staff boolean DEFAULT false NOT NULL,
     body text NOT NULL,
     created timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    mailed timestamp with time zone,
     CONSTRAINT ticket_message_body_check CHECK (((btrim(body) <> ''::text) AND (length(body) <= 20000)))
 );
 
@@ -5458,6 +5488,13 @@ COMMENT ON COLUMN public.ticket_message.staff IS 'Written by staff (users.staff4
 --
 
 COMMENT ON COLUMN public.ticket_message.created IS 'clock_timestamp(): keeps the order of messages written in one transaction';
+
+
+--
+-- Name: COLUMN ticket_message.mailed; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket_message.mailed IS 'E-mail notification sent (scripts/ticket_mail.py); NULL: not yet';
 
 
 --
@@ -6747,6 +6784,13 @@ CREATE INDEX ticket_message_ticket_idx ON public.ticket_message USING btree (tic
 
 
 --
+-- Name: ticket_message_unmailed_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX ticket_message_unmailed_idx ON public.ticket_message USING btree (created) WHERE (mailed IS NULL);
+
+
+--
 -- Name: ticket_updated_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -6908,6 +6952,13 @@ CREATE TRIGGER site_trigger BEFORE INSERT OR UPDATE ON public.site FOR EACH ROW 
 
 
 --
+-- Name: ticket_message ticket_message_mail; Type: TRIGGER; Schema: public; Owner: vhf_owner
+--
+
+CREATE TRIGGER ticket_message_mail AFTER INSERT ON public.ticket_message FOR EACH ROW EXECUTE FUNCTION public.ticket_message_mail();
+
+
+--
 -- Name: trx trx_networks_check; Type: TRIGGER; Schema: public; Owner: vhf_owner
 --
 
@@ -6966,6 +7017,7 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 GRANT ALL ON SCHEMA public TO vhf_owner;
 GRANT USAGE ON SCHEMA public TO vhf_login_writer;
 GRANT USAGE ON SCHEMA public TO vhf_ticket_writer;
+GRANT USAGE ON SCHEMA public TO repeater_mail;
 
 
 --
@@ -7059,6 +7111,7 @@ GRANT SELECT ON TABLE public.users TO vhf_ticket_writer;
 --
 
 GRANT INSERT(id) ON TABLE public.users TO vhf_ticket_writer;
+GRANT SELECT(id) ON TABLE public.users TO repeater_mail;
 
 
 --
@@ -7067,6 +7120,7 @@ GRANT INSERT(id) ON TABLE public.users TO vhf_ticket_writer;
 
 GRANT UPDATE(callsign) ON TABLE public.users TO vhf_login_writer;
 GRANT INSERT(callsign) ON TABLE public.users TO vhf_ticket_writer;
+GRANT SELECT(callsign) ON TABLE public.users TO repeater_mail;
 
 
 --
@@ -7074,6 +7128,14 @@ GRANT INSERT(callsign) ON TABLE public.users TO vhf_ticket_writer;
 --
 
 GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
+
+
+--
+-- Name: COLUMN users.email; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT(email),UPDATE(email) ON TABLE public.users TO vhf_ticket_writer;
+GRANT SELECT(email) ON TABLE public.users TO repeater_mail;
 
 
 --
@@ -7096,6 +7158,7 @@ REVOKE ALL ON FUNCTION public.ticket_current_user() FROM PUBLIC;
 --
 
 GRANT SELECT,INSERT,UPDATE ON TABLE public.ticket TO vhf_ticket_writer;
+GRANT SELECT ON TABLE public.ticket TO repeater_mail;
 
 
 --
@@ -7531,6 +7594,14 @@ GRANT SELECT ON TABLE public.ticket_config TO vhf_ticket_writer;
 --
 
 GRANT SELECT,INSERT,UPDATE ON TABLE public.ticket_message TO vhf_ticket_writer;
+GRANT SELECT ON TABLE public.ticket_message TO repeater_mail;
+
+
+--
+-- Name: COLUMN ticket_message.mailed; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT UPDATE(mailed) ON TABLE public.ticket_message TO repeater_mail;
 
 
 --
