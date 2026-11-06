@@ -36,6 +36,18 @@ server {
         limit_req zone=iplimit burst=100 nodelay;
         limit_req zone=serverlimit burst=1000 nodelay;
 
+        # Compression: nginx's default (gzip on in nginx.conf) covers text/html
+        # only. The JS bundles (820 kB -> 240 kB), the API's JSON and the SOTA
+        # summits (assets/sota-OE.json, 520 kB -> 75 kB) need these types.
+        # gzip_proxied any: the /api/ responses come from PostgREST (proxied).
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 5;
+        gzip_min_length 1024;
+        gzip_types text/css text/plain text/xml application/javascript text/javascript
+                   application/json application/geo+json application/xml image/svg+xml;
+
 	location / {
 		# root block
 	}

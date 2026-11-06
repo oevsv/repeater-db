@@ -201,6 +201,51 @@ tr '\0' '\n' < /proc/$pid/environ | sed -n 's/^PGRST_JWT_SECRET=//p' | tr -d '\n
 To change the secret, write a new one to `/etc/postgrest/jwt-secret` and
 `/etc/repeater-auth.env` and restart both services; old tokens live only 30 seconds.
 
+## Tickets (submitted updates)
+
+Logged-in users submit updates on the web page `/ticket` (heading, text,
+optionally the site) and follow them on `/ticket/<uuid>`; staff answer there.
+Migration `postgres/migrations/2026-11-05_01_tickets.sql` (apply as postgres:
+it creates the role `vhf_ticket_writer`, the owner of the ticket functions).
+
+- Tables `ticket` and `ticket_message`. The web roles have no rights on them; the web
+  page calls the functions `api.ticket_*` through `/api/secure/rpc/...`, and
+  they take the user from the token (claim `sub`).
+- A user sees their own tickets only; staff see and answer all of them.
+- Status: `open` (waiting for staff), `answered` (staff replied), `closed`. A reply sets
+  it (author: open, staff: answered); the author can close and reopen a ticket, and staff
+  can set any status.
+- No e-mail. The login button on every page shows a counter (`api.ticket_whoami()`,
+  `attention`, migration `2026-11-06_01_ticket_attention.sql`, apply as postgres): own
+  tickets staff answered, and for staff also all open tickets.
+
+Staff only (for testing): while `ticket_config.staff_only` is true, only staff can use
+tickets. Everyone else gets 404 from the `api.ticket_*` functions, the web page hides
+all links to `/ticket`, and the page itself says "not available". Migration
+`2026-11-06_02_ticket_staff_only.sql` (apply as postgres) sets it to true. Without a row
+in `ticket_config` (e.g. after loading only `vhf_schema.sql`), tickets are staff only as
+well. Open them to all logged-in users (visible on the next page load, no deploy):
+```
+psql vhf -c "INSERT INTO ticket_config (staff_only) VALUES (false) ON CONFLICT (id) DO UPDATE SET staff_only = excluded.staff_only"
+```
+Use `VALUES (true)` to restrict them again.
+
+Make someone staff (they must have logged in once):
+```
+psql vhf -c "UPDATE users SET staff4 = true WHERE callsign = 'OE1ABC'"
+```
+
+Open tickets:
+```
+psql vhf -c "SELECT t.updated, u.callsign, t.status, t.heading FROM ticket t JOIN users u ON u.id = t.user_id WHERE t.status <> 'closed' ORDER BY t.updated"
+```
+
+The login service must forward `/api/secure/rpc/...` to PostgREST's `/rpc/...`: with
+PostgREST at its root (as here) set `PGRST_STRIP_PREFIX=/api/secure` in
+`/etc/repeater-auth.env`. Check after logging in: the page `/ticket` shows the form. It
+shows "could not be loaded" if the path is wrong; PostgREST then logs requests to
+`/api/secure/rpc/...`.
+
 ## Network links (transmitter ↔ network node)
 
 Each transmitter names the nodes it appears as in the monitored networks, in

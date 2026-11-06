@@ -199,6 +199,181 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: ticket_create(text, text, text); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_create(heading text, body text, site_name text DEFAULT NULL::text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users := public.ticket_current_user();
+    new_id uuid;
+BEGIN
+    IF length(btrim(heading)) > 200 THEN
+        RAISE EXCEPTION 'heading too long (max. 200 characters)' USING ERRCODE = '22001';
+    END IF;
+    INSERT INTO public.ticket (user_id, heading, site_name)
+    VALUES (me.id, btrim(heading), nullif(btrim(site_name), ''))
+    RETURNING ticket.id INTO new_id;
+    INSERT INTO public.ticket_message (ticket_id, user_id, staff, body)
+    VALUES (new_id, me.id, me.staff4, body);
+    RETURN new_id;
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_create(heading text, body text, site_name text) OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_get(uuid); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_get(id uuid) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users := public.ticket_current_user();
+    t public.ticket := public.ticket_visible(ticket_get.id, me);
+BEGIN
+    RETURN json_build_object(
+        'id', t.id, 'heading', t.heading, 'status', t.status, 'site_name', t.site_name,
+        'created', t.created, 'updated', t.updated,
+        'author_callsign', (SELECT u.callsign FROM public.users u WHERE u.id = t.user_id),
+        'own', t.user_id = me.id,
+        'messages', coalesce((
+            SELECT json_agg(json_build_object(
+                       'id', m.id, 'body', m.body, 'created', m.created, 'staff', m.staff,
+                       'callsign', u.callsign, 'own', m.user_id = me.id) ORDER BY m.created)
+              FROM public.ticket_message m
+              JOIN public.users u ON u.id = m.user_id
+             WHERE m.ticket_id = t.id), '[]'::json));
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_get(id uuid) OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_list(); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_list() RETURNS TABLE(id uuid, heading character varying, status text, site_name character varying, created timestamp with time zone, updated timestamp with time zone, author_callsign character varying, own boolean, messages bigint, last_from_staff boolean)
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    WITH me AS (SELECT * FROM public.ticket_current_user())
+    SELECT t.id, t.heading, t.status, t.site_name, t.created, t.updated,
+           u.callsign, t.user_id = me.id,
+           (SELECT count(*) FROM public.ticket_message m WHERE m.ticket_id = t.id),
+           (SELECT m.staff FROM public.ticket_message m WHERE m.ticket_id = t.id
+             ORDER BY m.created DESC LIMIT 1)
+      FROM me, public.ticket t
+      JOIN public.users u ON u.id = t.user_id
+     WHERE t.user_id = me.id OR me.staff4
+     ORDER BY t.updated DESC;
+$$;
+
+
+ALTER FUNCTION api.ticket_list() OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_reply(uuid, text); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_reply(id uuid, body text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users := public.ticket_current_user();
+    t public.ticket := public.ticket_visible(ticket_reply.id, me);
+BEGIN
+    INSERT INTO public.ticket_message (ticket_id, user_id, staff, body)
+    VALUES (t.id, me.id, me.staff4, body);
+    -- Staff answering someone else's ticket: answered; otherwise waiting for staff.
+    UPDATE public.ticket
+       SET status = CASE WHEN me.staff4 AND t.user_id <> me.id THEN 'answered' ELSE 'open' END,
+           updated = now()
+     WHERE ticket.id = t.id;
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_reply(id uuid, body text) OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_set_status(uuid, text); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_set_status(id uuid, status text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users := public.ticket_current_user();
+    t public.ticket := public.ticket_visible(ticket_set_status.id, me);
+BEGIN
+    IF NOT me.staff4 AND ticket_set_status.status NOT IN ('open', 'closed') THEN
+        RAISE EXCEPTION 'only staff may set status %', ticket_set_status.status USING ERRCODE = '42501';
+    END IF;
+    UPDATE public.ticket
+       SET status = ticket_set_status.status, updated = now()
+     WHERE ticket.id = t.id;
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_set_status(id uuid, status text) OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_staff_only(); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_staff_only() RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+    SELECT coalesce((SELECT c.staff_only FROM public.ticket_config c), true);
+$$;
+
+
+ALTER FUNCTION api.ticket_staff_only() OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket_whoami(); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_whoami() RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users;
+BEGIN
+    BEGIN
+        me := public.ticket_current_user();
+    EXCEPTION WHEN SQLSTATE 'PT404' THEN
+        RETURN json_build_object('staff', false, 'enabled', false, 'attention', 0);
+    END;
+    RETURN json_build_object(
+        'staff', me.staff4,
+        'enabled', true,
+        'attention', (SELECT count(*) FROM public.ticket t
+                       WHERE (t.user_id = me.id AND t.status = 'answered')
+                          OR (me.staff4 AND t.status = 'open')));
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_whoami() OWNER TO vhf_ticket_writer;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -206,7 +381,8 @@ CREATE TABLE public.users (
     id uuid NOT NULL,
     callsign character varying(20),
     first_seen timestamp with time zone DEFAULT now() NOT NULL,
-    last_seen timestamp with time zone DEFAULT now() NOT NULL
+    last_seen timestamp with time zone DEFAULT now() NOT NULL,
+    staff4 boolean DEFAULT false NOT NULL
 );
 
 
@@ -231,6 +407,13 @@ COMMENT ON COLUMN public.users.id IS 'OpenID subject (sub) from Keycloak';
 --
 
 COMMENT ON COLUMN public.users.callsign IS 'Callsign from the latest login (preferred_username, upper case); may be NULL';
+
+
+--
+-- Name: COLUMN users.staff4; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.users.staff4 IS 'Staff: sees and answers all tickets (set by hand)';
 
 
 --
@@ -265,6 +448,116 @@ $$;
 
 
 ALTER FUNCTION api.user_login() OWNER TO vhf_login_writer;
+
+--
+-- Name: ticket_current_user(); Type: FUNCTION; Schema: public; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION public.ticket_current_user() RETURNS public.users
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    claims json := nullif(current_setting('request.jwt.claims', true), '')::json;
+    user_id uuid := (claims ->> 'sub')::uuid;
+    result public.users;
+BEGIN
+    IF user_id IS NULL THEN
+        RAISE EXCEPTION 'not logged in (claim sub missing)' USING ERRCODE = '42501';
+    END IF;
+    SELECT * INTO result FROM public.users u WHERE u.id = user_id;
+    IF NOT FOUND THEN
+        INSERT INTO public.users (id, callsign)
+        VALUES (user_id, nullif(upper(btrim(claims ->> 'callsign')), ''))
+        ON CONFLICT (id) DO NOTHING;
+        SELECT * INTO result FROM public.users u WHERE u.id = user_id;
+    END IF;
+    IF NOT result.staff4 AND coalesce((SELECT c.staff_only FROM public.ticket_config c), true) THEN
+        RAISE EXCEPTION 'tickets are restricted to staff' USING ERRCODE = 'PT404';
+    END IF;
+    RETURN result;
+END;
+$$;
+
+
+ALTER FUNCTION public.ticket_current_user() OWNER TO vhf_ticket_writer;
+
+--
+-- Name: ticket; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.ticket (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    heading character varying(200) NOT NULL,
+    status text DEFAULT 'open'::text NOT NULL,
+    site_name character varying(100),
+    created timestamp with time zone DEFAULT now() NOT NULL,
+    updated timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ticket_heading_check CHECK ((btrim((heading)::text) <> ''::text)),
+    CONSTRAINT ticket_status_check CHECK ((status = ANY (ARRAY['open'::text, 'answered'::text, 'closed'::text])))
+);
+
+
+ALTER TABLE public.ticket OWNER TO vhf_owner;
+
+--
+-- Name: TABLE ticket; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON TABLE public.ticket IS 'Updates submitted by logged-in users (website /ticket); written by the api.ticket_* functions';
+
+
+--
+-- Name: COLUMN ticket.id; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket.id IS 'Ticket id, in the URL /ticket/<id>';
+
+
+--
+-- Name: COLUMN ticket.status; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket.status IS 'open: waiting for staff, answered: waiting for the user, closed: done';
+
+
+--
+-- Name: COLUMN ticket.site_name; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket.site_name IS 'Site the update is about (optional, as given; no foreign key: site names are not unique)';
+
+
+--
+-- Name: COLUMN ticket.updated; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket.updated IS 'Last message or status change';
+
+
+--
+-- Name: ticket_visible(uuid, public.users); Type: FUNCTION; Schema: public; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION public.ticket_visible(ticket_id uuid, me public.users) RETURNS public.ticket
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    result public.ticket;
+BEGIN
+    SELECT * INTO result FROM public.ticket t
+     WHERE t.id = ticket_id AND (t.user_id = me.id OR me.staff4);
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'ticket not found' USING ERRCODE = 'PT404';
+    END IF;
+    RETURN result;
+END;
+$$;
+
+
+ALTER FUNCTION public.ticket_visible(ticket_id uuid, me public.users) OWNER TO vhf_ticket_writer;
 
 --
 -- Name: trx_networks_autofill(boolean, interval); Type: FUNCTION; Schema: public; Owner: vhf_owner
@@ -5103,6 +5396,71 @@ ALTER SEQUENCE public.station_uid_seq OWNED BY public.site.uid;
 
 
 --
+-- Name: ticket_config; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.ticket_config (
+    id boolean DEFAULT true NOT NULL,
+    staff_only boolean DEFAULT true NOT NULL,
+    CONSTRAINT ticket_config_one_row CHECK (id)
+);
+
+
+ALTER TABLE public.ticket_config OWNER TO vhf_owner;
+
+--
+-- Name: TABLE ticket_config; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON TABLE public.ticket_config IS 'Ticket settings (one row)';
+
+
+--
+-- Name: COLUMN ticket_config.staff_only; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket_config.staff_only IS 'true: tickets only for staff (users.staff4), hidden for everyone else';
+
+
+--
+-- Name: ticket_message; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.ticket_message (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    ticket_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    staff boolean DEFAULT false NOT NULL,
+    body text NOT NULL,
+    created timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    CONSTRAINT ticket_message_body_check CHECK (((btrim(body) <> ''::text) AND (length(body) <= 20000)))
+);
+
+
+ALTER TABLE public.ticket_message OWNER TO vhf_owner;
+
+--
+-- Name: TABLE ticket_message; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON TABLE public.ticket_message IS 'Messages of a ticket: the submitted text and the replies';
+
+
+--
+-- Name: COLUMN ticket_message.staff; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket_message.staff IS 'Written by staff (users.staff4 at that time)';
+
+
+--
+-- Name: COLUMN ticket_message.created; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.ticket_message.created IS 'clock_timestamp(): keeps the order of messages written in one transaction';
+
+
+--
 -- Name: trx_list_atv; Type: VIEW; Schema: public; Owner: vhf_owner
 --
 
@@ -6138,6 +6496,30 @@ ALTER TABLE ONLY public.scrap_winlink_pactor
 
 
 --
+-- Name: ticket_config ticket_config_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket_config
+    ADD CONSTRAINT ticket_config_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ticket_message ticket_message_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket_message
+    ADD CONSTRAINT ticket_message_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ticket ticket_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket
+    ADD CONSTRAINT ticket_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: trx trx_pk; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
@@ -6358,6 +6740,27 @@ CREATE INDEX srv07_mapping_uid_idx ON public.srv07_mapping USING btree (uid);
 
 
 --
+-- Name: ticket_message_ticket_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX ticket_message_ticket_idx ON public.ticket_message USING btree (ticket_id, created);
+
+
+--
+-- Name: ticket_updated_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX ticket_updated_idx ON public.ticket USING btree (updated DESC);
+
+
+--
+-- Name: ticket_user_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX ticket_user_idx ON public.ticket USING btree (user_id, updated DESC);
+
+
+--
 -- Name: trx_c4fm_idx; Type: INDEX; Schema: public; Owner: vhf_owner
 --
 
@@ -6512,6 +6915,30 @@ CREATE TRIGGER trx_networks_check BEFORE INSERT OR UPDATE OF networks ON public.
 
 
 --
+-- Name: ticket_message ticket_message_ticket_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket_message
+    ADD CONSTRAINT ticket_message_ticket_fkey FOREIGN KEY (ticket_id) REFERENCES public.ticket(id) ON DELETE CASCADE;
+
+
+--
+-- Name: ticket_message ticket_message_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket_message
+    ADD CONSTRAINT ticket_message_user_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ticket ticket_user_fkey; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.ticket
+    ADD CONSTRAINT ticket_user_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- Name: trx trx_site_fk; Type: FK CONSTRAINT; Schema: public; Owner: vhf_owner
 --
 
@@ -6527,6 +6954,7 @@ GRANT USAGE ON SCHEMA api TO web_anon;
 GRANT ALL ON SCHEMA api TO dz;
 GRANT USAGE ON SCHEMA api TO web_user;
 GRANT ALL ON SCHEMA api TO vhf_owner;
+GRANT USAGE ON SCHEMA api TO vhf_ticket_writer;
 
 
 --
@@ -6537,6 +6965,7 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 GRANT ALL ON SCHEMA public TO vhf_owner;
 GRANT USAGE ON SCHEMA public TO vhf_login_writer;
+GRANT USAGE ON SCHEMA public TO vhf_ticket_writer;
 
 
 --
@@ -6561,10 +6990,75 @@ GRANT ALL ON FUNCTION api.sitemap() TO web_anon;
 
 
 --
+-- Name: FUNCTION ticket_create(heading text, body text, site_name text); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_create(heading text, body text, site_name text) FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_create(heading text, body text, site_name text) TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_get(id uuid); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_get(id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_get(id uuid) TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_list(); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_list() FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_list() TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_reply(id uuid, body text); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_reply(id uuid, body text) FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_reply(id uuid, body text) TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_set_status(id uuid, status text); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_set_status(id uuid, status text) FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_set_status(id uuid, status text) TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_staff_only(); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_staff_only() FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_staff_only() TO web_anon;
+GRANT ALL ON FUNCTION api.ticket_staff_only() TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_whoami(); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_whoami() FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_whoami() TO web_user;
+
+
+--
 -- Name: TABLE users; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
 GRANT SELECT,INSERT ON TABLE public.users TO vhf_login_writer;
+GRANT SELECT ON TABLE public.users TO vhf_ticket_writer;
+
+
+--
+-- Name: COLUMN users.id; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT(id) ON TABLE public.users TO vhf_ticket_writer;
 
 
 --
@@ -6572,6 +7066,7 @@ GRANT SELECT,INSERT ON TABLE public.users TO vhf_login_writer;
 --
 
 GRANT UPDATE(callsign) ON TABLE public.users TO vhf_login_writer;
+GRANT INSERT(callsign) ON TABLE public.users TO vhf_ticket_writer;
 
 
 --
@@ -6587,6 +7082,27 @@ GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
 
 REVOKE ALL ON FUNCTION api.user_login() FROM PUBLIC;
 GRANT ALL ON FUNCTION api.user_login() TO web_user;
+
+
+--
+-- Name: FUNCTION ticket_current_user(); Type: ACL; Schema: public; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION public.ticket_current_user() FROM PUBLIC;
+
+
+--
+-- Name: TABLE ticket; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.ticket TO vhf_ticket_writer;
+
+
+--
+-- Name: FUNCTION ticket_visible(ticket_id uuid, me public.users); Type: ACL; Schema: public; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION public.ticket_visible(ticket_id uuid, me public.users) FROM PUBLIC;
 
 
 --
@@ -7001,6 +7517,20 @@ GRANT INSERT ON TABLE public.scrap_winlink_pactor TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_winlink_pactor_id_seq TO repeater_scrap;
+
+
+--
+-- Name: TABLE ticket_config; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE public.ticket_config TO vhf_ticket_writer;
+
+
+--
+-- Name: TABLE ticket_message; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.ticket_message TO vhf_ticket_writer;
 
 
 --
