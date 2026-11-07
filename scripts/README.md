@@ -15,7 +15,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_dstar_dcs009` | https://xlx232.oevsv.at/_status.html |
 | `scrap_dstar_xlx905` | http://xlx905.oevsv.at:8888/index.php?show=repeaters |
 | `scrap_dstar_ircddb` | https://status.ircddb.net/cgi-bin/ircddb-gw?AUT |
-| `scrap_dstar_ref096` | http://ref096.dstargateway.org/ (D-Plus reflector REF096: gateways linked right now, per module) |
+| `scrap_dstar_ref096` | http://ref096.dstargateway.org/ (D-Plus reflector REF096: gateways linked right now, per module, and remote users, `link_type` `mmdvm`: MMDVM repeaters and hotspots) |
 | `scrap_dstar_ref` | https://dstarusers.org/repeaters.php (country Austria) |
 | `scrap_tetra_oevsv` | http://tetra-reflector.dyndns.org/ (SVXReflector TETRA OE-MASTER; its table `create_html.php`, only gateways with monitored talkgroups) |
 | `scrap_tetra_de` | http://leipzig2000.dyndns.org:4047/ (Tetra Dashboard of the DL/EA/CT TETRA SVXReflectors; its JSON `/api/status`, only OE nodes with monitored talkgroups) |

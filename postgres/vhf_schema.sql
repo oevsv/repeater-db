@@ -496,6 +496,22 @@ $$;
 ALTER FUNCTION api.user_login() OWNER TO vhf_login_writer;
 
 --
+-- Name: ref096_text(text, text, text); Type: FUNCTION; Schema: public; Owner: vhf_owner
+--
+
+CREATE FUNCTION public.ref096_text(link_type text, gateway_module text, reflector_module text) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    AS $$
+    SELECT CASE WHEN link_type = 'mmdvm'
+                THEN concat_ws(' ', 'MMDVM', nullif(concat_ws('>', nullif(gateway_module, ''), reflector_module), ''))
+                ELSE concat_ws('>', nullif(gateway_module, ''), reflector_module)
+           END;
+$$;
+
+
+ALTER FUNCTION public.ref096_text(link_type text, gateway_module text, reflector_module text) OWNER TO vhf_owner;
+
+--
 -- Name: ticket_current_user(); Type: FUNCTION; Schema: public; Owner: vhf_ticket_writer
 --
 
@@ -1950,7 +1966,8 @@ CREATE TABLE public.scrap_dstar_ref096 (
     node text,
     gateway_module text,
     reflector_module text,
-    scraped_timestamp timestamp without time zone NOT NULL
+    scraped_timestamp timestamp without time zone NOT NULL,
+    link_type text DEFAULT 'gateway'::text NOT NULL
 );
 
 
@@ -2220,23 +2237,23 @@ CREATE VIEW api.ref096_status AS
           WHERE (COALESCE(scrap_dstar_ref096.callsign, ''::text) <> ''::text)
           GROUP BY scrap_dstar_ref096.callsign
         )
- SELECT l.callsign,
+ SELECT callsign,
     'REF096'::text AS network,
-    ( SELECT string_agg(DISTINCT concat_ws('>'::text, NULLIF(r.gateway_module, ''::text), r.reflector_module), ', '::text) AS string_agg
+    ( SELECT string_agg(DISTINCT public.ref096_text(r.link_type, r.gateway_module, r.reflector_module), ', '::text) AS string_agg
            FROM public.scrap_dstar_ref096 r
           WHERE ((r.callsign = l.callsign) AND (r.scraped_timestamp = l.scraped_timestamp))) AS text,
-    ((l.scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
-    (l.scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
    FROM latest l;
 
 
-ALTER TABLE api.ref096_status OWNER TO vhf_owner;
+ALTER VIEW api.ref096_status OWNER TO vhf_owner;
 
 --
 -- Name: VIEW ref096_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.ref096_status IS 'Live status of the D-STAR gateways linked to the reflector REF096 (active = linked within 120 minutes)';
+COMMENT ON VIEW api.ref096_status IS 'Live status of the D-STAR stations linked to the reflector REF096: gateways and MMDVM users (active = linked within 120 minutes)';
 
 
 --
@@ -3087,7 +3104,7 @@ CREATE VIEW api.trx_status AS
               WHERE (x.dv_station = tn.node)
               ORDER BY x.scraped_timestamp DESC
              LIMIT 1)
-            WHEN 'ref096'::text THEN ( SELECT concat_ws('>'::text, NULLIF(r.gateway_module, ''::text), r.reflector_module) AS concat_ws
+            WHEN 'ref096'::text THEN ( SELECT public.ref096_text(r.link_type, r.gateway_module, r.reflector_module) AS ref096_text
                FROM public.scrap_dstar_ref096 r
               WHERE (r.node = tn.node)
               ORDER BY r.scraped_timestamp DESC
@@ -3103,7 +3120,7 @@ CREATE VIEW api.trx_status AS
   WHERE (((tn.trx_status)::text = 'active'::text) AND (tn.last_listed IS NOT NULL));
 
 
-ALTER TABLE api.trx_status OWNER TO vhf_owner;
+ALTER VIEW api.trx_status OWNER TO vhf_owner;
 
 --
 -- Name: VIEW trx_status; Type: COMMENT; Schema: api; Owner: vhf_owner

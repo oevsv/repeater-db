@@ -205,15 +205,16 @@ CREATE TABLE scrap_dstar_ircddb (
 -- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
 CREATE INDEX scrap_dstar_ircddb_callsign_ts_idx ON scrap_dstar_ircddb (callsign, scraped_timestamp DESC);
 
--- D-STAR: gateways linked to the reflector REF096, http://ref096.dstargateway.org/
--- (DREFD dashboard, table "Linked Gateways"; live, not a registry).
+-- D-STAR: stations linked to the reflector REF096, http://ref096.dstargateway.org/
+-- (DREFD dashboard, tables "Linked Gateways" and "Remote Users"; live, not a registry).
 CREATE TABLE scrap_dstar_ref096 (
     id SERIAL PRIMARY KEY,
     callsign TEXT,          -- gateway: OE6XDF
     node TEXT,              -- gateway with module: OE6XDF-B
     gateway_module TEXT,    -- B
-    reflector_module TEXT,  -- A (REF096 A)
-    scraped_timestamp TIMESTAMP NOT NULL
+    reflector_module TEXT,  -- A (REF096 A); MMDVM users: module last transmitted on, NULL = listening
+    scraped_timestamp TIMESTAMP NOT NULL,
+    link_type TEXT NOT NULL DEFAULT 'gateway'  -- 'gateway' (Linked Gateways) or 'mmdvm' (Remote Users)
 );
 
 -- api.ref096_status reads the latest rows per callsign (migration 2026-11-04_02_ref096.sql).
