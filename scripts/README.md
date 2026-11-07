@@ -20,6 +20,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_dstar_ref` | https://dstarusers.org/repeaters.php (country Austria) |
 | `scrap_tetra_oevsv` | http://tetra-reflector.dyndns.org/ (SVXReflector TETRA OE-MASTER; its table `create_html.php`, only gateways with monitored talkgroups) |
 | `scrap_tetra_de` | http://leipzig2000.dyndns.org:4047/ (Tetra Dashboard of the DL/EA/CT TETRA SVXReflectors; its JSON `/api/status`, only OE nodes with monitored talkgroups) |
+| `scrap_m17_aut` | https://m17-aut.xreflector.net/index.php?show=links (M17 reflector M17-AUT; Austrian callsigns `OE<digit>` only, often none) |
 | `scrap_winlink_pactor` | https://cms.winlink.org:444/GatewayChannels.aspx (Pactor, OE only) |
 
 Every table has a column `callsign`, upper case. Where a page lists a callsign only with

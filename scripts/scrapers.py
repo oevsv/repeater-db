@@ -173,6 +173,43 @@ def scrap_dstar_xlx905():
     return save("scrap_dstar_xlx905", table.find_all("tr")[2:], to_record)
 
 
+# --- M17 -------------------------------------------------------------------
+
+def scrap_m17_aut():
+    """Stations linked to the M17 reflector M17-AUT (dashboard
+    https://m17-aut.xreflector.net/, page "Links"; same layout as XLX905). Only
+    Austrian callsigns ("OE" + digit) are stored: the reflector also links
+    foreign repeaters (DB0MMR-R)."""
+    url = "https://m17-aut.xreflector.net/index.php?show=links"
+
+    def to_record(row):
+        # 9 cells: #, Flag, DV Station ("OE5HOO-D"), Via, Last Heard,
+        #          Linked for, Protocol, Module, IP
+        cells = row_cells(row, 9)
+        if cells is None:
+            return None
+        no, flag, dv_station, via, last_heard, linked_for, protocol, module, ip = cells
+        call = base_callsign(dv_station)
+        if not re.match(r"OE\d", call):
+            return None
+        return {"no": no, "flag": flag, "callsign": call, "dv_station": dv_station, "via": via,
+                "last_heard": last_heard, "linked_for": linked_for, "protocol": protocol,
+                "module": module, "ip_address": ip}
+
+    soup = get_soup(url)
+    header = soup.find("th", string=lambda t: t and t.strip() == "DV Station")
+    if not header:
+        raise ScrapError(f"{url}: no table with the header 'DV Station' found")
+    rows = header.find_parent("table").find_all("tr")[1:]
+    # save() refuses an empty list (layout changed?): no Austrian station
+    # linked is normal here, so only store when there is one.
+    records = [r for r in map(to_record, rows) if r]
+    if not records:
+        print(f"No Austrian station linked to M17-AUT ({len(rows)} stations linked).", flush=True)
+        return 0
+    return save("scrap_m17_aut", rows, to_record)
+
+
 def scrap_dstar_ircddb():
     """Gateways of ircDDB in Austria. Each gateway is one <td width="119">:
       <a class="tooltip"><img src="/images/20green.png"><span>Online</span></a>
@@ -391,5 +428,6 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_dstar_ref,
     scrap_tetra_oevsv,
     scrap_tetra_de,
+    scrap_m17_aut,
     scrap_winlink_pactor,
 ]}

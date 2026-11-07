@@ -26,7 +26,7 @@ $$;
 
 DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_de, scrap_dmr_ipsc2_hotspot, scrap_dmr_brandmeister, scrap_oelink,
     scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref096, scrap_dstar_ref,
-    scrap_tetra_oevsv, scrap_tetra_de, scrap_winlink_pactor;
+    scrap_tetra_oevsv, scrap_tetra_de, scrap_m17_aut, scrap_winlink_pactor;
 
 -- C4FM: https://ycs232.oevsv.at/_status.html
 CREATE TABLE scrap_c4fm_ycs232 (
@@ -214,6 +214,26 @@ CREATE TABLE scrap_dstar_xlx905 (
 -- api.*_status read the latest row per callsign (migration 2026-11-02_06_dstar_status.sql).
 CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON scrap_dstar_xlx905 (callsign, scraped_timestamp DESC);
 
+-- M17: stations linked to the reflector M17-AUT, https://m17-aut.xreflector.net/index.php?show=links
+-- (same layout as XLX905); Austrian callsigns only.
+CREATE TABLE scrap_m17_aut (
+    id SERIAL PRIMARY KEY,
+    no TEXT,
+    flag TEXT,
+    callsign TEXT,     -- dv_station without the suffix: OE5HOO
+    dv_station TEXT,   -- as listed: OE5HOO-D
+    via TEXT,          -- "DV Client" or empty
+    last_heard TEXT,
+    linked_for TEXT,
+    protocol TEXT,
+    module TEXT,       -- reflector module: B
+    ip_address TEXT,   -- as shown (masked)
+    scraped_timestamp TIMESTAMP NOT NULL
+);
+
+-- api.m17_aut_status reads the latest rows per callsign (migration 2026-11-07_06_m17_aut.sql).
+CREATE INDEX scrap_m17_aut_callsign_ts_idx ON scrap_m17_aut (callsign, scraped_timestamp DESC);
+
 -- D-STAR ircDDB gateways: https://status.ircddb.net/cgi-bin/ircddb-gw?AUT
 CREATE TABLE scrap_dstar_ircddb (
     id SERIAL PRIMARY KEY,
@@ -305,7 +325,7 @@ DECLARE
 BEGIN
     FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_de', 'scrap_dmr_ipsc2_hotspot', 'scrap_dmr_brandmeister',
             'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb', 'scrap_dstar_ref096',
-            'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_tetra_de',
+            'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_tetra_de', 'scrap_m17_aut',
             'scrap_winlink_pactor'] LOOP
         EXECUTE format('ALTER TABLE %I OWNER TO vhf_owner', t);
         EXECUTE format('GRANT INSERT ON %I TO repeater_scrap', t);

@@ -1119,7 +1119,8 @@ CREATE FUNCTION public.trx_technologies(t public.trx) RETURNS text[]
     AS $$
   SELECT array_remove(ARRAY[CASE WHEN t.fm THEN 'fm' END, CASE WHEN t.dmr THEN 'dmr' END,
                             CASE WHEN t.c4fm THEN 'c4fm' END, CASE WHEN t.dstar THEN 'dstar' END,
-                            CASE WHEN t.tetra THEN 'tetra' END], NULL)
+                            CASE WHEN t.tetra THEN 'tetra' END,
+                            CASE WHEN upper(btrim(t.other_mode_name::text)) = 'M17' THEN 'm17' END], NULL)
 $$;
 
 
@@ -1988,6 +1989,59 @@ COMMENT ON VIEW api.ircddb_status IS 'Live status of the D-STAR gateways on ircD
 
 
 --
+-- Name: scrap_m17_aut; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_m17_aut (
+    id integer NOT NULL,
+    no text,
+    flag text,
+    callsign text,
+    dv_station text,
+    via text,
+    last_heard text,
+    linked_for text,
+    protocol text,
+    module text,
+    ip_address text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_m17_aut OWNER TO vhf_owner;
+
+--
+-- Name: m17_aut_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.m17_aut_status AS
+ WITH latest AS (
+         SELECT scrap_m17_aut.callsign,
+            max(scrap_m17_aut.scraped_timestamp) AS ts
+           FROM public.scrap_m17_aut
+          WHERE (COALESCE(scrap_m17_aut.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_m17_aut.callsign
+        )
+ SELECT callsign,
+    'M17 AT'::text AS network,
+    ( SELECT string_agg(DISTINCT concat_ws(' '::text, NULLIF(x.dv_station, ''::text), NULLIF(x.module, ''::text)), ', '::text) AS string_agg
+           FROM public.scrap_m17_aut x
+          WHERE ((x.callsign = l.callsign) AND (x.scraped_timestamp = l.ts))) AS text,
+    ((ts AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (ts AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest l;
+
+
+ALTER VIEW api.m17_aut_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW m17_aut_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.m17_aut_status IS 'Live status of the Austrian stations linked to the M17 reflector M17-AUT (active = linked within 120 minutes)';
+
+
+--
 -- Name: scrap_c4fm_ycs232; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -2242,7 +2296,14 @@ CREATE VIEW api.network_node AS
                     WHEN (scrap_tetra_de.tx_freq ~ '^\d+(\.\d+)?$'::text) THEN (scrap_tetra_de.tx_freq)::numeric
                     ELSE NULL::numeric
                 END AS frequency
-           FROM public.scrap_tetra_de) n
+           FROM public.scrap_tetra_de
+        UNION ALL
+         SELECT 'm17_aut'::text AS network_id,
+            scrap_m17_aut.dv_station AS node,
+            scrap_m17_aut.callsign,
+            scrap_m17_aut.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_m17_aut) n
   WHERE (COALESCE(node, ''::text) <> ''::text)
   GROUP BY network_id, node, callsign;
 
@@ -2566,7 +2627,15 @@ UNION ALL
     tetra_de_status.text,
     tetra_de_status.active,
     tetra_de_status.last_active
-   FROM api.tetra_de_status;
+   FROM api.tetra_de_status
+UNION ALL
+ SELECT m17_aut_status.callsign,
+    m17_aut_status.network,
+    'm17'::text AS technology,
+    m17_aut_status.text,
+    m17_aut_status.active,
+    m17_aut_status.last_active
+   FROM api.m17_aut_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -2575,7 +2644,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, IPSC2 DE, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, IPSC2 DE, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA, M17 AT: M17)';
 
 
 --
@@ -2589,7 +2658,7 @@ CREATE TABLE public.network (
     technologies text[] NOT NULL,
     sort smallint DEFAULT 0 NOT NULL,
     CONSTRAINT network_id_check CHECK ((id ~ '^[a-z0-9_]+$'::text)),
-    CONSTRAINT network_technologies_check CHECK (((technologies <@ ARRAY['fm'::text, 'dmr'::text, 'c4fm'::text, 'dstar'::text, 'tetra'::text]) AND (technologies <> '{}'::text[])))
+    CONSTRAINT network_technologies_check CHECK (((technologies <@ ARRAY['fm'::text, 'dmr'::text, 'c4fm'::text, 'dstar'::text, 'tetra'::text, 'm17'::text]) AND (technologies <> '{}'::text[])))
 );
 
 
@@ -5096,6 +5165,28 @@ ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNED BY public.scrap_fm_svx_oe9.i
 
 
 --
+-- Name: scrap_m17_aut_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_m17_aut_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_m17_aut_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_m17_aut_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_m17_aut_id_seq OWNED BY public.scrap_m17_aut.id;
+
+
+--
 -- Name: scrap_oelink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -6475,6 +6566,13 @@ ALTER TABLE ONLY public.scrap_fm_svx_oe9 ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: scrap_m17_aut id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_m17_aut ALTER COLUMN id SET DEFAULT nextval('public.scrap_m17_aut_id_seq'::regclass);
+
+
+--
 -- Name: scrap_oelink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -6663,6 +6761,14 @@ ALTER TABLE ONLY public.scrap_dstar_xlx905
 
 ALTER TABLE ONLY public.scrap_fm_svx_oe9
     ADD CONSTRAINT scrap_fm_svx_oe9_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_m17_aut scrap_m17_aut_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_m17_aut
+    ADD CONSTRAINT scrap_m17_aut_pkey PRIMARY KEY (id);
 
 
 --
@@ -6904,6 +7010,13 @@ CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON public.scrap_dstar_xlx905 USI
 --
 
 CREATE INDEX scrap_fm_svx_oe9_callsign_ts_idx ON public.scrap_fm_svx_oe9 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_m17_aut_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_m17_aut_callsign_ts_idx ON public.scrap_m17_aut USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -7435,6 +7548,20 @@ GRANT SELECT ON TABLE api.ircddb_status TO web_anon;
 
 
 --
+-- Name: TABLE scrap_m17_aut; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_m17_aut TO repeater_scrap;
+
+
+--
+-- Name: TABLE m17_aut_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.m17_aut_status TO web_anon;
+
+
+--
 -- Name: TABLE scrap_c4fm_ycs232; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -7758,6 +7885,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_m17_aut_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_m17_aut_id_seq TO repeater_scrap;
 
 
 --
