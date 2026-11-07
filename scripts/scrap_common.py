@@ -100,10 +100,12 @@ def utc_now():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def save(table, items, to_record):
+def save(table, items, to_record, replace=False):
     """Turns each item (e.g. a table row) into a record with to_record(item) -
     a dict {column: value}, or None to skip the item - and inserts them all,
-    with one scraped_timestamp, into table. Returns the number of rows."""
+    with one scraped_timestamp, into table. Returns the number of rows.
+    replace: the table keeps no history - its rows are deleted first, in the
+    same transaction (on any failure the previous rows stay)."""
     now = utc_now()
     records = [r for r in map(to_record, items) if r is not None]
     if not records:
@@ -125,7 +127,10 @@ def save(table, items, to_record):
                          f"{db_config.get('user')!r}, config {DB_CONFIG_FILE})") from e
     # The connection commits on success, rolls back on an exception, then closes.
     with conn:
-        conn.cursor().executemany(query, [(*r.values(), now) for r in records])
+        cursor = conn.cursor()
+        if replace:
+            cursor.execute(sql.SQL("DELETE FROM {}").format(sql.Identifier(table)))
+        cursor.executemany(query, [(*r.values(), now) for r in records])
     print(f"Inserted {len(records)} rows into {table}.", flush=True)
     return len(records)
 

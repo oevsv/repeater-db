@@ -1895,6 +1895,54 @@ COMMENT ON VIEW api.echolink_status IS 'Live status of the Austrian EchoLink lin
 
 
 --
+-- Name: scrap_hamnet_site; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_hamnet_site (
+    id integer NOT NULL,
+    callsign text,
+    hamnet_id integer,
+    name text,
+    latitude double precision,
+    longitude double precision,
+    elevation integer,
+    ground_asl integer,
+    inactive boolean,
+    maintainer text,
+    edited text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_hamnet_site OWNER TO vhf_owner;
+
+--
+-- Name: hamnet_site; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.hamnet_site AS
+ SELECT callsign,
+    name,
+    latitude,
+    longitude,
+    elevation,
+    ground_asl,
+    inactive,
+    ('https://hamnetdb.net/?m=site&q='::text || lower(callsign)) AS url,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS scraped
+   FROM public.scrap_hamnet_site;
+
+
+ALTER VIEW api.hamnet_site OWNER TO vhf_owner;
+
+--
+-- Name: VIEW hamnet_site; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.hamnet_site IS 'Austrian sites registered at HamnetDB (https://hamnetdb.net/), as of the last scraper run';
+
+
+--
 -- Name: scrap_dmr_ipsc2_de; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -3070,14 +3118,24 @@ CREATE VIEW api.site_type AS
     site.geo_prefix,
     site.bev_gid,
     site.geom,
-    public.st_askml(site.geom) AS st_askml
+    public.st_askml(site.geom) AS st_askml,
+    ( SELECT lower(min(h.callsign)) AS lower
+           FROM public.scrap_hamnet_site h
+          WHERE (h.callsign = ANY (array_agg(upper(btrim((trx.callsign)::text)))))) AS hamnetdb
    FROM (public.site site
      LEFT JOIN public.trx USING (site_name))
   WHERE ((trx.status)::text = 'active'::text)
   GROUP BY site.site_name, site.city, site.longitude, site.latitude, (public.vhf_nice_geo(site.longitude)), (public.vhf_nice_geo(site.latitude)), site.sea_level, site.locator_short, site.locator_long, site.geo_prefix, site.bev_gid, site.geom;
 
 
-ALTER TABLE api.site_type OWNER TO vhf_owner;
+ALTER VIEW api.site_type OWNER TO vhf_owner;
+
+--
+-- Name: COLUMN site_type.hamnetdb; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN api.site_type.hamnetdb IS 'Callsign of the site at HamnetDB (lower case; https://hamnetdb.net/?m=site&q=<hamnetdb>), NULL if not registered there';
+
 
 --
 -- Name: trx; Type: VIEW; Schema: api; Owner: vhf_owner
@@ -5267,6 +5325,28 @@ ALTER SEQUENCE public.scrap_fm_svx_oe9_id_seq OWNED BY public.scrap_fm_svx_oe9.i
 
 
 --
+-- Name: scrap_hamnet_site_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_hamnet_site_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_hamnet_site_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_hamnet_site_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_hamnet_site_id_seq OWNED BY public.scrap_hamnet_site.id;
+
+
+--
 -- Name: scrap_m17_aut_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -6675,6 +6755,13 @@ ALTER TABLE ONLY public.scrap_fm_svx_oe9 ALTER COLUMN id SET DEFAULT nextval('pu
 
 
 --
+-- Name: scrap_hamnet_site id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_hamnet_site ALTER COLUMN id SET DEFAULT nextval('public.scrap_hamnet_site_id_seq'::regclass);
+
+
+--
 -- Name: scrap_m17_aut id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -6878,6 +6965,14 @@ ALTER TABLE ONLY public.scrap_echolink
 
 ALTER TABLE ONLY public.scrap_fm_svx_oe9
     ADD CONSTRAINT scrap_fm_svx_oe9_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_hamnet_site scrap_hamnet_site_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_hamnet_site
+    ADD CONSTRAINT scrap_hamnet_site_pkey PRIMARY KEY (id);
 
 
 --
@@ -7134,6 +7229,13 @@ CREATE INDEX scrap_echolink_callsign_ts_idx ON public.scrap_echolink USING btree
 --
 
 CREATE INDEX scrap_fm_svx_oe9_callsign_ts_idx ON public.scrap_fm_svx_oe9 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_hamnet_site_callsign_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_hamnet_site_callsign_idx ON public.scrap_hamnet_site USING btree (callsign);
 
 
 --
@@ -7644,6 +7746,20 @@ GRANT SELECT ON TABLE api.echolink_status TO web_anon;
 
 
 --
+-- Name: TABLE scrap_hamnet_site; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT,DELETE ON TABLE public.scrap_hamnet_site TO repeater_scrap;
+
+
+--
+-- Name: TABLE hamnet_site; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.hamnet_site TO web_anon;
+
+
+--
 -- Name: TABLE scrap_dmr_ipsc2_de; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -8030,6 +8146,13 @@ GRANT USAGE ON SEQUENCE public.scrap_echolink_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_fm_svx_oe9_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_hamnet_site_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_hamnet_site_id_seq TO repeater_scrap;
 
 
 --

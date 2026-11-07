@@ -276,6 +276,38 @@ def scrap_m17_aut():
     return save("scrap_m17_aut", rows, to_record)
 
 
+# --- HamnetDB ----------------------------------------------------------------
+
+def scrap_hamnet_site():
+    """The Austrian sites (callsign "OE" + digit, not deleted) registered at
+    HamnetDB, from its JSON export of all sites (about 3700). Not a network:
+    only whether a site is registered (api.site_type.hamnetdb). No history -
+    each run replaces the table (the old list stays if this one fails)."""
+    url = "https://hamnetdb.net/csv.cgi?tab=site&json=1"
+    sites = fetch(url).json()
+    if not isinstance(sites, list):
+        raise ScrapError(f"{url}: no list of sites")
+
+    def number(text):  # "48,337982" -> 48.337982
+        try:
+            return float(str(text).replace(",", "."))
+        except ValueError:
+            return None
+
+    def to_record(site):
+        call = callsign(site.get("callsign"))
+        if not re.match(r"OE\d", call) or site.get("deleted"):
+            return None
+        return {"callsign": call, "hamnet_id": site.get("id"), "name": site.get("name"),
+                "latitude": number(site.get("latitude")), "longitude": number(site.get("longitude")),
+                "elevation": site.get("elevation"), "ground_asl": site.get("ground_asl"),
+                "inactive": bool(site.get("inactive")), "maintainer": site.get("maintainer"),
+                "edited": site.get("edited")}
+
+    # save() refuses an empty list: about 190 Austrian sites are registered.
+    return save("scrap_hamnet_site", sites, to_record, replace=True)
+
+
 def scrap_dstar_ircddb():
     """Gateways of ircDDB in Austria. Each gateway is one <td width="119">:
       <a class="tooltip"><img src="/images/20green.png"><span>Online</span></a>
@@ -496,5 +528,6 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_tetra_de,
     scrap_m17_aut,
     scrap_echolink,
+    scrap_hamnet_site,
     scrap_winlink_pactor,
 ]}

@@ -22,6 +22,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 | `scrap_tetra_de` | http://leipzig2000.dyndns.org:4047/ (Tetra Dashboard of the DL/EA/CT TETRA SVXReflectors; its JSON `/api/status`, only OE nodes with monitored talkgroups) |
 | `scrap_m17_aut` | https://m17-aut.xreflector.net/index.php?show=links (M17 reflector M17-AUT; Austrian callsigns `OE<digit>` only, often none) |
 | `scrap_echolink` | https://www.echolink.org/links.jsp (EchoLink links online; worldwide list sorted by callsign, only the pages with OE callsigns are loaded, Austrian callsigns `OE<digit>` only) |
+| `scrap_hamnet_site` | https://hamnetdb.net/csv.cgi?tab=site&json=1 (HamnetDB sites, Austrian callsigns `OE<digit>` only; no history, each run replaces the table) |
 | `scrap_winlink_pactor` | https://cms.winlink.org:444/GatewayChannels.aspx (Pactor, OE only) |
 
 Every table has a column `callsign`, upper case. Where a page lists a callsign only with
