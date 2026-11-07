@@ -41,6 +41,7 @@ like `FCS22820`). The `scrap_*` tables are not part of the API.
 | `create_scrap_tables.sql` | Creates the tables (drops existing ones and their data) |
 | `load_db_config.py` | Reads `db_config.ini` |
 | `systemd/repeater-scrap.service`, `.timer` | Runs the scrapers hourly, see [Service](#service-systemd) |
+| `propagation_tiles.py` | Not a scraper, run by hand: downloads the propagation tiles of all sites from HamnetDB (`calc_visibility.cgi`) to `/var/www/tiles-<date>/<site>/` (or a given path), one site at a time with a pause as long as the download; `--site <name>` for single sites, existing site directories are skipped |
 | `ticket_mail.py`, `systemd/repeater-ticket-mail.service` | E-mail notifications for tickets, see [Ticket e-mails](#ticket-e-mails) (not a scraper) |
 
 ## Setup
