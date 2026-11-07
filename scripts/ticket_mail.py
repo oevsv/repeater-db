@@ -87,8 +87,7 @@ def build_mail(r):
               r['body'].replace('\r\n', '\n'), '',
               f'Ansehen und antworten: {url}', '',
               '-- ',
-              'ÖVSV Repeater - automatische Nachricht. Bitte auf der Seite antworten.',
-              'Automatic message: please reply on the page.']
+              'ÖVSV Repeater - automatische Nachricht/automatic message.']
 
     msg = EmailMessage()
     msg['From'] = MAIL_FROM
