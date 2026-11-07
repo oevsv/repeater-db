@@ -212,6 +212,8 @@ it creates the role `vhf_ticket_writer`, the owner of the ticket functions).
   page calls the functions `api.ticket_*` through `/api/secure/rpc/...`, and
   they take the user from the token (claim `sub`).
 - A user sees their own tickets only; staff see and answer all of them.
+- Staff can delete a ticket with all its messages (button on `/ticket/<uuid>`,
+  `api.ticket_delete(id)`, migration `2026-11-07_02_ticket_delete.sql`, apply as postgres).
 - Status: `open` (waiting for staff), `answered` (staff replied), `closed`. A reply sets
   it (author: open, staff: answered); the author can close and reopen a ticket, and staff
   can set any status.
@@ -219,7 +221,11 @@ it creates the role `vhf_ticket_writer`, the owner of the ticket functions).
   `attention`, migration `2026-11-06_01_ticket_attention.sql`, apply as postgres): own
   tickets staff answered, and for staff also all open tickets.
 - E-mail for every message (first text and replies) to the ticket's author (address from
-  the SSO login, stored in `users.email`) with `ukw@oevsv.at` in Cc. Migration
+  the SSO login, stored in `users.email`) with `ukw@oevsv.at` in Cc. The address is kept only
+  while the user is active: `users.last_active` (login or ticket use) older than 28 days ->
+  `api.user_login()` clears it at the next login of any user (migration
+  `2026-11-07_03_email_retention.sql`, apply as postgres); it comes back from the SSO when
+  that user is active again. Without an address the mail goes to `ukw@oevsv.at` only. Migration
   `2026-11-06_03_ticket_mail.sql` (apply as postgres); sent by the service
   `repeater-ticket-mail` (`scripts/ticket_mail.py`), see
   [scripts/README.md](scripts/README.md#ticket-e-mails).

@@ -226,6 +226,29 @@ $$;
 ALTER FUNCTION api.ticket_create(heading text, body text, site_name text) OWNER TO vhf_ticket_writer;
 
 --
+-- Name: ticket_delete(uuid); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
+--
+
+CREATE FUNCTION api.ticket_delete(id uuid) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+    me public.users := public.ticket_current_user();
+    t public.ticket;
+BEGIN
+    IF NOT me.staff4 THEN
+        RAISE EXCEPTION 'only staff may delete tickets' USING ERRCODE = '42501';
+    END IF;
+    t := public.ticket_visible(ticket_delete.id, me);
+    DELETE FROM public.ticket WHERE ticket.id = t.id;
+END;
+$$;
+
+
+ALTER FUNCTION api.ticket_delete(id uuid) OWNER TO vhf_ticket_writer;
+
+--
 -- Name: ticket_get(uuid); Type: FUNCTION; Schema: api; Owner: vhf_ticket_writer
 --
 
@@ -383,7 +406,8 @@ CREATE TABLE public.users (
     first_seen timestamp with time zone DEFAULT now() NOT NULL,
     last_seen timestamp with time zone DEFAULT now() NOT NULL,
     staff4 boolean DEFAULT false NOT NULL,
-    email character varying(254)
+    email character varying(254),
+    last_active timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -425,6 +449,13 @@ COMMENT ON COLUMN public.users.email IS 'E-mail from the login (SSO), for ticket
 
 
 --
+-- Name: COLUMN users.last_active; Type: COMMENT; Schema: public; Owner: vhf_owner
+--
+
+COMMENT ON COLUMN public.users.last_active IS 'Last login or ticket use; users.email is cleared 28 days after it (api.user_login())';
+
+
+--
 -- Name: user_login(); Type: FUNCTION; Schema: api; Owner: vhf_login_writer
 --
 
@@ -443,12 +474,19 @@ BEGIN
             USING ERRCODE = '42501'; -- insufficient_privilege: PostgREST answers 401/403
     END IF;
 
-    INSERT INTO public.users AS u (id, callsign, first_seen, last_seen)
-    VALUES (user_id, user_callsign, now(), now())
+    INSERT INTO public.users AS u (id, callsign, first_seen, last_seen, last_active)
+    VALUES (user_id, user_callsign, now(), now(), now())
     ON CONFLICT (id) DO UPDATE
         SET callsign = EXCLUDED.callsign,
-            last_seen = now()
+            last_seen = now(),
+            last_active = now()
     RETURNING u.* INTO result;
+
+    -- E-mail of users inactive for 4 weeks.
+    UPDATE public.users u SET email = NULL
+     WHERE u.email IS NOT NULL
+       AND u.last_active < now() - interval '28 days'
+       AND u.id <> user_id;
 
     RETURN result;
 END;
@@ -480,8 +518,11 @@ BEGIN
         VALUES (user_id, nullif(upper(btrim(claims ->> 'callsign')), ''), new_email)
         ON CONFLICT (id) DO NOTHING;
         SELECT * INTO result FROM public.users u WHERE u.id = user_id;
-    ELSIF new_email IS NOT NULL AND new_email IS DISTINCT FROM result.email THEN
-        UPDATE public.users u SET email = new_email WHERE u.id = user_id
+    ELSIF (new_email IS NOT NULL AND new_email IS DISTINCT FROM result.email)
+          OR result.last_active < now() - interval '1 hour' THEN
+        UPDATE public.users u
+           SET email = coalesce(new_email, u.email), last_active = now()
+         WHERE u.id = user_id
         RETURNING * INTO result;
     END IF;
     IF NOT result.staff4 AND coalesce((SELECT c.staff_only FROM public.ticket_config c), true) THEN
@@ -7050,6 +7091,14 @@ GRANT ALL ON FUNCTION api.ticket_create(heading text, body text, site_name text)
 
 
 --
+-- Name: FUNCTION ticket_delete(id uuid); Type: ACL; Schema: api; Owner: vhf_ticket_writer
+--
+
+REVOKE ALL ON FUNCTION api.ticket_delete(id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION api.ticket_delete(id uuid) TO web_user;
+
+
+--
 -- Name: FUNCTION ticket_get(id uuid); Type: ACL; Schema: api; Owner: vhf_ticket_writer
 --
 
@@ -7136,6 +7185,15 @@ GRANT UPDATE(last_seen) ON TABLE public.users TO vhf_login_writer;
 
 GRANT INSERT(email),UPDATE(email) ON TABLE public.users TO vhf_ticket_writer;
 GRANT SELECT(email) ON TABLE public.users TO repeater_mail;
+GRANT UPDATE(email) ON TABLE public.users TO vhf_login_writer;
+
+
+--
+-- Name: COLUMN users.last_active; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT UPDATE(last_active) ON TABLE public.users TO vhf_login_writer;
+GRANT UPDATE(last_active) ON TABLE public.users TO vhf_ticket_writer;
 
 
 --
@@ -7157,7 +7215,7 @@ REVOKE ALL ON FUNCTION public.ticket_current_user() FROM PUBLIC;
 -- Name: TABLE ticket; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
-GRANT SELECT,INSERT,UPDATE ON TABLE public.ticket TO vhf_ticket_writer;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.ticket TO vhf_ticket_writer;
 GRANT SELECT ON TABLE public.ticket TO repeater_mail;
 
 
