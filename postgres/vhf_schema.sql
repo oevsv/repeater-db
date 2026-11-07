@@ -7376,6 +7376,7 @@ GRANT SELECT ON TABLE api.networks TO web_anon;
 --
 
 GRANT ALL ON TABLE public.setting_options TO dz;
+GRANT SELECT ON TABLE public.setting_options TO vhf_owner;
 
 
 --
@@ -7426,6 +7427,7 @@ GRANT SELECT ON TABLE api.trx TO web_anon;
 --
 
 GRANT SELECT ON TABLE public.oesterreich_bev_vgd_lam TO dz;
+GRANT SELECT ON TABLE public.oesterreich_bev_vgd_lam TO vhf_owner;
 
 
 --
@@ -7461,6 +7463,7 @@ GRANT SELECT ON TABLE public.bands TO web_anon;
 --
 
 GRANT ALL ON TABLE public.dhm TO dz;
+GRANT SELECT ON TABLE public.dhm TO vhf_owner;
 
 
 --
