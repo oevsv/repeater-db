@@ -50,15 +50,15 @@ def visibility_params(lat, lon, antenna):
             "ant_b": 10, "ant_c": 2, "ref": 0.25, "e": 1}
 
 
-def download(site, out_dir, antenna):
-    """Steps 3-7 for one site. Returns the seconds the download took."""
-    name = dir_name(site["site_name"])
+def download(name, lat, lon, out_dir, antenna):
+    """Steps 3-7 for one position, stored as <name>.zip and <name>/. Returns
+    the seconds the download took."""
     zip_path = os.path.join(out_dir, name + ".zip")
     part_path = zip_path + ".part"
     target = os.path.join(out_dir, name)
 
     start = time.monotonic()
-    with requests.get(VISIBILITY_URL, params=visibility_params(site["latitude"], site["longitude"], antenna),
+    with requests.get(VISIBILITY_URL, params=visibility_params(lat, lon, antenna),
                       stream=True, timeout=TIMEOUT) as response:
         response.raise_for_status()
         with open(part_path, "wb") as f:
@@ -103,27 +103,33 @@ def main():
         if missing:
             print(f"Unknown site(s): {', '.join(sorted(missing))}", file=sys.stderr)
             return 1
-    os.makedirs(args.path, exist_ok=True)
+    return download_all([(s["site_name"], dir_name(s["site_name"]), s["latitude"], s["longitude"]) for s in sites],
+                        args.path, args.antenna)
 
+
+def download_all(entries, out_dir, antenna):
+    """Downloads one entry (label, name, lat, lon) after the other, with a pause
+    as long as each download took; existing <name>/ directories are skipped.
+    Returns the exit status: 1 if any entry failed. Also used by sota_tiles.py."""
+    os.makedirs(out_dir, exist_ok=True)
     failed = []
-    for i, site in enumerate(sites, 1):
-        name = dir_name(site["site_name"])
-        print(f"[{i}/{len(sites)}] {site['site_name']} ({site['latitude']}, {site['longitude']})", flush=True)
-        if os.path.isdir(os.path.join(args.path, name)):
+    for i, (label, name, lat, lon) in enumerate(entries, 1):
+        print(f"[{i}/{len(entries)}] {label} ({lat}, {lon})", flush=True)
+        if os.path.isdir(os.path.join(out_dir, name)):
             print("  exists, skipped", flush=True)
             continue
-        if site["latitude"] is None or site["longitude"] is None:
+        if lat is None or lon is None:
             print("  no position, skipped", flush=True)
-            failed.append(site["site_name"])
+            failed.append(label)
             continue
         start = time.monotonic()
         try:
-            took = download(site, args.path, args.antenna)
-        except Exception as e:  # report, go on with the next site
+            took = download(name, lat, lon, out_dir, antenna)
+        except Exception as e:  # report, go on with the next one
             took = time.monotonic() - start
             print(f"  FAILED: {e}", flush=True)
-            failed.append(site["site_name"])
-        if i < len(sites):
+            failed.append(label)
+        if i < len(entries):
             print(f"  pause {took:.0f} s", flush=True)
             time.sleep(took)
 
