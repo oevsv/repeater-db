@@ -659,7 +659,7 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
           WHERE nn.last_listed >= now() - max_age
             AND NOT EXISTS (SELECT 1 FROM public.trx t WHERE t.networks @> jsonb_build_object(nn.network_id, nn.node))
        ), free AS (  -- active transmitters, with their modes
-         SELECT t.uid, t.site_name, upper(t.callsign::text) AS callsign, t.frequency_tx, t.digital_id, t.networks,
+         SELECT t.uid, t.site_name, upper(t.callsign::text) AS callsign, t.frequency_tx, t.digital_id, t.echolink_id, t.networks,
                 public.trx_technologies(t) AS technologies, nullif(upper(t.dstar_rpt1::text), '') AS dstar_module
            FROM public.trx t
           WHERE t.status::text = 'active'
@@ -669,8 +669,12 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
                         count(*) OVER (PARTITION BY nodes.network_id, nodes.node) AS trx_per_node,
                         count(*) OVER (PARTITION BY nodes.network_id, f.uid) AS nodes_per_trx
                    FROM nodes
-                   JOIN free f ON f.digital_id::text = nodes.node
-                              AND f.technologies && nodes.technologies
+                   -- EchoLink: the node number is trx.echolink_id (set by hand, so
+                   -- no check of the modes); else the DMR id etc. in digital_id.
+                   JOIN free f ON CASE WHEN nodes.network_id = 'echolink'
+                                       THEN f.echolink_id::text = nodes.node
+                                       ELSE f.digital_id::text = nodes.node
+                                            AND f.technologies && nodes.technologies END
                               AND NOT f.networks ? nodes.network_id) x
           WHERE x.trx_per_node = 1 AND x.nodes_per_trx = 1
        ), by_module AS (  -- D-STAR node "OE6XDF-B": same callsign, module B = trx.dstar_rpt1
@@ -732,7 +736,7 @@ CREATE FUNCTION public.trx_networks_autofill(dry_run boolean DEFAULT true, max_a
                   WHERE x.trx_per_node = 1) y
           WHERE y.pick = 1
        ), links AS (
-         SELECT network_id, node, uid, 'digital_id' AS rule FROM by_id
+         SELECT network_id, node, uid, CASE WHEN network_id = 'echolink' THEN 'echolink_id' ELSE 'digital_id' END AS rule FROM by_id
          UNION ALL
          SELECT network_id, node, uid, 'module' FROM by_module
          UNION ALL
@@ -759,7 +763,7 @@ ALTER FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) O
 -- Name: FUNCTION trx_networks_autofill(dry_run boolean, max_age interval); Type: COMMENT; Schema: public; Owner: vhf_owner
 --
 
-COMMENT ON FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) IS 'Fills trx.networks from the scraped nodes (rules digital_id, callsign); never changes existing keys. dry_run (default) only lists.';
+COMMENT ON FUNCTION public.trx_networks_autofill(dry_run boolean, max_age interval) IS 'Fills trx.networks from the scraped nodes (rules digital_id / echolink_id, module, frequency, callsign); never changes existing keys. dry_run (default) only lists.';
 
 
 --
@@ -1833,6 +1837,64 @@ COMMENT ON VIEW api.dcs009_status IS 'Live status of the D-STAR repeaters on DCS
 
 
 --
+-- Name: scrap_echolink; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_echolink (
+    id integer NOT NULL,
+    callsign text,
+    station text,
+    description text,
+    node_number text,
+    lat_lon text,
+    grid_square text,
+    place text,
+    frequency text,
+    tone text,
+    power text,
+    haat text,
+    antenna text,
+    status text,
+    comment text,
+    last_update text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_echolink OWNER TO vhf_owner;
+
+--
+-- Name: echolink_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.echolink_status AS
+ WITH latest AS (
+         SELECT scrap_echolink.callsign,
+            max(scrap_echolink.scraped_timestamp) AS ts
+           FROM public.scrap_echolink
+          WHERE (COALESCE(scrap_echolink.callsign, ''::text) <> ''::text)
+          GROUP BY scrap_echolink.callsign
+        )
+ SELECT callsign,
+    'Echolink'::text AS network,
+    ( SELECT string_agg(DISTINCT concat_ws(' '::text, NULLIF(x.station, ''::text), NULLIF(x.node_number, ''::text)), ', '::text) AS string_agg
+           FROM public.scrap_echolink x
+          WHERE ((x.callsign = l.callsign) AND (x.scraped_timestamp = l.ts))) AS text,
+    ((ts AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (ts AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest l;
+
+
+ALTER VIEW api.echolink_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW echolink_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.echolink_status IS 'Live status of the Austrian EchoLink links (active = online within 120 minutes)';
+
+
+--
 -- Name: scrap_dmr_ipsc2_de; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -2303,7 +2365,17 @@ CREATE VIEW api.network_node AS
             scrap_m17_aut.callsign,
             scrap_m17_aut.scraped_timestamp,
             NULL::numeric AS frequency
-           FROM public.scrap_m17_aut) n
+           FROM public.scrap_m17_aut
+        UNION ALL
+         SELECT 'echolink'::text AS network_id,
+            scrap_echolink.node_number AS node,
+            scrap_echolink.callsign,
+            scrap_echolink.scraped_timestamp,
+                CASE
+                    WHEN ((scrap_echolink.frequency ~ '^\d+(\.\d+)?$'::text) AND ((scrap_echolink.frequency)::numeric > (0)::numeric)) THEN (scrap_echolink.frequency)::numeric
+                    ELSE NULL::numeric
+                END AS frequency
+           FROM public.scrap_echolink) n
   WHERE (COALESCE(node, ''::text) <> ''::text)
   GROUP BY network_id, node, callsign;
 
@@ -2635,7 +2707,15 @@ UNION ALL
     m17_aut_status.text,
     m17_aut_status.active,
     m17_aut_status.last_active
-   FROM api.m17_aut_status;
+   FROM api.m17_aut_status
+UNION ALL
+ SELECT echolink_status.callsign,
+    echolink_status.network,
+    'fm'::text AS technology,
+    echolink_status.text,
+    echolink_status.active,
+    echolink_status.last_active
+   FROM api.echolink_status;
 
 
 ALTER VIEW api.network_status OWNER TO vhf_owner;
@@ -2644,7 +2724,7 @@ ALTER VIEW api.network_status OWNER TO vhf_owner;
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, IPSC2 DE, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA, M17 AT: M17)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9, Echolink: FM, IPSC2, IPSC2 DE, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA, M17 AT: M17)';
 
 
 --
@@ -5143,6 +5223,28 @@ ALTER SEQUENCE public.scrap_dstar_xlx905_id_seq OWNED BY public.scrap_dstar_xlx9
 
 
 --
+-- Name: scrap_echolink_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_echolink_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_echolink_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_echolink_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_echolink_id_seq OWNED BY public.scrap_echolink.id;
+
+
+--
 -- Name: scrap_fm_svx_oe9_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
 --
 
@@ -6559,6 +6661,13 @@ ALTER TABLE ONLY public.scrap_dstar_xlx905 ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
+-- Name: scrap_echolink id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_echolink ALTER COLUMN id SET DEFAULT nextval('public.scrap_echolink_id_seq'::regclass);
+
+
+--
 -- Name: scrap_fm_svx_oe9 id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -6753,6 +6862,14 @@ ALTER TABLE ONLY public.scrap_dstar_ref
 
 ALTER TABLE ONLY public.scrap_dstar_xlx905
     ADD CONSTRAINT scrap_dstar_xlx905_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_echolink scrap_echolink_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_echolink
+    ADD CONSTRAINT scrap_echolink_pkey PRIMARY KEY (id);
 
 
 --
@@ -7003,6 +7120,13 @@ CREATE INDEX scrap_dstar_ref096_callsign_ts_idx ON public.scrap_dstar_ref096 USI
 --
 
 CREATE INDEX scrap_dstar_xlx905_callsign_ts_idx ON public.scrap_dstar_xlx905 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_echolink_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_echolink_callsign_ts_idx ON public.scrap_echolink USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -7506,6 +7630,20 @@ GRANT SELECT ON TABLE api.dcs009_status TO web_anon;
 
 
 --
+-- Name: TABLE scrap_echolink; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_echolink TO repeater_scrap;
+
+
+--
+-- Name: TABLE echolink_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.echolink_status TO web_anon;
+
+
+--
 -- Name: TABLE scrap_dmr_ipsc2_de; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -7878,6 +8016,13 @@ GRANT USAGE ON SEQUENCE public.scrap_dstar_ref_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dstar_xlx905_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_echolink_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_echolink_id_seq TO repeater_scrap;
 
 
 --

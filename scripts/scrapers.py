@@ -173,6 +173,72 @@ def scrap_dstar_xlx905():
     return save("scrap_dstar_xlx905", table.find_all("tr")[2:], to_record)
 
 
+# --- EchoLink --------------------------------------------------------------
+
+ECHOLINK_URL = "https://www.echolink.org/links.jsp?d=2&sel=all&offset={}"
+ECHOLINK_COLUMNS = ["station", "description", "node_number", "lat_lon", "grid_square", "place",
+                    "frequency", "tone", "power", "haat", "antenna", "status", "comment", "last_update"]
+
+
+def scrap_echolink():
+    """EchoLink links (-R repeaters, -L simplex links) that are online, from the
+    worldwide list https://www.echolink.org/links.jsp (Online only, 200 per
+    page, sorted by callsign). Its country filter has no effect, so only the
+    pages with the "OE" callsigns are loaded: a binary search for the first of
+    them (about 5 pages instead of all), then on until the callsigns pass
+    "OE". Only Austrian callsigns ("OE" + digit) are stored. node_number is the
+    EchoLink node, the same as trx.echolink_id."""
+    pages = {}
+
+    def page(offset):  # each page loaded once
+        if offset not in pages:
+            soup = get_soup(ECHOLINK_URL.format(offset))
+            pages[offset] = soup, [tr for tr in soup.find_all("tr")
+                                   if len(tr.find_all("td", recursive=False)) == len(ECHOLINK_COLUMNS)]
+        return pages[offset]
+
+    def first_call(rows):
+        return rows[0].find("td").get_text(strip=True).upper() if rows else "~"  # empty page: past the end
+
+    def last_call(rows):
+        return rows[-1].find("td").get_text(strip=True).upper() if rows else "~"
+
+    soup, rows = page(0)
+    size = len(rows)
+    if not size:
+        raise ScrapError(f"{ECHOLINK_URL.format(0)}: no links found - did the page layout change?")
+    last_offset = max((int(o) for o in re.findall(r"offset=(\d+)", str(soup))), default=0)
+
+    # The last page that starts before "OE": the OE callsigns begin on it or right after.
+    lo, hi = 0, last_offset // size
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if first_call(page(mid * size)[1]) < "OE":
+            lo = mid
+        else:
+            hi = mid - 1
+    found = []
+    offset = lo * size
+    while offset <= last_offset:
+        rows = page(offset)[1]
+        found += rows
+        if last_call(rows) >= "OF":
+            break
+        offset += size
+
+    def to_record(row):
+        cells = row_cells(row, len(ECHOLINK_COLUMNS))
+        if cells is None:
+            return None
+        record = dict(zip(ECHOLINK_COLUMNS, cells))
+        record["callsign"] = base_callsign(record["station"])  # OE1XCS-R -> OE1XCS
+        return record if re.match(r"OE\d", record["callsign"]) else None
+
+    # About 20 Austrian links are online at any time: none means the search or
+    # the page went wrong (save() refuses an empty list).
+    return save("scrap_echolink", found, to_record)
+
+
 # --- M17 -------------------------------------------------------------------
 
 def scrap_m17_aut():
@@ -429,5 +495,6 @@ SCRAPERS = {f.__name__: f for f in [
     scrap_tetra_oevsv,
     scrap_tetra_de,
     scrap_m17_aut,
+    scrap_echolink,
     scrap_winlink_pactor,
 ]}
