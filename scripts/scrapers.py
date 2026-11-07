@@ -10,7 +10,7 @@ import re
 
 import requests
 
-from scrap_common import (ScrapError, base_callsign, callsign, fetch, find_all, get_soup, row_cells,
+from scrap_common import (ScrapError, base_callsign, callsign, dmr_record, fetch, find_all, get_soup, row_cells,
                           save, scrap_dmr_status_page, scrap_status_page)
 
 
@@ -18,6 +18,16 @@ from scrap_common import (ScrapError, base_callsign, callsign, fetch, find_all, 
 
 def scrap_dmr_ipsc2():
     return scrap_dmr_status_page("https://ipsc2.oevsv.at/_status.html", "scrap_dmr_ipsc2")
+
+
+def scrap_dmr_ipsc2_de():
+    """The German IPSC2 server (same dashboard as the OEVSV IPSC2). Only
+    Austrian callsigns ("OE" + digit) are stored: not the German repeaters and
+    not the network names like "OE-MLINK"."""
+    def oe_record(row):
+        record = dmr_record(row)
+        return record if record and re.match(r"OE\d", record["callsign"]) else None
+    return scrap_status_page("https://ipsc2-dl-rptr.xreflector.net/_status.html", "scrap_dmr_ipsc2_de", oe_record)
 
 
 def scrap_dmr_ipsc2_hotspot():
@@ -369,6 +379,7 @@ def scrap_winlink_pactor():
 SCRAPERS = {f.__name__: f for f in [
     scrap_c4fm_ycs232,
     scrap_dmr_ipsc2,
+    scrap_dmr_ipsc2_de,
     scrap_dmr_ipsc2_hotspot,
     scrap_dmr_brandmeister,
     scrap_oelink,

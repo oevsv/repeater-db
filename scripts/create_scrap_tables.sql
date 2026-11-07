@@ -24,7 +24,7 @@ BEGIN
 END
 $$;
 
-DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_hotspot, scrap_dmr_brandmeister, scrap_oelink,
+DROP TABLE IF EXISTS scrap_c4fm_ycs232, scrap_dmr_ipsc2, scrap_dmr_ipsc2_de, scrap_dmr_ipsc2_hotspot, scrap_dmr_brandmeister, scrap_oelink,
     scrap_fm_svx_oe9, scrap_dstar_dcs009, scrap_dstar_xlx905, scrap_dstar_ircddb, scrap_dstar_ref096, scrap_dstar_ref,
     scrap_tetra_oevsv, scrap_tetra_de, scrap_winlink_pactor;
 
@@ -49,7 +49,7 @@ CREATE TABLE scrap_c4fm_ycs232 (
 -- api.ycs232_status reads the latest row per callsign (migration 2026-11-02_05_ycs232_status.sql).
 CREATE INDEX scrap_c4fm_ycs232_callsign_ts_idx ON scrap_c4fm_ycs232 (callsign, scraped_timestamp DESC);
 
--- DMR, all three with the same columns; callsign also holds network names (OE-MLINK).
+-- DMR, all four with the same columns; callsign also holds network names (OE-MLINK).
 -- https://ipsc2.oevsv.at/_status.html
 CREATE TABLE scrap_dmr_ipsc2 (
     id SERIAL PRIMARY KEY,
@@ -70,6 +70,27 @@ CREATE TABLE scrap_dmr_ipsc2 (
 
 -- api.ipsc2_status reads the latest row per callsign (migration 2026-11-02_04_ipsc2_network_status.sql).
 CREATE INDEX scrap_dmr_ipsc2_callsign_ts_idx ON scrap_dmr_ipsc2 (callsign, scraped_timestamp DESC);
+
+-- https://ipsc2-dl-rptr.xreflector.net/_status.html (IPSC2 DE), OE callsigns only
+CREATE TABLE scrap_dmr_ipsc2_de (
+    id SERIAL PRIMARY KEY,
+    nr TEXT,
+    callsign TEXT,
+    info TEXT,
+    repeater_id TEXT,
+    ts1 TEXT,
+    cq TEXT,
+    ts1_info TEXT,
+    ts2 TEXT,
+    ts2_info TEXT,
+    ref TEXT,
+    start TEXT,
+    hardware TEXT,
+    scraped_timestamp TIMESTAMP NOT NULL
+);
+
+-- api.ipsc2_de_status reads the latest row per callsign (migration 2026-11-07_05_ipsc2_de.sql).
+CREATE INDEX scrap_dmr_ipsc2_de_callsign_ts_idx ON scrap_dmr_ipsc2_de (callsign, scraped_timestamp DESC);
 
 -- https://dmo.oevsv.at/_status.html
 CREATE TABLE scrap_dmr_ipsc2_hotspot (
@@ -282,7 +303,7 @@ DO $$
 DECLARE
     t text;
 BEGIN
-    FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_hotspot', 'scrap_dmr_brandmeister',
+    FOREACH t IN ARRAY ARRAY['scrap_c4fm_ycs232', 'scrap_dmr_ipsc2', 'scrap_dmr_ipsc2_de', 'scrap_dmr_ipsc2_hotspot', 'scrap_dmr_brandmeister',
             'scrap_oelink', 'scrap_fm_svx_oe9', 'scrap_dstar_dcs009', 'scrap_dstar_xlx905', 'scrap_dstar_ircddb', 'scrap_dstar_ref096',
             'scrap_dstar_ref', 'scrap_tetra_oevsv', 'scrap_tetra_de',
             'scrap_winlink_pactor'] LOOP

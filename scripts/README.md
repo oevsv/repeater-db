@@ -8,6 +8,7 @@ rows of one run share the same `scraped_timestamp` (UTC).
 |---|---|
 | `scrap_c4fm_ycs232` | https://ycs232.oevsv.at/_status.html |
 | `scrap_dmr_ipsc2` | https://ipsc2.oevsv.at/_status.html |
+| `scrap_dmr_ipsc2_de` | https://ipsc2-dl-rptr.xreflector.net/_status.html (IPSC2 DE, the German IPSC2 server; Austrian callsigns `OE<digit>` only) |
 | `scrap_dmr_ipsc2_hotspot` | https://dmo.oevsv.at/_status.html |
 | `scrap_dmr_brandmeister` | https://api.brandmeister.network/v2/device/byMaster/2322 (Brandmeister API; dashboard https://brandmeister.network/#/devices is WebSocket only; Austrian master, OE callsigns only) |
 | `scrap_oelink` | https://oe-link.oevsv.at/_status.html |

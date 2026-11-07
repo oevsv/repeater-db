@@ -1832,6 +1832,61 @@ COMMENT ON VIEW api.dcs009_status IS 'Live status of the D-STAR repeaters on DCS
 
 
 --
+-- Name: scrap_dmr_ipsc2_de; Type: TABLE; Schema: public; Owner: vhf_owner
+--
+
+CREATE TABLE public.scrap_dmr_ipsc2_de (
+    id integer NOT NULL,
+    nr text,
+    callsign text,
+    info text,
+    repeater_id text,
+    ts1 text,
+    cq text,
+    ts1_info text,
+    ts2 text,
+    ts2_info text,
+    ref text,
+    start text,
+    hardware text,
+    scraped_timestamp timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE public.scrap_dmr_ipsc2_de OWNER TO vhf_owner;
+
+--
+-- Name: ipsc2_de_status; Type: VIEW; Schema: api; Owner: vhf_owner
+--
+
+CREATE VIEW api.ipsc2_de_status AS
+ WITH latest AS (
+         SELECT DISTINCT ON (scrap_dmr_ipsc2_de.callsign) scrap_dmr_ipsc2_de.callsign,
+            scrap_dmr_ipsc2_de.repeater_id,
+            scrap_dmr_ipsc2_de.hardware,
+            scrap_dmr_ipsc2_de.scraped_timestamp
+           FROM public.scrap_dmr_ipsc2_de
+          WHERE (COALESCE(scrap_dmr_ipsc2_de.callsign, ''::text) <> ''::text)
+          ORDER BY scrap_dmr_ipsc2_de.callsign, scrap_dmr_ipsc2_de.scraped_timestamp DESC
+        )
+ SELECT callsign,
+    'IPSC2 DE'::text AS network,
+    concat_ws(' '::text, NULLIF(repeater_id, ''::text), NULLIF(hardware, ''::text)) AS text,
+    ((scraped_timestamp AT TIME ZONE 'UTC'::text) >= (now() - '02:00:00'::interval)) AS active,
+    (scraped_timestamp AT TIME ZONE 'UTC'::text) AS last_active
+   FROM latest;
+
+
+ALTER VIEW api.ipsc2_de_status OWNER TO vhf_owner;
+
+--
+-- Name: VIEW ipsc2_de_status; Type: COMMENT; Schema: api; Owner: vhf_owner
+--
+
+COMMENT ON VIEW api.ipsc2_de_status IS 'Live status of the Austrian repeaters on IPSC2 DE (active = listed within 120 minutes)';
+
+
+--
 -- Name: scrap_dmr_ipsc2; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -2082,13 +2137,13 @@ ALTER TABLE public.scrap_tetra_oevsv OWNER TO vhf_owner;
 --
 
 CREATE VIEW api.network_node AS
- SELECT n.network_id,
-    n.node,
-    n.callsign,
-    (max(n.scraped_timestamp) AT TIME ZONE 'UTC'::text) AS last_listed,
-    (array_agg(n.frequency ORDER BY n.scraped_timestamp DESC))[1] AS frequency,
+ SELECT network_id,
+    node,
+    callsign,
+    (max(scraped_timestamp) AT TIME ZONE 'UTC'::text) AS last_listed,
+    (array_agg(frequency ORDER BY scraped_timestamp DESC))[1] AS frequency,
         CASE
-            WHEN (n.network_id = 'ircddb'::text) THEN COALESCE((( SELECT s.status
+            WHEN (network_id = 'ircddb'::text) THEN COALESCE((( SELECT s.status
                FROM public.scrap_dstar_ircddb s
               WHERE (s.callsign = n.node)
               ORDER BY s.scraped_timestamp DESC
@@ -2118,6 +2173,13 @@ CREATE VIEW api.network_node AS
             scrap_dmr_ipsc2.scraped_timestamp,
             NULL::numeric AS frequency
            FROM public.scrap_dmr_ipsc2
+        UNION ALL
+         SELECT 'ipsc2_de'::text AS network_id,
+            scrap_dmr_ipsc2_de.repeater_id AS node,
+            scrap_dmr_ipsc2_de.callsign,
+            scrap_dmr_ipsc2_de.scraped_timestamp,
+            NULL::numeric AS frequency
+           FROM public.scrap_dmr_ipsc2_de
         UNION ALL
          SELECT 'ycs232'::text AS network_id,
             scrap_c4fm_ycs232.station AS node,
@@ -2181,11 +2243,11 @@ CREATE VIEW api.network_node AS
                     ELSE NULL::numeric
                 END AS frequency
            FROM public.scrap_tetra_de) n
-  WHERE (COALESCE(n.node, ''::text) <> ''::text)
-  GROUP BY n.network_id, n.node, n.callsign;
+  WHERE (COALESCE(node, ''::text) <> ''::text)
+  GROUP BY network_id, node, callsign;
 
 
-ALTER TABLE api.network_node OWNER TO vhf_owner;
+ALTER VIEW api.network_node OWNER TO vhf_owner;
 
 --
 -- Name: VIEW network_node; Type: COMMENT; Schema: api; Owner: vhf_owner
@@ -2426,6 +2488,14 @@ UNION ALL
     ipsc2_status.last_active
    FROM api.ipsc2_status
 UNION ALL
+ SELECT ipsc2_de_status.callsign,
+    ipsc2_de_status.network,
+    'dmr'::text AS technology,
+    ipsc2_de_status.text,
+    ipsc2_de_status.active,
+    ipsc2_de_status.last_active
+   FROM api.ipsc2_de_status
+UNION ALL
  SELECT ycs232_status.callsign,
     ycs232_status.network,
     'c4fm'::text AS technology,
@@ -2499,13 +2569,13 @@ UNION ALL
    FROM api.tetra_de_status;
 
 
-ALTER TABLE api.network_status OWNER TO vhf_owner;
+ALTER VIEW api.network_status OWNER TO vhf_owner;
 
 --
 -- Name: VIEW network_status; Type: COMMENT; Schema: api; Owner: vhf_owner
 --
 
-COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA)';
+COMMENT ON VIEW api.network_status IS 'Live status of the repeaters in all monitored networks (OE-Link, SVXLink OE9: FM, IPSC2, IPSC2 DE, Brandmeister: DMR, YCS232: C4FM, DCS009/XLX905/REF096/ircDDB: D-STAR, Tetra ÖVSV, Tetra-DE: TETRA)';
 
 
 --
@@ -4785,6 +4855,28 @@ ALTER SEQUENCE public.scrap_dmr_brandmeister_id_seq OWNED BY public.scrap_dmr_br
 
 
 --
+-- Name: scrap_dmr_ipsc2_de_id_seq; Type: SEQUENCE; Schema: public; Owner: vhf_owner
+--
+
+CREATE SEQUENCE public.scrap_dmr_ipsc2_de_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.scrap_dmr_ipsc2_de_id_seq OWNER TO vhf_owner;
+
+--
+-- Name: scrap_dmr_ipsc2_de_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: vhf_owner
+--
+
+ALTER SEQUENCE public.scrap_dmr_ipsc2_de_id_seq OWNED BY public.scrap_dmr_ipsc2_de.id;
+
+
+--
 -- Name: scrap_dmr_ipsc2_hotspot; Type: TABLE; Schema: public; Owner: vhf_owner
 --
 
@@ -6327,6 +6419,13 @@ ALTER TABLE ONLY public.scrap_dmr_ipsc2 ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: scrap_dmr_ipsc2_de id; Type: DEFAULT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2_de ALTER COLUMN id SET DEFAULT nextval('public.scrap_dmr_ipsc2_de_id_seq'::regclass);
+
+
+--
 -- Name: scrap_dmr_ipsc2_hotspot id; Type: DEFAULT; Schema: public; Owner: vhf_owner
 --
 
@@ -6492,6 +6591,14 @@ ALTER TABLE ONLY public.scrap_c4fm_ycs232
 
 ALTER TABLE ONLY public.scrap_dmr_brandmeister
     ADD CONSTRAINT scrap_dmr_brandmeister_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: scrap_dmr_ipsc2_de scrap_dmr_ipsc2_de_pkey; Type: CONSTRAINT; Schema: public; Owner: vhf_owner
+--
+
+ALTER TABLE ONLY public.scrap_dmr_ipsc2_de
+    ADD CONSTRAINT scrap_dmr_ipsc2_de_pkey PRIMARY KEY (id);
 
 
 --
@@ -6755,6 +6862,13 @@ CREATE INDEX scrap_dmr_brandmeister_device_ts_idx ON public.scrap_dmr_brandmeist
 --
 
 CREATE INDEX scrap_dmr_ipsc2_callsign_ts_idx ON public.scrap_dmr_ipsc2 USING btree (callsign, scraped_timestamp DESC);
+
+
+--
+-- Name: scrap_dmr_ipsc2_de_callsign_ts_idx; Type: INDEX; Schema: public; Owner: vhf_owner
+--
+
+CREATE INDEX scrap_dmr_ipsc2_de_callsign_ts_idx ON public.scrap_dmr_ipsc2_de USING btree (callsign, scraped_timestamp DESC);
 
 
 --
@@ -7279,6 +7393,20 @@ GRANT SELECT ON TABLE api.dcs009_status TO web_anon;
 
 
 --
+-- Name: TABLE scrap_dmr_ipsc2_de; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT INSERT ON TABLE public.scrap_dmr_ipsc2_de TO repeater_scrap;
+
+
+--
+-- Name: TABLE ipsc2_de_status; Type: ACL; Schema: api; Owner: vhf_owner
+--
+
+GRANT SELECT ON TABLE api.ipsc2_de_status TO web_anon;
+
+
+--
 -- Name: TABLE scrap_dmr_ipsc2; Type: ACL; Schema: public; Owner: vhf_owner
 --
 
@@ -7553,6 +7681,13 @@ GRANT USAGE ON SEQUENCE public.scrap_c4fm_ycs232_id_seq TO repeater_scrap;
 --
 
 GRANT USAGE ON SEQUENCE public.scrap_dmr_brandmeister_id_seq TO repeater_scrap;
+
+
+--
+-- Name: SEQUENCE scrap_dmr_ipsc2_de_id_seq; Type: ACL; Schema: public; Owner: vhf_owner
+--
+
+GRANT USAGE ON SEQUENCE public.scrap_dmr_ipsc2_de_id_seq TO repeater_scrap;
 
 
 --
